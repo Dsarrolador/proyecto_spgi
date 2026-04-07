@@ -20,14 +20,22 @@ class CategoriaIgualaController extends Controller
             'nombre' => 'required|string|max:150|unique:categorias_iguala,nombre',
             'descripcion' => 'nullable|string',
             'activo' => 'nullable',
+            'cantidad_soporte_remoto' => 'nullable|integer|min:0',
+            'cantidad_visitas'        => 'nullable|integer|min:0',
+            'mantenimiento_sw_hw'     => 'nullable',
+            'equipo_prestamo'         => 'nullable',
+            'asistencia_vip'          => 'nullable',
         ]);
 
-        DB::table('categorias_iguala')->insert([
-            'nombre'       => $request->input('nombre'),
-            'descripcion'  => $request->input('descripcion'),
-            'activo'       => $request->has('activo'),
-            'created_at'   => now(),
-            'updated_at'   => now(),
+        CategoriaIguala::create([
+            'nombre'                  => $request->input('nombre'),
+            'descripcion'             => $request->input('descripcion'),
+            'activo'                  => $request->has('activo'),
+            'cantidad_soporte_remoto' => $request->input('cantidad_soporte_remoto', 0),
+            'cantidad_visitas'        => $request->input('cantidad_visitas', 0),
+            'mantenimiento_sw_hw'     => $request->has('mantenimiento_sw_hw'),
+            'equipo_prestamo'         => $request->has('equipo_prestamo'),
+            'asistencia_vip'          => $request->has('asistencia_vip'),
         ]);
 
         return redirect()
@@ -43,12 +51,22 @@ class CategoriaIgualaController extends Controller
             'nombre' => 'required|string|max:150|unique:categorias_iguala,nombre,' . $iguala->id,
             'descripcion' => 'nullable|string',
             'activo' => 'nullable',
+            'cantidad_soporte_remoto' => 'nullable|integer|min:0',
+            'cantidad_visitas'        => 'nullable|integer|min:0',
+            'mantenimiento_sw_hw'     => 'nullable',
+            'equipo_prestamo'         => 'nullable',
+            'asistencia_vip'          => 'nullable',
         ]);
 
         $iguala->update([
-            'nombre'      => $request->input('nombre'),
-            'descripcion' => $request->input('descripcion'),
-            'activo'      => $request->has('activo'),
+            'nombre'                  => $request->input('nombre'),
+            'descripcion'             => $request->input('descripcion'),
+            'activo'                  => $request->has('activo'),
+            'cantidad_soporte_remoto' => $request->input('cantidad_soporte_remoto', 0),
+            'cantidad_visitas'        => $request->input('cantidad_visitas', 0),
+            'mantenimiento_sw_hw'     => $request->has('mantenimiento_sw_hw'),
+            'equipo_prestamo'         => $request->has('equipo_prestamo'),
+            'asistencia_vip'          => $request->has('asistencia_vip'),
         ]);
 
         return redirect()
