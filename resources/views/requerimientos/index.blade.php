@@ -773,11 +773,17 @@
               <label class="form-label">Categoría iguala</label>
               <select name="categoria_iguala" class="form-select">
                 <option value="">Todas</option>
-                <option value="Cliente de iguala solo sistema" {{ request('categoria_iguala') == 'Cliente de iguala solo sistema' ? 'selected' : '' }}>Cliente de iguala solo sistema</option>
-                <option value="Cliente de iguala premium" {{ request('categoria_iguala') == 'Cliente de iguala premium' ? 'selected' : '' }}>Cliente de iguala premium</option>
-                <option value="Cliente de iguala avanzada" {{ request('categoria_iguala') == 'Cliente de iguala avanzada' ? 'selected' : '' }}>Cliente de iguala avanzada</option>
-                <option value="Cliente de iguala Basico" {{ request('categoria_iguala') == 'Cliente de iguala Basico' ? 'selected' : '' }}>Cliente de iguala Basico</option>
-                <option value="Cliente sin iguala" {{ request('categoria_iguala') == 'Cliente sin iguala' ? 'selected' : '' }}>Cliente sin iguala</option>
+                @foreach($categoriasIguala as $plan)
+                  <option value="{{ $plan->id }}" {{ (string)request('categoria_iguala') === (string)$plan->id ? 'selected' : '' }}>
+                    {{ $plan->nombre }}
+                  </option>
+                @endforeach
+                {{-- No quitamos las opciones legacy por si hay datos viejos --}}
+                <option value="Cliente de iguala solo sistema" {{ request('categoria_iguala') == 'Cliente de iguala solo sistema' ? 'selected' : '' }}>Cliente de iguala solo sistema (viejo)</option>
+                <option value="Cliente de iguala premium" {{ request('categoria_iguala') == 'Cliente de iguala premium' ? 'selected' : '' }}>Cliente de iguala premium (viejo)</option>
+                <option value="Cliente de iguala avanzada" {{ request('categoria_iguala') == 'Cliente de iguala avanzada' ? 'selected' : '' }}>Cliente de iguala avanzada (viejo)</option>
+                <option value="Cliente de iguala Basico" {{ request('categoria_iguala') == 'Cliente de iguala Basico' ? 'selected' : '' }}>Cliente de iguala Basico (viejo)</option>
+                <option value="Cliente sin iguala" {{ request('categoria_iguala') == 'Cliente sin iguala' ? 'selected' : '' }}>Cliente sin iguala (viejo)</option>
               </select>
             </div>
 

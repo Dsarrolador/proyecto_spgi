@@ -24,11 +24,18 @@ class RequerimientoCliente extends Model
         'fecha_finalizado',
         'tiempo_invertido',
         'facturado',
+        'es_recurrente',
+        'frecuencia',
+        'proxima_fecha_ejecucion',
+        'fecha_inicio_recurrencia',
     ];
 
     protected $casts = [
         'facturado' => 'boolean',
         'fecha_finalizado' => 'datetime',
+        'proxima_fecha_ejecucion' => 'datetime',
+        'fecha_inicio_recurrencia' => 'datetime',
+        'es_recurrente' => 'boolean',
     ];
 
     public function clienteRelation()
@@ -98,5 +105,38 @@ class RequerimientoCliente extends Model
         }
         
         return collect($files);
+    }
+
+    /**
+     * Calcula la siguiente fecha de ejecución según la frecuencia
+     */
+    public function calcularProximaFecha($desde = null)
+    {
+        // Prioridad: 1. Desde (pasado por argumento), 2. Fecha Inicio Recurrencia, 3. Now
+        if ($desde) {
+            $fecha = \Carbon\Carbon::parse($desde);
+        } elseif ($this->fecha_inicio_recurrencia) {
+            $fecha = \Carbon\Carbon::parse($this->fecha_inicio_recurrencia);
+        } else {
+            $fecha = now();
+        }
+
+        switch (strtolower($this->frecuencia)) {
+            case 'diario':
+                return $fecha->addDay();
+            case 'semanal':
+                return $fecha->addWeek();
+            case 'quincenal':
+                return $fecha->addDays(15);
+            case 'mensual':
+                return $fecha->addMonth();
+            case 'semestral':
+                return $fecha->addMonths(6);
+            case 'al año':
+            case 'anual':
+                return $fecha->addYear();
+            default:
+                return null;
+        }
     }
 }

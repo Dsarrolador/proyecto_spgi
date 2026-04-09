@@ -18,6 +18,7 @@ use App\Http\Controllers\CategoriaController;
 use App\Http\Controllers\WikiController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\RoleUserController;
+use App\Http\Controllers\NotificacionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -45,6 +46,21 @@ Route::middleware('auth')->group(function () {
     })->name('bienvenido');
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard/iguala-control', [DashboardController::class, 'igualaControl'])->name('dashboard.iguala-control');
+    Route::get('/api/cliente-metrics/{id}', [DashboardController::class, 'getClienteMetrics'])->name('api.cliente-metrics');
+
+    /*
+    |--------------------------------------------------------------------------
+    | 🔔 NOTIFICACIONES
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/api/notificaciones/unread', [NotificacionController::class, 'getUnread'])->name('api.notificaciones.unread');
+    Route::get('/notificaciones', [NotificacionController::class, 'index'])->name('notificaciones.index');
+    Route::post('/api/notificaciones/{id}/read', [NotificacionController::class, 'markAsRead'])->name('api.notificaciones.read');
+    Route::delete('/api/notificaciones/delete-all', [NotificacionController::class, 'destroyAll'])->name('api.notificaciones.destroyAll');
+    Route::delete('/api/notificaciones/{id}', [NotificacionController::class, 'destroy'])->name('api.notificaciones.destroy');
+    Route::get('/notificaciones/admin', [NotificacionController::class, 'adminPanel'])->name('notificaciones.admin');
+    Route::post('/notificaciones/send', [NotificacionController::class, 'send'])->name('notificaciones.send');
 
     /*
     |--------------------------------------------------------------------------

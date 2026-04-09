@@ -27,6 +27,13 @@
                     <option value="{{ $cliente->id }}">{{ $cliente->nombre }}</option>
                 @endforeach
             </select>
+            <!-- Alerta de Iguala -->
+            <div id="iguala_alert" class="mt-2 d-none">
+                <div class="alert alert-warning d-flex align-items-center mb-0 p-2" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <div id="iguala_alert_text" class="small fw-bold"></div>
+                </div>
+            </div>
         </div>
 
         <!-- CONTACTO -->
@@ -129,10 +136,38 @@
             </small>
         </div>
 
-        <!-- PREVIEW IMÁGENES ADICIONALES -->
-        <div class="mb-3 d-none" id="previewMultiplesContainer">
-            <label class="form-label fw-semibold">Vista previa de imágenes adicionales</label>
-            <div id="previewMultiples" class="d-flex flex-wrap gap-2"></div>
+        <!-- RECURRENCIA -->
+        <div class="card bg-light border-0 mb-3" style="border-radius: 12px;">
+            <div class="card-body">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" name="es_recurrente" id="es_recurrente" value="1">
+                    <label class="form-check-label fw-bold" for="es_recurrente">
+                        <i class="bi bi-arrow-repeat me-1"></i> ¿Es un requerimiento recurrente?
+                    </label>
+                </div>
+                
+                <div id="freq_container" class="mt-3 d-none">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Frecuencia de repetición</label>
+                        <select name="frecuencia" id="frecuencia" class="form-select">
+                            <option value="Diario">Diario</option>
+                            <option value="Semanal">Semanal</option>
+                            <option value="Quincenal">Quincenal</option>
+                            <option value="Mensual">Mensual</option>
+                            <option value="Semestral">Semestral</option>
+                            <option value="Al año">Al año</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Fecha de Inicio de Recurrencia</label>
+                        <input type="datetime-local" name="fecha_inicio_recurrencia" class="form-control" value="{{ now()->format('Y-m-d\TH:i') }}">
+                        <small class="text-muted d-block mt-1">El primer ciclo comenzará a partir de esta fecha.</small>
+                    </div>
+
+                    <small class="text-muted d-block mt-1">El sistema creará uno nuevo automáticamente al cumplirse el plazo.</small>
+                </div>
+            </div>
         </div>
 
         <!-- BOTONES -->
@@ -344,12 +379,64 @@ document.addEventListener('DOMContentLoaded', () => {
             contactoSelect.disabled = false;
             helpText.textContent = 'Contactos cargados correctamente.';
 
+            // ✅ NUEVO: Chequear balance de Iguala
+            checkIgualaBalance(clienteId);
+
         } catch (e) {
             resetContactos('Error al cargar contactos');
             helpText.textContent = 'Hubo un error consultando los contactos. Revisa la ruta / controlador.';
             console.error(e);
         }
     });
+
+    // ✅ Lógica de recurrencia
+    const switchRecurrente = document.getElementById('es_recurrente');
+    const freqContainer   = document.getElementById('freq_container');
+
+    if (switchRecurrente) {
+        switchRecurrente.addEventListener('change', function() {
+            if (this.checked) {
+                freqContainer.classList.remove('d-none');
+            } else {
+                freqContainer.classList.add('d-none');
+            }
+        });
+    }
+
+    async function checkIgualaBalance(clienteId) {
+        const alertDiv = document.getElementById('iguala_alert');
+        const alertText = document.getElementById('iguala_alert_text');
+        
+        try {
+            const url = `{{ route('api.cliente-metrics', ':id') }}`.replace(':id', clienteId);
+            const res = await fetch(url);
+            if (!res.ok) return;
+
+            const m = await res.json();
+            if (!m) {
+                alertDiv.classList.add('d-none');
+                return;
+            }
+
+            let warnings = [];
+            if (m.limite_remoto > 0 && m.disponible_remoto === 0) {
+                warnings.push(`Soportes remotos AGOTADOS (Plan: ${m.plan_nombre})`);
+            }
+            if (m.limite_visita > 0 && m.disponible_visita === 0) {
+                warnings.push(`Visitas presenciales AGOTADAS (Plan: ${m.plan_nombre})`);
+            }
+
+            if (warnings.length > 0) {
+                alertText.innerHTML = warnings.join('<br>');
+                alertDiv.classList.remove('d-none');
+            } else {
+                alertDiv.classList.add('d-none');
+            }
+
+        } catch (e) {
+            console.error('Error al chequear balance de iguala:', e);
+        }
+    }
 });
 </script>
 @endsection

@@ -30,12 +30,12 @@ class CategoriaIgualaController extends Controller
         CategoriaIguala::create([
             'nombre'                  => $request->input('nombre'),
             'descripcion'             => $request->input('descripcion'),
-            'activo'                  => $request->has('activo'),
-            'cantidad_soporte_remoto' => $request->input('cantidad_soporte_remoto', 0),
-            'cantidad_visitas'        => $request->input('cantidad_visitas', 0),
-            'mantenimiento_sw_hw'     => $request->has('mantenimiento_sw_hw'),
-            'equipo_prestamo'         => $request->has('equipo_prestamo'),
-            'asistencia_vip'          => $request->has('asistencia_vip'),
+            'activo'                  => $request->boolean('activo', true),
+            'cantidad_soporte_remoto' => (int) $request->input('cantidad_soporte_remoto', 0),
+            'cantidad_visitas'        => (int) $request->input('cantidad_visitas', 0),
+            'mantenimiento_sw_hw'     => $request->boolean('mantenimiento_sw_hw'),
+            'equipo_prestamo'         => $request->boolean('equipo_prestamo'),
+            'asistencia_vip'          => $request->boolean('asistencia_vip'),
         ]);
 
         return redirect()
@@ -61,12 +61,12 @@ class CategoriaIgualaController extends Controller
         $iguala->update([
             'nombre'                  => $request->input('nombre'),
             'descripcion'             => $request->input('descripcion'),
-            'activo'                  => $request->has('activo'),
-            'cantidad_soporte_remoto' => $request->input('cantidad_soporte_remoto', 0),
-            'cantidad_visitas'        => $request->input('cantidad_visitas', 0),
-            'mantenimiento_sw_hw'     => $request->has('mantenimiento_sw_hw'),
-            'equipo_prestamo'         => $request->has('equipo_prestamo'),
-            'asistencia_vip'          => $request->has('asistencia_vip'),
+            'activo'                  => $request->boolean('activo'),
+            'cantidad_soporte_remoto' => (int) $request->input('cantidad_soporte_remoto', 0),
+            'cantidad_visitas'        => (int) $request->input('cantidad_visitas', 0),
+            'mantenimiento_sw_hw'     => $request->boolean('mantenimiento_sw_hw'),
+            'equipo_prestamo'         => $request->boolean('equipo_prestamo'),
+            'asistencia_vip'          => $request->boolean('asistencia_vip'),
         ]);
 
         return redirect()

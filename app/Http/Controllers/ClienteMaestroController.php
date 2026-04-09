@@ -6,6 +6,7 @@ use App\Models\Categoria;
 use App\Models\ClienteMaestro;
 use App\Models\LibretaContacto;
 use App\Models\Roles;
+use App\Models\CategoriaIguala;
 use Illuminate\Http\Request;
 
 class ClienteMaestroController extends Controller
@@ -30,9 +31,10 @@ class ClienteMaestroController extends Controller
         $clientes = $clientesQuery->get();
 
         $categorias = Categoria::orderBy('categoria')->get();
+        $categoriasIguala = CategoriaIguala::orderBy('nombre')->get();
         $roles = Roles::orderBy('nombre')->get();
 
-        return view('cliente_maestro', compact('clientes', 'categorias', 'roles'));
+        return view('cliente_maestro', compact('clientes', 'categorias', 'categoriasIguala', 'roles'));
     }
 
     /**
@@ -41,10 +43,11 @@ class ClienteMaestroController extends Controller
     public function create()
     {
         $categorias = Categoria::orderBy('categoria')->get();
+        $categoriasIguala = CategoriaIguala::orderBy('nombre')->get();
         $roles = Roles::orderBy('nombre')->get();
 
         // si tu vista de crear se llama crear_cliente.blade.php
-        return view('crear_cliente', compact('categorias', 'roles'));
+        return view('crear_cliente', compact('categorias', 'categoriasIguala', 'roles'));
     }
 
     /**
@@ -52,27 +55,27 @@ class ClienteMaestroController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
+        $validData = $request->validate([
             'nombre'                => 'required|string|max:150',
             'rnc'                   => 'nullable|string|max:50',
             'telefono_principal'    => 'nullable|string|max:30',
             'clasificacion_negocio' => 'nullable|string|max:10',
             'clasificacion_interna' => 'nullable|exists:categoria,id',
-            'categoria_iguala'      => 'nullable|string|max:60',
+            'categoria_iguala_id'   => 'nullable|exists:categorias_iguala,id',
             'direccion_escrita'     => 'nullable|string|max:255',
             'notas'                 => 'nullable|string',
         ]);
 
-        ClienteMaestro::create([
-            'nombre'                => $request->nombre,
-            'rnc'                   => $request->rnc,
-            'telefono_principal'    => $request->telefono_principal,
-            'clasificacion_negocio' => $request->clasificacion_negocio,
-            'clasificacion_interna' => $request->clasificacion_interna,
-            'categoria_iguala'      => $request->categoria_iguala,
-            'direccion_escrita'     => $request->direccion_escrita,
-            'notas'                 => $request->notas,
-        ]);
+        // Sincronizar el nombre de la iguala para compatibilidad
+        $categoriaNombre = null;
+        if ($request->categoria_iguala_id) {
+            $plan = CategoriaIguala::find($request->categoria_iguala_id);
+            $categoriaNombre = $plan ? $plan->nombre : null;
+        }
+
+        ClienteMaestro::create(array_merge($validData, [
+            'categoria_iguala' => $categoriaNombre
+        ]));
 
         return redirect()->route('clientes.index')
             ->with('success', 'Cliente creado correctamente');
@@ -83,29 +86,29 @@ class ClienteMaestroController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $request->validate([
+        $validData = $request->validate([
             'nombre'                => 'required|string|max:150',
             'rnc'                   => 'nullable|string|max:50',
             'telefono_principal'    => 'nullable|string|max:30',
             'clasificacion_negocio' => 'nullable|string|max:10',
             'clasificacion_interna' => 'nullable|exists:categoria,id',
-            'categoria_iguala'      => 'nullable|string|max:60',
+            'categoria_iguala_id'   => 'nullable|exists:categorias_iguala,id',
             'direccion_escrita'     => 'nullable|string|max:255',
             'notas'                 => 'nullable|string',
         ]);
 
         $cliente = ClienteMaestro::findOrFail($id);
 
-        $cliente->update([
-            'nombre'                => $request->nombre,
-            'rnc'                   => $request->rnc,
-            'telefono_principal'    => $request->telefono_principal,
-            'clasificacion_negocio' => $request->clasificacion_negocio,
-            'clasificacion_interna' => $request->clasificacion_interna,
-            'categoria_iguala'      => $request->categoria_iguala,
-            'direccion_escrita'     => $request->direccion_escrita,
-            'notas'                 => $request->notas,
-        ]);
+        // Sincronizar el nombre de la iguala para compatibilidad
+        $categoriaNombre = null;
+        if ($request->categoria_iguala_id) {
+            $plan = CategoriaIguala::find($request->categoria_iguala_id);
+            $categoriaNombre = $plan ? $plan->nombre : null;
+        }
+
+        $cliente->update(array_merge($validData, [
+            'categoria_iguala' => $categoriaNombre
+        ]));
 
         return redirect()->route('clientes.index')
             ->with('success', 'Cliente actualizado correctamente');

@@ -9,6 +9,7 @@ use App\Models\LibretaContacto;
 use App\Models\User;
 use App\Models\EstadoRequerimiento;
 use App\Models\RequerimientoImagen;
+use App\Models\CategoriaIguala;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
@@ -104,7 +105,11 @@ class RequerimientoClienteController extends Controller
 
         if (!empty($categoria_iguala)) {
             $query->whereHas('clienteRelation', function ($q) use ($categoria_iguala) {
-                $q->where('categoria_iguala', $categoria_iguala);
+                if (is_numeric($categoria_iguala)) {
+                    $q->where('categoria_iguala_id', (int) $categoria_iguala);
+                } else {
+                    $q->where('categoria_iguala', $categoria_iguala);
+                }
             });
         }
 
@@ -180,6 +185,7 @@ class RequerimientoClienteController extends Controller
             'facturado'        => $request->get('facturado'),
             'chartClientes'    => $chartClientes,
             'chartEncargados'  => $chartEncargados,
+            'categoriasIguala' => CategoriaIguala::orderBy('nombre')->get(),
             'esAdmin'          => $this->esAdministracion(),
             'esEncargado'      => $this->esRol('encargado'),
         ]);
@@ -252,6 +258,9 @@ class RequerimientoClienteController extends Controller
             'imagenes'         => 'nullable|array',
             'imagenes.*'       => 'nullable|image|max:30720',
             'asignado_user_id' => 'nullable|exists:users,id',
+            'es_recurrente'    => 'nullable|boolean',
+            'frecuencia'       => 'nullable|string',
+            'fecha_inicio_recurrencia' => 'nullable|date',
         ]);
 
         $rutaFoto = null;
@@ -275,6 +284,9 @@ class RequerimientoClienteController extends Controller
             'user_id'          => $creadoPor,
             'creador_user_id'  => $creadoPor,
             'asignado_user_id' => $asignadoId,
+            'es_recurrente'    => $request->has('es_recurrente'),
+            'frecuencia'       => $request->frecuencia,
+            'fecha_inicio_recurrencia' => $request->fecha_inicio_recurrencia,
         ];
 
         if ($this->col('facturado')) {
@@ -282,6 +294,13 @@ class RequerimientoClienteController extends Controller
         }
 
         $requerimiento = RequerimientoCliente::create($data);
+
+        // Si es recurrente, calculamos la primera fecha de ejecución futura
+        if ($requerimiento->es_recurrente && $requerimiento->frecuencia) {
+            $requerimiento->update([
+                'proxima_fecha_ejecucion' => $requerimiento->calcularProximaFecha()
+            ]);
+        }
 
         if ($request->hasFile('imagenes')) {
             foreach ($request->file('imagenes') as $imagen) {
@@ -337,6 +356,9 @@ class RequerimientoClienteController extends Controller
             'imagenes.*'       => 'nullable|image|max:30720',
             'created_at'       => 'nullable|date',
             'asignado_user_id' => 'nullable|exists:users,id',
+            'es_recurrente'    => 'nullable|boolean',
+            'frecuencia'       => 'nullable|string',
+            'fecha_inicio_recurrencia' => 'nullable|date',
         ];
 
         if ($this->col('fecha_finalizado')) {
@@ -375,6 +397,20 @@ class RequerimientoClienteController extends Controller
 
         if ($request->has('asignado_user_id')) {
             $req->asignado_user_id = $request->input('asignado_user_id') ?: null;
+        }
+
+        if ($request->has('es_recurrente')) {
+            $req->es_recurrente = $request->boolean('es_recurrente');
+            $req->frecuencia = $request->frecuencia;
+            $req->fecha_inicio_recurrencia = $request->fecha_inicio_recurrencia;
+            
+            if ($req->es_recurrente && !$req->proxima_fecha_ejecucion) {
+                $req->proxima_fecha_ejecucion = $req->calcularProximaFecha();
+            } elseif (!$req->es_recurrente) {
+                $req->proxima_fecha_ejecucion = null;
+                $req->frecuencia = null;
+                $req->fecha_inicio_recurrencia = null;
+            }
         }
 
         if ($request->hasFile('foto')) {

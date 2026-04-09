@@ -6,6 +6,7 @@ use App\Models\RequerimientoCliente;
 use App\Models\ClienteMaestro;
 use App\Models\User;
 use App\Models\EstadoRequerimiento;
+use App\Models\CategoriaIguala;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
@@ -102,7 +103,11 @@ class DashboardController extends Controller
 
         if (!empty($categoria_iguala)) {
             $query->whereHas('clienteRelation', function ($q) use ($categoria_iguala) {
-                $q->where('categoria_iguala', $categoria_iguala);
+                if (is_numeric($categoria_iguala)) {
+                    $q->where('categoria_iguala_id', (int) $categoria_iguala);
+                } else {
+                    $q->where('categoria_iguala', $categoria_iguala);
+                }
             });
         }
 
@@ -122,6 +127,10 @@ class DashboardController extends Controller
 
     public function index(Request $request)
     {
+        if (!Auth::user()->es_admin && !Auth::user()->es_encargado) {
+            return redirect()->route('bienvenido')->with('error', 'Acceso restringido al Dashboard de Gráficas.');
+        }
+
         $usuario = Auth::user();
 
         $asignados = User::query()
@@ -206,8 +215,47 @@ class DashboardController extends Controller
             'clientes'                => ClienteMaestro::orderBy('nombre')->get(),
             'asignados'               => $asignados,
             'estadosList'             => $estados,
+            'categoriasIguala'        => CategoriaIguala::orderBy('nombre')->get(),
             'esAdmin'                 => $this->esAdministracion(),
             'esEncargado'             => $this->esRol('encargado'),
         ]);
+    }
+
+    public function igualaControl(Request $request)
+    {
+        if (!Auth::user()->esAdmin && !Auth::user()->esEncargado) {
+            return redirect()->route('bienvenido')->with('error', 'Acceso restringido al Control de Igualas.');
+        }
+
+        $clientes = ClienteMaestro::whereNotNull('categoria_iguala_id')
+            ->whereHas('igualaPlan', function($q) {
+                $q->where('nombre', '!=', 'Cliente sin iguala');
+            })
+            ->with('igualaPlan')
+            ->orderBy('nombre')
+            ->get();
+
+        $data = $clientes->map(function ($cliente) {
+            return [
+                'id' => $cliente->id,
+                'nombre' => $cliente->nombre,
+                'metrics' => $cliente->getMetricasIguala()
+            ];
+        })->filter();
+
+        return view('dashboard.iguala_control', [
+            'data' => $data,
+            'esAdmin' => $this->esAdministracion(),
+            'esEncargado' => $this->esRol('encargado'),
+        ]);
+    }
+
+    public function getClienteMetrics($id)
+    {
+        $cliente = ClienteMaestro::find($id);
+        if (!$cliente) return response()->json(['error' => 'Cliente no encontrado'], 404);
+
+        $metrics = $cliente->getMetricasIguala();
+        return response()->json($metrics);
     }
 }

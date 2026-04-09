@@ -375,11 +375,17 @@
               <label class="form-label small fw-bold">Categoría Iguala</label>
               <select name="categoria_iguala" class="form-select">
                 <option value="">Todas</option>
-                <option value="Cliente de iguala solo sistema" {{ request('categoria_iguala') == 'Cliente de iguala solo sistema' ? 'selected' : '' }}>Solo sistema</option>
-                <option value="Cliente de iguala premium" {{ request('categoria_iguala') == 'Cliente de iguala premium' ? 'selected' : '' }}>Premium</option>
-                <option value="Cliente de iguala avanzada" {{ request('categoria_iguala') == 'Cliente de iguala avanzada' ? 'selected' : '' }}>Avanzada</option>
-                <option value="Cliente de iguala Basico" {{ request('categoria_iguala') == 'Cliente de iguala Basico' ? 'selected' : '' }}>Basico</option>
-                <option value="Cliente sin iguala" {{ request('categoria_iguala') == 'Cliente sin iguala' ? 'selected' : '' }}>Sin iguala</option>
+                @foreach($categoriasIguala as $plan)
+                  <option value="{{ $plan->id }}" {{ (string)request('categoria_iguala') === (string)$plan->id ? 'selected' : '' }}>
+                    {{ $plan->nombre }}
+                  </option>
+                @endforeach
+                {{-- Opciones legacy --}}
+                <option value="Cliente de iguala solo sistema" {{ request('categoria_iguala') == 'Cliente de iguala solo sistema' ? 'selected' : '' }}>Solo sistema (viejo)</option>
+                <option value="Cliente de iguala premium" {{ request('categoria_iguala') == 'Cliente de iguala premium' ? 'selected' : '' }}>Premium (viejo)</option>
+                <option value="Cliente de iguala avanzada" {{ request('categoria_iguala') == 'Cliente de iguala avanzada' ? 'selected' : '' }}>Avanzada (viejo)</option>
+                <option value="Cliente de iguala Basico" {{ request('categoria_iguala') == 'Cliente de iguala Basico' ? 'selected' : '' }}>Basico (viejo)</option>
+                <option value="Cliente sin iguala" {{ request('categoria_iguala') == 'Cliente sin iguala' ? 'selected' : '' }}>Sin iguala (viejo)</option>
               </select>
             </div>
             @if($esAdmin || $esEncargado)

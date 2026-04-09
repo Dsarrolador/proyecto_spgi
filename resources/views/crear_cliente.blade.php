@@ -87,13 +87,13 @@
           <!-- 🧾 NUEVO: Categoría iguala (al lado de Categoría) -->
           <div class="col-md-6 mb-3">
             <label class="form-label fw-semibold">Categoría iguala</label>
-            <select name="categoria_iguala" class="form-select">
+            <select name="categoria_iguala_id" class="form-select">
               <option value="">-- Selecciona una opción --</option>
-              <option value="Cliente de iguala solo sistema" {{ old('categoria_iguala') == 'Cliente de iguala solo sistema' ? 'selected' : '' }}>Cliente de iguala solo sistema</option>
-              <option value="Cliente de iguala premium" {{ old('categoria_iguala') == 'Cliente de iguala premium' ? 'selected' : '' }}>Cliente de iguala premium</option>
-              <option value="Cliente de iguala avanzada" {{ old('categoria_iguala') == 'Cliente de iguala avanzada' ? 'selected' : '' }}>Cliente de iguala avanzada</option>
-              <option value="Cliente de iguala Basico" {{ old('categoria_iguala') == 'Cliente de iguala Basico' ? 'selected' : '' }}>Cliente de iguala Basico</option>
-              <option value="Cliente sin iguala" {{ old('categoria_iguala') == 'Cliente sin iguala' ? 'selected' : '' }}>Cliente sin iguala</option>
+              @foreach($categoriasIguala as $plan)
+                <option value="{{ $plan->id }}" {{ old('categoria_iguala_id') == $plan->id ? 'selected' : '' }}>
+                  {{ $plan->nombre }}
+                </option>
+              @endforeach
             </select>
           </div>
 
