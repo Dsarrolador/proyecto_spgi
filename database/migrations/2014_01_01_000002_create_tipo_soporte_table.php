@@ -13,11 +13,13 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('tipo_soporte', function (Blueprint $table) {
-            $table->id();
-            $table->string('nombre');
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('tipo_soporte')) {
+            Schema::create('tipo_soporte', function (Blueprint $table) {
+                $table->id();
+                $table->string('nombre');
+                $table->timestamps();
+            });
+        }
     }
 
     /**

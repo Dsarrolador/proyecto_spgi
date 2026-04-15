@@ -13,6 +13,7 @@ class TipoSoporte extends Model
 
     protected $fillable = [
         'nombre',
+        'clase',
         'descripcion',
         'activo',
     ];

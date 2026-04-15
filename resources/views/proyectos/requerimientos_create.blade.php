@@ -186,7 +186,7 @@
             <div class="col-md-8">
               <label class="spgi-label">Adjunto (foto/pdf)</label>
               <input type="file" name="foto" class="form-control spgi-control" accept="image/*,application/pdf">
-              <div class="text-muted small mt-1">Máx 8MB. Formatos: jpg, png, webp, pdf.</div>
+              <div class="text-muted small mt-1">Máx 30MB. Formatos: jpg, png, webp, pdf.</div>
             </div>
 
           </div>

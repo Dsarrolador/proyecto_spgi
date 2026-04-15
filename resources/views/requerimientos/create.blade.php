@@ -4,6 +4,16 @@
 <div class="container mt-4">
 
     <h3 class="mb-4">Agregar Requerimiento</h3>
+    
+    @if($errors->any())
+      <div class="alert alert-danger">
+        <ul class="mb-0">
+          @foreach($errors->all() as $e)
+            <li>{{ $e }}</li>
+          @endforeach
+        </ul>
+      </div>
+    @endif
 
     <form action="{{ route('requerimientos.store') }}" method="POST" enctype="multipart/form-data">
         @csrf
@@ -17,6 +27,13 @@
                     <option value="{{ $cliente->id }}">{{ $cliente->nombre }}</option>
                 @endforeach
             </select>
+            <!-- Alerta de Iguala -->
+            <div id="iguala_alert" class="mt-2 d-none">
+                <div class="alert alert-warning d-flex align-items-center mb-0 p-2" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <div id="iguala_alert_text" class="small fw-bold"></div>
+                </div>
+            </div>
         </div>
 
         <!-- CONTACTO -->
@@ -39,6 +56,38 @@
                     <option value="{{ $tipo->id }}">{{ $tipo->nombre }}</option>
                 @endforeach
             </select>
+        </div>
+
+        <!-- COLABORATIVO -->
+        <div class="mb-3">
+            <div class="form-check form-switch p-3 bg-light border rounded d-flex flex-column justify-content-center">
+                <div>
+                    <input class="form-check-input ms-0 me-2 mt-1" style="float:left;" type="checkbox" name="es_colaborativo" id="es_colaborativo" value="1">
+                    <label class="form-check-label fw-bold d-block" for="es_colaborativo">
+                        <i class="bi bi-people-fill me-1 text-primary"></i> Requerimiento Colaborativo / Compartido
+                    </label>
+                </div>
+                <small class="text-muted d-block ms-5 mt-1" style="margin-left: 2.5rem !important;">Permite que otros usuarios vean y colaboren en este requerimiento.</small>
+                
+                <div id="colaboradores_container" class="mt-3 d-none ms-5" style="margin-left: 2.5rem !important;">
+                    <label class="form-label small fw-bold text-dark">Selecciona colaboradores adicionales:</label>
+                    <div class="row g-2 border rounded p-3 bg-white shadow-sm" style="max-height: 200px; overflow-y: auto;">
+                        @foreach($usuarios as $u)
+                            @if($u->id != auth()->id())
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="colaboradores_ids[]" value="{{ $u->id }}" id="colab{{ $u->id }}">
+                                        <label class="form-check-label small" for="colab{{ $u->id }}">
+                                            {{ $u->name }}
+                                        </label>
+                                    </div>
+                                </div>
+                            @endif
+                        @endforeach
+                    </div>
+                    <small class="text-muted d-block mt-2">A estos usuarios les aparecerá el requerimiento en su lista de tareas.</small>
+                </div>
+            </div>
         </div>
 
         <!-- ASIGNAR A USUARIO -->
@@ -119,10 +168,40 @@
             </small>
         </div>
 
-        <!-- PREVIEW IMÁGENES ADICIONALES -->
-        <div class="mb-3 d-none" id="previewMultiplesContainer">
-            <label class="form-label fw-semibold">Vista previa de imágenes adicionales</label>
-            <div id="previewMultiples" class="d-flex flex-wrap gap-2"></div>
+        <!-- OPCIONES AVANZADAS -->
+        <div class="card bg-light border-0 mb-3" style="border-radius: 12px;">
+            <div class="card-body">
+
+                <!-- RECURRENCIA -->
+                <div class="form-check form-switch mt-3">
+                    <input class="form-check-input" type="checkbox" name="es_recurrente" id="es_recurrente" value="1">
+                    <label class="form-check-label fw-bold" for="es_recurrente">
+                        <i class="bi bi-arrow-repeat me-1 text-success"></i> ¿Es un requerimiento recurrente?
+                    </label>
+                </div>
+                
+                <div id="freq_container" class="mt-3 d-none">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Frecuencia de repetición</label>
+                        <select name="frecuencia" id="frecuencia" class="form-select">
+                            <option value="Diario">Diario</option>
+                            <option value="Semanal">Semanal</option>
+                            <option value="Quincenal">Quincenal</option>
+                            <option value="Mensual">Mensual</option>
+                            <option value="Semestral">Semestral</option>
+                            <option value="Al año">Al año</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Fecha de Inicio de Recurrencia</label>
+                        <input type="datetime-local" name="fecha_inicio_recurrencia" class="form-control" value="{{ now()->format('Y-m-d\TH:i') }}">
+                        <small class="text-muted d-block mt-1">El primer ciclo comenzará a partir de esta fecha.</small>
+                    </div>
+
+                    <small class="text-muted d-block mt-1">El sistema creará uno nuevo automáticamente al cumplirse el plazo.</small>
+                </div>
+            </div>
         </div>
 
         <!-- BOTONES -->
@@ -334,12 +413,88 @@ document.addEventListener('DOMContentLoaded', () => {
             contactoSelect.disabled = false;
             helpText.textContent = 'Contactos cargados correctamente.';
 
+            // ✅ NUEVO: Chequear balance de Iguala
+            checkIgualaBalance(clienteId);
+
         } catch (e) {
             resetContactos('Error al cargar contactos');
             helpText.textContent = 'Hubo un error consultando los contactos. Revisa la ruta / controlador.';
             console.error(e);
         }
     });
+
+    // ✅ Lógica de recurrencia
+    const switchRecurrente = document.getElementById('es_recurrente');
+    const freqContainer   = document.getElementById('freq_container');
+
+    if (switchRecurrente) {
+        switchRecurrente.addEventListener('change', function() {
+            if (this.checked) {
+                freqContainer.classList.remove('d-none');
+            } else {
+                freqContainer.classList.add('d-none');
+            }
+        });
+    }
+
+    async function checkIgualaBalance(clienteId) {
+        const alertDiv = document.getElementById('iguala_alert');
+        const alertText = document.getElementById('iguala_alert_text');
+        
+        try {
+            const url = `{{ route('api.cliente-metrics', ':id') }}`.replace(':id', clienteId);
+            const res = await fetch(url);
+            if (!res.ok) return;
+
+            const m = await res.json();
+            if (!m) {
+                alertDiv.classList.add('d-none');
+                return;
+            }
+
+            let warnings = [];
+            if (m.limite_remoto > 0 && m.disponible_remoto === 0) {
+                warnings.push(`Soportes remotos AGOTADOS (Plan: ${m.plan_nombre})`);
+            }
+            if (m.limite_visita > 0 && m.disponible_visita === 0) {
+                warnings.push(`Visitas presenciales AGOTADAS (Plan: ${m.plan_nombre})`);
+            }
+
+            if (warnings.length > 0) {
+                alertText.innerHTML = warnings.join('<br>');
+                alertDiv.classList.remove('d-none');
+            } else {
+                alertDiv.classList.add('d-none');
+            }
+
+        } catch (e) {
+            console.error('Error al chequear balance de iguala:', e);
+        }
+    }
+
+    const currentUserId = "{{ auth()->id() }}";
+    const asignadoSelect = document.getElementById('asignado_user_id');
+    const colaborativoCheck = document.getElementById('es_colaborativo');
+
+    if (asignadoSelect && colaborativoCheck) {
+        asignadoSelect.addEventListener('change', function() {
+            if (this.value && this.value !== currentUserId) {
+                // Si es un usuario diferente, se marca como colaborativo por defecto.
+                colaborativoCheck.checked = true;
+                // Disparar evento de cambio manualmente para que se muestre el contenedor
+                colaborativoCheck.dispatchEvent(new Event('change'));
+            }
+        });
+
+        colaborativoCheck.addEventListener('change', function() {
+            const container = document.getElementById('colaboradores_container');
+            if (this.checked) {
+                container.classList.remove('d-none');
+            } else {
+                container.classList.add('d-none');
+            }
+        });
+    }
 });
 </script>
 @endsection

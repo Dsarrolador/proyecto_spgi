@@ -48,6 +48,13 @@ class User extends Authenticatable
         return $this->belongsTo(\App\Models\RoleUser::class, 'cod_roleUser');
     }
 
+    public function getEsAdminAttribute()
+    {
+        return $this->cod_roleUser == 1;
+    }
 
-    
+    public function getEsEncargadoAttribute()
+    {
+        return $this->cod_roleUser == 2;
+    }
 }

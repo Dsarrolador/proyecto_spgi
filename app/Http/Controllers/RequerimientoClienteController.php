@@ -9,8 +9,11 @@ use App\Models\LibretaContacto;
 use App\Models\User;
 use App\Models\EstadoRequerimiento;
 use App\Models\RequerimientoImagen;
+use App\Models\CategoriaIguala;
+use App\Models\NotificacionSistema;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
@@ -60,7 +63,7 @@ class RequerimientoClienteController extends Controller
         return Schema::hasColumn('requerimiento_cliente', $column);
     }
 
-    public function index(Request $request)
+    private function applyFilters(Request $request, $query)
     {
         $usuario = Auth::user();
 
@@ -72,26 +75,15 @@ class RequerimientoClienteController extends Controller
         $facturado        = $request->get('facturado');
         $asignado_id      = $request->get('asignado_id', $request->get('asignado_user_id', 'mios'));
 
-        $asignados = User::query()
-            ->whereIn('id', function ($q) {
-                $q->select('asignado_user_id')
-                    ->from('requerimiento_cliente')
-                    ->whereNotNull('asignado_user_id')
-                    ->groupBy('asignado_user_id');
-            })
-            ->orderBy('name')
-            ->get(['id', 'name', 'email']);
-
-        $query = RequerimientoCliente::with([
-            'novedades.user',
-            'clienteRelation',
-            'user',
-            'asignado',
-        ])->orderByDesc('id');
-
         if ($asignado_id === 'mios' || $asignado_id === null || $asignado_id === '') {
             if ($usuario) {
-                $query->where('asignado_user_id', $usuario->id);
+                $query->where(function($q) use ($usuario) {
+                    $q->where('asignado_user_id', $usuario->id)
+                      ->orWhere('user_id', $usuario->id)
+                      ->orWhereHas('colaboradores', function($sq) use ($usuario) {
+                          $sq->where('users.id', $usuario->id);
+                      });
+                });
             }
         } elseif ($asignado_id === 'todos') {
             // sin filtro
@@ -117,41 +109,121 @@ class RequerimientoClienteController extends Controller
             if ($facturado !== null && $facturado !== '') {
                 $query->where('facturado', (int) $facturado);
             }
-        } else {
-            $facturado = null;
         }
 
         if (!empty($categoria_iguala)) {
             $query->whereHas('clienteRelation', function ($q) use ($categoria_iguala) {
-                $q->where('categoria_iguala', $categoria_iguala);
+                if (is_numeric($categoria_iguala)) {
+                    $q->where('categoria_iguala_id', (int) $categoria_iguala);
+                } else {
+                    $q->where('categoria_iguala', $categoria_iguala);
+                }
             });
         }
 
         if (!empty($desde) && !empty($hasta)) {
-            $query->whereBetween('created_at', [
+            $query->whereBetween('requerimiento_cliente.created_at', [
                 Carbon::parse($desde)->startOfDay(),
                 Carbon::parse($hasta)->endOfDay(),
             ]);
         } elseif (!empty($desde)) {
-            $query->where('created_at', '>=', Carbon::parse($desde)->startOfDay());
+            $query->where('requerimiento_cliente.created_at', '>=', Carbon::parse($desde)->startOfDay());
         } elseif (!empty($hasta)) {
-            $query->where('created_at', '<=', Carbon::parse($hasta)->endOfDay());
+            $query->where('requerimiento_cliente.created_at', '<=', Carbon::parse($hasta)->endOfDay());
         }
 
+        return $query;
+    }
+
+    public function index(Request $request)
+    {
+        $usuario = Auth::user();
+
+        // 1. Obtener asignados para el combo del filtro
+        $asignados = User::query()
+            ->whereIn('id', function ($q) {
+                $q->select('asignado_user_id')
+                    ->from('requerimiento_cliente')
+                    ->whereNotNull('asignado_user_id')
+                    ->groupBy('asignado_user_id');
+            })
+            ->orderBy('name')
+            ->get(['id', 'name', 'email']);
+
+        // 2. Query principal con filtros aplicados
+        $query = RequerimientoCliente::with([
+            'novedades.user',
+            'clienteRelation',
+            'user',
+            'asignado',
+            'colaboradores',
+        ]);
+
+        $query = $this->applyFilters($request, $query);
+
+        // 3. Clonar la query para las gráficas (sin paginación)
+        $chartDataQuery = clone $query;
+
+        // Gráfica de Clientes
+        $chartClientes = (clone $chartDataQuery)
+            ->selectRaw('count(*) as total, cliente_id')
+            ->join('cliente_maestro', 'requerimiento_cliente.cliente_id', '=', 'cliente_maestro.id')
+            ->selectRaw('cliente_maestro.nombre as label')
+            ->groupBy('cliente_id', 'cliente_maestro.nombre')
+            ->get();
+
+        // Gráfica de Encargados
+        $chartEncargados = (clone $chartDataQuery)
+            ->selectRaw('count(*) as total, asignado_user_id')
+            ->leftJoin('users', 'requerimiento_cliente.asignado_user_id', '=', 'users.id')
+            ->selectRaw('COALESCE(users.name, "Sin asignar") as label')
+            ->groupBy('asignado_user_id', 'users.name')
+            ->get();
+
         return view('requerimientos.index', [
-            'requerimientos'   => $query->paginate(15)->withQueryString(),
+            'requerimientos'   => $query->orderByDesc('id')->paginate(15)->withQueryString(),
             'clientes'         => ClienteMaestro::orderBy('nombre')->get(),
             'asignados'        => $asignados,
             'estados'          => EstadoRequerimiento::all(),
-            'asignado_id'      => $asignado_id,
-            'estado'           => $estado,
-            'cliente_id'       => $cliente_id,
-            'categoria_iguala' => $categoria_iguala,
-            'desde'            => $desde,
-            'hasta'            => $hasta,
-            'facturado'        => $facturado,
+            'asignado_id'      => $request->get('asignado_id', $request->get('asignado_user_id', 'mios')),
+            'estado'           => $request->get('estado'),
+            'cliente_id'       => $request->get('cliente_id'),
+            'categoria_iguala' => $request->get('categoria_iguala'),
+            'desde'            => $request->get('desde'),
+            'hasta'            => $request->get('hasta'),
+            'facturado'        => $request->get('facturado'),
+            'chartClientes'    => $chartClientes,
+            'chartEncargados'  => $chartEncargados,
+            'categoriasIguala' => CategoriaIguala::orderBy('nombre')->get(),
+            'esAdmin'          => $this->esAdministracion(),
+            'esEncargado'      => $this->esRol('encargado'),
         ]);
     }
+
+    private function esRol(string $roleName): bool
+    {
+        $u = Auth::user();
+        if (!$u) return false;
+
+        $rNm = null;
+        if (method_exists($u, 'rol') && optional($u->rol)->nombre) {
+            $rNm = $u->rol->nombre;
+        } elseif (method_exists($u, 'role') && optional($u->role)->nombre) {
+            $rNm = $u->role->nombre;
+        } elseif (isset($u->role_id) && $u->role_id) {
+            $role = \App\Models\Roles::find($u->role_id);
+            $rNm = $role?->nombre;
+        } elseif (isset($u->cod_roleUser)) {
+           $role = \App\Models\RoleUser::find($u->cod_roleUser);
+           $rNm = $role?->nombre;
+        }
+
+        if (!$rNm) return false;
+
+        $norm = (string) Str::of($rNm)->ascii()->lower()->trim();
+        return $norm === (string) Str::of($roleName)->ascii()->lower()->trim();
+    }
+
 
    public function show($id)
 {
@@ -162,6 +234,7 @@ class RequerimientoClienteController extends Controller
         'user',
         'estadoRequerimiento',
         'imagenes',
+        'novedades.user',
     ])->findOrFail($id);
 
     $estados = EstadoRequerimiento::orderBy('nombre')->get();
@@ -191,16 +264,22 @@ class RequerimientoClienteController extends Controller
             'contacto_id'      => 'nullable|exists:libreta_contacto,id',
             'tipo_soporte_id'  => 'required|exists:tipo_soporte,id',
             'texto_imagen'     => 'required|string|max:2000',
-            'foto'             => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'foto'             => 'nullable|image|max:30720',
             'imagenes'         => 'nullable|array',
-            'imagenes.*'       => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'imagenes.*'       => 'nullable|image|max:30720',
             'asignado_user_id' => 'nullable|exists:users,id',
+            'es_recurrente'    => 'nullable|boolean',
+            'frecuencia'       => 'nullable|string',
+            'fecha_inicio_recurrencia' => 'nullable|date',
+            'es_colaborativo'  => 'nullable|boolean',
+            'colaboradores_ids' => 'nullable|array',
+            'colaboradores_ids.*' => 'exists:users,id',
         ]);
 
         $rutaFoto = null;
 
         if ($request->hasFile('foto')) {
-            $rutaFoto = $request->file('foto')->store('requerimientos', 'public');
+            $rutaFoto = $request->file('foto')->store('Requerimientos', 'ftp');
         }
 
         $creadoPor  = Auth::id();
@@ -218,6 +297,10 @@ class RequerimientoClienteController extends Controller
             'user_id'          => $creadoPor,
             'creador_user_id'  => $creadoPor,
             'asignado_user_id' => $asignadoId,
+            'es_recurrente'    => $request->has('es_recurrente'),
+            'frecuencia'       => $request->frecuencia,
+            'fecha_inicio_recurrencia' => $request->fecha_inicio_recurrencia,
+            'es_colaborativo'  => $request->has('es_colaborativo'),
         ];
 
         if ($this->col('facturado')) {
@@ -226,14 +309,64 @@ class RequerimientoClienteController extends Controller
 
         $requerimiento = RequerimientoCliente::create($data);
 
+        // Si es recurrente, calculamos la primera fecha de ejecución futura
+        if ($requerimiento->es_recurrente && $requerimiento->frecuencia) {
+            $requerimiento->update([
+                'proxima_fecha_ejecucion' => $requerimiento->calcularProximaFecha()
+            ]);
+        }
+        
+        // Sincronizar colaboradores
+        if ($requerimiento->es_colaborativo && $request->filled('colaboradores_ids')) {
+            $requerimiento->colaboradores()->sync($request->colaboradores_ids);
+        }
+
         if ($request->hasFile('imagenes')) {
             foreach ($request->file('imagenes') as $imagen) {
-                $ruta = $imagen->store('requerimientos', 'public');
+                $ruta = $imagen->store('requerimientos', 'ftp');
 
                 RequerimientoImagen::create([
                     'requerimiento_id' => $requerimiento->id,
                     'imagen'           => $ruta,
                 ]);
+            }
+        }
+
+        // NOTIFICACIONES INICIALES
+        $urlDeVista = route('requerimientos.show', $requerimiento->id);
+        
+        NotificacionSistema::create([
+            'user_id' => $creadoPor,
+            'sender_id' => $creadoPor,
+            'titulo' => 'Requerimiento Creado',
+            'mensaje' => 'Añadiste exitosamente el requerimiento #' . $requerimiento->id,
+            'url' => $urlDeVista,
+        ]);
+
+        if ($asignadoId && $asignadoId !== $creadoPor) {
+            $senderName = auth()->user()->name ?? 'Un usuario';
+            NotificacionSistema::create([
+                'user_id' => $asignadoId,
+                'sender_id' => $creadoPor,
+                'titulo' => 'Nueva Asignación (#'.$requerimiento->id.')',
+                'mensaje' => $senderName . ' te ha asignado a un requerimiento.',
+                'url' => $urlDeVista,
+            ]);
+        }
+
+        // Notificar a colaboradores
+        if ($requerimiento->es_colaborativo && $request->filled('colaboradores_ids')) {
+            $senderName = auth()->user()->name ?? 'Un usuario';
+            foreach ($request->colaboradores_ids as $colabId) {
+                if ($colabId != $creadoPor && $colabId != $asignadoId) {
+                    NotificacionSistema::create([
+                        'user_id' => $colabId,
+                        'sender_id' => $creadoPor,
+                        'titulo' => 'Colaboración asignada (#'.$requerimiento->id.')',
+                        'mensaje' => $senderName . ' te ha añadido como colaborador en un requerimiento.',
+                        'url' => $urlDeVista,
+                    ]);
+                }
             }
         }
 
@@ -249,6 +382,7 @@ class RequerimientoClienteController extends Controller
             'tipoSoporte',
             'user',
             'asignado',
+            'colaboradores',
             'imagenes',
             'estadoRequerimiento',
         ])->findOrFail($id);
@@ -268,6 +402,9 @@ class RequerimientoClienteController extends Controller
     {
         $req = RequerimientoCliente::findOrFail($id);
         $esAdmin = $this->esAdministracion();
+        
+        $oldAsignado = $req->asignado_user_id;
+        $oldEstado = $req->estado_id;
 
         $rules = [
             'cliente_id'       => 'nullable|exists:cliente_maestro,id',
@@ -275,11 +412,17 @@ class RequerimientoClienteController extends Controller
             'tipo_soporte_id'  => 'nullable|exists:tipo_soporte,id',
             'texto_imagen'     => 'nullable|string|max:2000',
             'estado_id'        => 'nullable|exists:estado_requerimientos,id',
-            'foto'             => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'foto'             => 'nullable|image|max:30720',
             'imagenes'         => 'nullable|array',
-            'imagenes.*'       => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'imagenes.*'       => 'nullable|image|max:30720',
             'created_at'       => 'nullable|date',
             'asignado_user_id' => 'nullable|exists:users,id',
+            'es_recurrente'    => 'nullable|boolean',
+            'frecuencia'       => 'nullable|string',
+            'fecha_inicio_recurrencia' => 'nullable|date',
+            'es_colaborativo'  => 'nullable|boolean',
+            'colaboradores_ids' => 'nullable|array',
+            'colaboradores_ids.*' => 'exists:users,id',
         ];
 
         if ($this->col('fecha_finalizado')) {
@@ -320,13 +463,37 @@ class RequerimientoClienteController extends Controller
             $req->asignado_user_id = $request->input('asignado_user_id') ?: null;
         }
 
+        if ($request->has('es_recurrente')) {
+            $req->es_recurrente = $request->boolean('es_recurrente');
+            $req->frecuencia = $request->frecuencia;
+            $req->fecha_inicio_recurrencia = $request->fecha_inicio_recurrencia;
+            
+            if ($req->es_recurrente && !$req->proxima_fecha_ejecucion) {
+                $req->proxima_fecha_ejecucion = $req->calcularProximaFecha();
+            } elseif (!$req->es_recurrente) {
+                $req->proxima_fecha_ejecucion = null;
+                $req->frecuencia = null;
+                $req->fecha_inicio_recurrencia = null;
+            }
+        }
+        
+        if ($request->has('es_colaborativo')) {
+            $req->es_colaborativo = $request->boolean('es_colaborativo');
+            
+            if ($req->es_colaborativo) {
+                $req->colaboradores()->sync($request->colaboradores_ids ?? []);
+            } else {
+                $req->colaboradores()->detach();
+            }
+        }
+
         if ($request->hasFile('foto')) {
-            $req->foto = $request->file('foto')->store('requerimientos', 'public');
+            $req->foto = $request->file('foto')->store('requerimientos', 'ftp');
         }
 
         if ($request->hasFile('imagenes')) {
             foreach ($request->file('imagenes') as $imagen) {
-                $ruta = $imagen->store('requerimientos', 'public');
+                $ruta = $imagen->store('requerimientos', 'ftp');
 
                 RequerimientoImagen::create([
                     'requerimiento_id' => $req->id,
@@ -358,6 +525,59 @@ class RequerimientoClienteController extends Controller
         }
 
         $req->save();
+
+        // NOTIFICACIONES DE SEGUIMIENTO (Si es colaborativo o reasignado)
+        $urlDeVista = route('requerimientos.show', $req->id);
+        $usuarioUpdater = Auth::id();
+        $senderName = auth()->user()->name ?? 'Un usuario';
+
+        // 1. Notificación por cambio de estado o actualización general en requerimientos colaborativos
+        if ($req->es_colaborativo) {
+            // Notificamos a los interesados (Creador y Asignado) si no son el que actualizó
+            $destinatarios = array_filter(array_unique([
+                $req->creador_user_id ?? $req->user_id, 
+                $req->asignado_user_id
+            ]));
+
+            foreach ($destinatarios as $userId) {
+                if ($userId && $userId != $usuarioUpdater) {
+                    $tituloNotif = ($oldEstado !== $req->estado_id) ? 'Actualización de Estado' : 'Actualización de Requerimiento';
+                    $mensajeNotif = ($oldEstado !== $req->estado_id) 
+                        ? 'Han cambiado el estado del Requerimiento #' . $req->id 
+                        : $senderName . ' actualizó los detalles del Requerimiento #' . $req->id;
+
+                    NotificacionSistema::create([
+                        'user_id' => $userId,
+                        'sender_id' => $usuarioUpdater,
+                        'titulo' => $tituloNotif,
+                        'mensaje' => $mensajeNotif,
+                        'url' => $urlDeVista,
+                    ]);
+                }
+            }
+        }
+
+        // 2. Notificación específica por Reasignación (siempre se notifica al nuevo y al viejo, sea colaborativo o no)
+        if ($oldAsignado !== $req->asignado_user_id) {
+            if ($req->asignado_user_id && $req->asignado_user_id != $usuarioUpdater) {
+                NotificacionSistema::create([
+                    'user_id' => $req->asignado_user_id,
+                    'sender_id' => $usuarioUpdater,
+                    'titulo' => 'Reasignación (#'.$req->id.')',
+                    'mensaje' => $senderName . ' te ha reasignado a un requerimiento.',
+                    'url' => $urlDeVista,
+                ]);
+            }
+            if ($oldAsignado && $oldAsignado != $usuarioUpdater) {
+                NotificacionSistema::create([
+                    'user_id' => $oldAsignado,
+                    'sender_id' => $usuarioUpdater,
+                    'titulo' => 'Asignación Retirada',
+                    'mensaje' => 'Se te ha retirado la asignación del Requerimiento #' . $req->id,
+                    'url' => $urlDeVista,
+                ]);
+            }
+        }
 
         return redirect()->route('requerimientos.index')
             ->with('success', 'Requerimiento actualizado correctamente');

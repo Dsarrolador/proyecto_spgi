@@ -12,5 +12,10 @@ class CategoriaIguala extends Model
         'nombre',
         'descripcion',
         'activo',
+        'cantidad_soporte_remoto',
+        'cantidad_visitas',
+        'mantenimiento_sw_hw',
+        'equipo_prestamo',
+        'asistencia_vip',
     ];
 }

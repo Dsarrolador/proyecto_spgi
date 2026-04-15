@@ -178,11 +178,20 @@
     overflow: hidden;
     text-overflow: ellipsis;
     min-height: 64px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .preview-box.expanded{
+    -webkit-line-clamp: unset !important;
+    max-height: none !important;
+    display: block;
   }
 
   .preview-box:hover{
     background: #eef4ff;
     border-color: rgba(13,110,253,.20);
+    box-shadow: 0 4px 12px rgba(13,110,253,.08);
   }
 
   .spgi-mobile-list{
@@ -215,6 +224,23 @@
     font-weight:800;
     color:var(--spgi-ink);
     line-height:1.25;
+  }
+
+  .spgi-field-value{
+    font-size:.92rem;
+    font-weight:600;
+    color:var(--spgi-ink);
+    line-height:1.45;
+    word-break:break-word;
+    cursor: pointer;
+  }
+
+  .spgi-field-value.truncated{
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .spgi-req-subtitle{
@@ -503,7 +529,9 @@
                 <th>Asignado a</th>
                 <th class="col-fecha">Fecha</th>
                 <th class="col-estado">Estado</th>
-                <th class="col-facturacion">Facturación</th>
+                @if($esAdmin || $esEncargado)
+                  <th class="col-facturacion">Facturación</th>
+                @endif
                 <th class="col-acciones">Acciones</th>
               </tr>
             </thead>
@@ -522,7 +550,29 @@
                   </td>
 
                   <td class="text-center">
-                    {{ $req->asignado?->name ?? 'Sin asignar' }}
+                    <div class="d-flex flex-column align-items-center">
+                      <span class="fw-bold">{{ $req->asignado?->name ?? 'Sin asignar' }}</span>
+                      
+                      @if($req->es_colaborativo)
+                        <span class="badge bg-info-subtle text-info border border-info-subtle mt-1" style="font-size: 0.65rem;">
+                          <i class="bi bi-people-fill me-1"></i> COLABORATIVO
+                        </span>
+                      @endif
+
+                      @if($req->colaboradores->count() > 0)
+                        <div class="mt-1">
+                          <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle" 
+                                title="Colaboradores: {{ $req->colaboradores->pluck('name')->implode(', ') }}" 
+                                data-bs-toggle="tooltip">
+                            <i class="bi bi-plus-circle me-1"></i> +{{ $req->colaboradores->count() }}
+                          </span>
+                        </div>
+                      @endif
+
+                      @if($req->user_id == auth()->id() && $req->asignado_user_id != auth()->id())
+                        <small class="text-muted italic mt-1" style="font-size: 0.7rem;">(Creado por ti)</small>
+                      @endif
+                    </div>
                   </td>
 
                   <td class="text-center">
@@ -541,6 +591,7 @@
                     @endif
                   </td>
 
+                  @if($esAdmin || $esEncargado)
                   <td class="text-center">
                     @if((int)($req->facturado ?? 0) === 1)
                       <span class="badge bg-success">Facturado</span>
@@ -548,6 +599,7 @@
                       <span class="badge bg-warning text-dark">No facturado</span>
                     @endif
                   </td>
+                  @endif
 
                   <td>
                     <div class="d-flex justify-content-center gap-2 acciones flex-nowrap">
@@ -582,7 +634,7 @@
                 </tr>
               @empty
                 <tr>
-                  <td colspan="7" class="text-center text-muted p-4">
+                  <td colspan="{{ ($esAdmin || $esEncargado) ? 7 : 6 }}" class="text-center text-muted p-4">
                     No hay requerimientos registrados.
                   </td>
                 </tr>
@@ -602,20 +654,40 @@
                 </h5>
                 <div class="spgi-req-subtitle">
                   Asignado a: {{ $req->asignado?->name ?? 'Sin asignar' }}
+                  @if($req->user_id == auth()->id() && $req->asignado_user_id != auth()->id())
+                    <span class="small text-muted italic">(Creado por ti)</span>
+                  @endif
+                  
+                  @if($req->es_colaborativo)
+                    <div class="mt-1">
+                      <span class="badge bg-info-subtle text-info border border-info-subtle" style="font-size: 0.7rem;">
+                        <i class="bi bi-people-fill me-1"></i> Colaborativo
+                      </span>
+                    </div>
+                  @endif
+
+                  @if($req->colaboradores->count() > 0)
+                    <div class="mt-1 small text-info">
+                       <i class="bi bi-person-plus-fill me-1"></i> 
+                       Con: {{ $req->colaboradores->pluck('name')->implode(', ') }}
+                    </div>
+                  @endif
                 </div>
               </div>
 
-              @if((int)($req->facturado ?? 0) === 1)
-                <span class="spgi-badge bg-success text-white">Facturado</span>
-              @else
-                <span class="spgi-badge bg-warning text-dark">No facturado</span>
+              @if($esAdmin || $esEncargado)
+                @if((int)($req->facturado ?? 0) === 1)
+                  <span class="spgi-badge bg-success text-white">Facturado</span>
+                @else
+                  <span class="spgi-badge bg-warning text-dark">No facturado</span>
+                @endif
               @endif
             </div>
 
             <div class="spgi-info-grid">
               <div class="spgi-field">
                 <span class="spgi-field-label">Requerimiento</span>
-                <div class="spgi-field-value">{{ $req->texto_imagen ?? 'Sin descripción' }}</div>
+                <div class="spgi-field-value truncated" onclick="this.classList.toggle('truncated')">{{ $req->texto_imagen ?? 'Sin descripción' }}</div>
               </div>
 
               <div class="spgi-field">
@@ -667,8 +739,6 @@
             No hay requerimientos registrados.
           </div>
         @endforelse
-      </div>
-
       <div class="spgi-pagination-wrap">
         {{ $requerimientos->withQueryString()->links() }}
       </div>
@@ -728,6 +798,7 @@
               </select>
             </div>
 
+            @if($esAdmin || $esEncargado)
             <div class="col-12 col-md-6">
               <label class="form-label">Facturación</label>
               <select name="facturado" class="form-select">
@@ -736,16 +807,23 @@
                 <option value="0" {{ request('facturado') === '0' ? 'selected' : '' }}>No facturados</option>
               </select>
             </div>
+            @endif
 
             <div class="col-12 col-md-6">
               <label class="form-label">Categoría iguala</label>
               <select name="categoria_iguala" class="form-select">
                 <option value="">Todas</option>
-                <option value="Cliente de iguala solo sistema" {{ request('categoria_iguala') == 'Cliente de iguala solo sistema' ? 'selected' : '' }}>Cliente de iguala solo sistema</option>
-                <option value="Cliente de iguala premium" {{ request('categoria_iguala') == 'Cliente de iguala premium' ? 'selected' : '' }}>Cliente de iguala premium</option>
-                <option value="Cliente de iguala avanzada" {{ request('categoria_iguala') == 'Cliente de iguala avanzada' ? 'selected' : '' }}>Cliente de iguala avanzada</option>
-                <option value="Cliente de iguala Basico" {{ request('categoria_iguala') == 'Cliente de iguala Basico' ? 'selected' : '' }}>Cliente de iguala Basico</option>
-                <option value="Cliente sin iguala" {{ request('categoria_iguala') == 'Cliente sin iguala' ? 'selected' : '' }}>Cliente sin iguala</option>
+                @foreach($categoriasIguala as $plan)
+                  <option value="{{ $plan->id }}" {{ (string)request('categoria_iguala') === (string)$plan->id ? 'selected' : '' }}>
+                    {{ $plan->nombre }}
+                  </option>
+                @endforeach
+                {{-- No quitamos las opciones legacy por si hay datos viejos --}}
+                <option value="Cliente de iguala solo sistema" {{ request('categoria_iguala') == 'Cliente de iguala solo sistema' ? 'selected' : '' }}>Cliente de iguala solo sistema (viejo)</option>
+                <option value="Cliente de iguala premium" {{ request('categoria_iguala') == 'Cliente de iguala premium' ? 'selected' : '' }}>Cliente de iguala premium (viejo)</option>
+                <option value="Cliente de iguala avanzada" {{ request('categoria_iguala') == 'Cliente de iguala avanzada' ? 'selected' : '' }}>Cliente de iguala avanzada (viejo)</option>
+                <option value="Cliente de iguala Basico" {{ request('categoria_iguala') == 'Cliente de iguala Basico' ? 'selected' : '' }}>Cliente de iguala Basico (viejo)</option>
+                <option value="Cliente sin iguala" {{ request('categoria_iguala') == 'Cliente sin iguala' ? 'selected' : '' }}>Cliente sin iguala (viejo)</option>
               </select>
             </div>
 
@@ -830,11 +908,14 @@
             <h5 class="fw-bold mb-3">Historial</h5>
 
             <div id="historial-container-{{ $req->id }}">
-              @forelse ($req->novedades->sortBy('created_at') as $nov)
-                <div class="mb-3 d-flex flex-column" id="novedad-wrapper-{{ $nov->id }}">
+              @forelse ($req->novedades->sortBy('created_at') as $item)
+                <div class="mb-3 d-flex flex-column" id="novedad-wrapper-{{ $item->id }}">
                   <div class="d-flex justify-content-between align-items-center mb-1 gap-2">
                     <span class="fw-bold text-primary small">
-                      {{ $nov->user->name ?? 'Usuario' }}
+                      @if($item->adjunto)
+                        <i class="bi bi-paperclip me-1 text-success"></i>
+                      @endif
+                      {{ $item->user->name ?? 'Usuario' }}
                     </span>
                     <div class="dropdown">
                       <button class="btn btn-link btn-sm text-muted p-0" type="button" data-bs-toggle="dropdown">
@@ -844,14 +925,14 @@
                         <li>
                           <button class="dropdown-item small"
                                   type="button"
-                                  onclick="habilitarEdicion({{ $nov->id }})">
+                                  onclick="habilitarEdicion({{ $item->id }})">
                             <i class="bi bi-pencil me-1"></i> Editar
                           </button>
                         </li>
                         <li>
                           <button class="dropdown-item text-danger small"
                                   type="button"
-                                  onclick="eliminarNovedad({{ $nov->id }}, {{ $req->id }})">
+                                  onclick="eliminarNovedad({{ $item->id }}, {{ $req->id }})">
                             <i class="bi bi-trash me-1"></i> Eliminar
                           </button>
                         </li>
@@ -860,24 +941,22 @@
                   </div>
 
                   <div class="p-3 rounded-3 shadow-sm bg-white" style="border: 1px solid var(--spgi-border);">
-                    <p class="mb-1 small" id="novedad-texto-{{ $nov->id }}" style="white-space: pre-wrap;">{{ $nov->novedad }}</p>
+                    <p class="mb-1 small" id="novedad-texto-{{ $item->id }}" style="white-space: pre-wrap;">{{ $item->novedad }}</p>
 
-                    <div id="novedad-edit-{{ $nov->id }}" class="d-none">
-                      <textarea class="form-control form-control-sm mb-2" id="novedad-area-{{ $nov->id }}"></textarea>
+                    <div id="novedad-edit-{{ $item->id }}" class="d-none">
+                      <textarea class="form-control form-control-sm mb-2" id="novedad-area-{{ $item->id }}"></textarea>
                       <div class="d-flex gap-2 flex-wrap">
-                        <button type="button" class="btn btn-primary btn-sm py-0 px-2" onclick="guardarEdicion({{ $nov->id }})" style="font-size: 0.7rem;">Guardar</button>
-                        <button type="button" class="btn btn-light btn-sm py-0 px-2" onclick="cancelarEdicion({{ $nov->id }})" style="font-size: 0.7rem;">Cancelar</button>
+                        <button type="button" class="btn btn-primary btn-sm py-0 px-2" onclick="guardarEdicion({{ $item->id }})" style="font-size: 0.7rem;">Guardar</button>
+                        <button type="button" class="btn btn-light btn-sm py-0 px-2" onclick="cancelarEdicion({{ $item->id }})" style="font-size: 0.7rem;">Cancelar</button>
                       </div>
                     </div>
 
                     <div class="d-flex justify-content-between align-items-center mt-2 gap-2 flex-wrap">
                       <span class="text-muted" style="font-size: 0.7rem;">
-                        {{ $nov->created_at->format('d/m/Y H:i') }}
+                        {{ $item->created_at->format('d/m/Y H:i') }}
                       </span>
-                      @if($nov->adjunto)
-                        <a href="{{ asset('storage/' . $nov->adjunto) }}"
-                           target="_blank"
-                           download="{{ $nov->nombre_original ?? basename($nov->adjunto) }}"
+                      @if($item->adjunto)
+                        <a href="{{ route('novedades.download', $item->id) }}"
                            class="btn btn-sm btn-outline-primary py-0 px-2"
                            style="font-size: 0.7rem;">
                           <i class="bi bi-download"></i> Descargar
@@ -907,6 +986,7 @@
               <div class="mb-3">
                 <label class="form-label small text-muted">Adjuntar archivo (opcional)</label>
                 <input type="file" name="adjunto" class="form-control form-control-sm">
+                <small class="text-muted">Máximo 30MB.</small>
               </div>
 
               <button type="submit" class="btn btn-primary w-100" id="btn-save-{{ $req->id }}">
@@ -1062,6 +1142,21 @@ function eliminarNovedad(id, reqId) {
     })
     .catch(error => alert('Error al eliminar'));
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.preview-box').forEach(box => {
+        box.addEventListener('click', function() {
+            this.classList.toggle('expanded');
+        });
+    });
+});
+  // Inicializar tooltips de Bootstrap
+  document.addEventListener('DOMContentLoaded', function () {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+  });
 </script>
 @endpush
 

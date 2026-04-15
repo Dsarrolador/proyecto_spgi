@@ -16,7 +16,12 @@ use App\Http\Controllers\ProyectoController;
 use App\Http\Controllers\RequerimientoProyectoController;
 use App\Http\Controllers\CategoriaController;
 use App\Http\Controllers\WikiController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\RoleUserController;
+use App\Http\Controllers\NotificacionController;
+use App\Http\Controllers\CatEquipoController;
+use App\Http\Controllers\CatTipoEquipoController;
+use App\Http\Controllers\ClienteEntornoController;
 
 /*
 |--------------------------------------------------------------------------
@@ -43,9 +48,31 @@ Route::middleware('auth')->group(function () {
         return view('bienvenido');
     })->name('bienvenido');
 
-    Route::get('/dashboard', function () {
-        return redirect()->route('usuarios.index');
-    })->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard/iguala-control', [DashboardController::class, 'igualaControl'])->name('dashboard.iguala-control');
+    Route::get('/api/cliente-metrics/{id}', [DashboardController::class, 'getClienteMetrics'])->name('api.cliente-metrics');
+
+    /*
+    |--------------------------------------------------------------------------
+    | 🔔 NOTIFICACIONES
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/api/notificaciones/unread', [NotificacionController::class, 'getUnread'])->name('api.notificaciones.unread');
+    Route::get('/notificaciones', [NotificacionController::class, 'index'])->name('notificaciones.index');
+    Route::post('/api/notificaciones/{id}/read', [NotificacionController::class, 'markAsRead'])->name('api.notificaciones.read');
+    Route::delete('/api/notificaciones/delete-all', [NotificacionController::class, 'destroyAll'])->name('api.notificaciones.destroyAll');
+    Route::delete('/api/notificaciones/{id}', [NotificacionController::class, 'destroy'])->name('api.notificaciones.destroy');
+    Route::get('/notificaciones/admin', [NotificacionController::class, 'adminPanel'])->name('notificaciones.admin');
+    Route::post('/notificaciones/send', [NotificacionController::class, 'send'])->name('notificaciones.send');
+
+    /*
+    |--------------------------------------------------------------------------
+    | 📦 STORAGE PROXY (FTP)
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/storage-proxy/{path}', [\App\Http\Controllers\FileProxyController::class, 'stream'])
+        ->where('path', '.*')
+        ->name('storage.proxy');
 
     /*
     |--------------------------------------------------------------------------
@@ -96,6 +123,8 @@ Route::middleware('auth')->group(function () {
     |--------------------------------------------------------------------------
     */
     Route::resource('proyectos', ProyectoController::class);
+    Route::get('/proyectos/download/{proyecto}', [ProyectoController::class, 'download'])
+        ->name('proyectos.download');
 
     /*
     |--------------------------------------------------------------------------
@@ -107,6 +136,9 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/novedades', [NovedadRequerimientoController::class, 'store'])
         ->name('novedades.store');
+
+    Route::get('/novedades/download/{novedad}', [NovedadRequerimientoController::class, 'download'])
+        ->name('novedades.download');
 
     Route::patch('/novedades/{novedad}', [NovedadRequerimientoController::class, 'update'])
         ->name('novedades.update');
@@ -167,6 +199,10 @@ Route::middleware('auth')->group(function () {
             ->except(['create', 'show', 'edit'])
             ->parameters(['estados-requerimiento' => 'estado_requerimiento'])
             ->names('estados-requerimiento');
+
+        // Equipos
+        Route::resource('equipos', CatEquipoController::class);
+        Route::resource('tipos-equipo', CatTipoEquipoController::class);
     });
 
     /*
@@ -198,4 +234,30 @@ Route::middleware('auth')->group(function () {
             'update' => 'requerimientos_proyecto.update',
             'destroy' => 'requerimientos_proyecto.destroy',
         ]);
+
+    /*
+    |--------------------------------------------------------------------------
+    | 🧩 ENTORNO DE CLIENTES
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('clientes/{cliente}/entorno')->name('clientes.entorno.')->group(function () {
+        Route::get('/', [ClienteEntornoController::class, 'show'])->name('show');
+        
+        // AnyDesk
+        Route::post('/anydesk', [ClienteEntornoController::class, 'storeAnydesk'])->name('anydesk.store');
+        Route::put('/anydesk/{id}', [ClienteEntornoController::class, 'updateAnydesk'])->name('anydesk.update');
+        Route::delete('/anydesk/{id}', [ClienteEntornoController::class, 'destroyAnydesk'])->name('anydesk.destroy');
+        
+        // Bitácora
+        Route::post('/bitacora', [ClienteEntornoController::class, 'storeBitacora'])->name('bitacora.store');
+        
+        // Documentos
+        Route::post('/documento', [ClienteEntornoController::class, 'storeDocumento'])->name('documento.store');
+        Route::get('/documento/{id}/download', [ClienteEntornoController::class, 'downloadDocumento'])->name('documento.download');
+        Route::delete('/documento/{id}', [ClienteEntornoController::class, 'destroyDocumento'])->name('documento.destroy');
+        
+        // Inventario
+        Route::post('/equipo', [ClienteEntornoController::class, 'storeEquipo'])->name('equipo.store');
+        Route::delete('/equipo/{id}', [ClienteEntornoController::class, 'destroyEquipo'])->name('equipo.destroy');
+    });
 });

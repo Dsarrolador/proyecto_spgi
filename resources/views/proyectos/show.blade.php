@@ -240,20 +240,20 @@
                   <td class="text-center">
                     <div class="d-inline-flex gap-2 acciones">
                       {{-- Ver --}}
-                      <a href="{{ route('proyectos.requerimientos.show', [$proyecto->id, $r->id]) }}"
+                      <a href="{{ route('requerimientos_proyecto.show', $r->id) }}"
                          class="btn btn-primary btn-sm" title="Ver">
                         <i class="bi bi-eye"></i>
                       </a>
 
                       {{-- Editar --}}
-                      <a href="{{ route('proyectos.requerimientos.edit', [$proyecto->id, $r->id]) }}"
+                      <a href="{{ route('requerimientos_proyecto.edit', $r->id) }}"
                          class="btn btn-warning btn-sm" title="Editar">
                         <i class="bi bi-pencil-square"></i>
                       </a>
 
                       {{-- Eliminar --}}
                       <form method="POST"
-                            action="{{ route('proyectos.requerimientos.destroy', [$proyecto->id, $r->id]) }}"
+                            action="{{ route('requerimientos_proyecto.destroy', $r->id) }}"
                             onsubmit="return confirm('¿Eliminar este requerimiento?')">
                         @csrf
                         @method('DELETE')

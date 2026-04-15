@@ -32,7 +32,8 @@
           <tr>
             <th style="width:80px;">ID</th>
             <th>Nombre</th>
-            <th>Descripción</th>
+            <th>Soporte/Visitas</th>
+            <th>Servicios Especiales</th>
             <th style="width:90px;">Activo</th>
             <th style="width:210px;">Acciones</th>
           </tr>
@@ -41,8 +42,40 @@
           @forelse($igualas as $i)
             <tr>
               <td>{{ $i->id }}</td>
-              <td>{{ $i->nombre }}</td>
-              <td>{{ $i->descripcion ?? '-' }}</td>
+              <td>
+                <div><strong>{{ $i->nombre }}</strong></div>
+                <small class="text-muted">{{ $i->descripcion }}</small>
+              </td>
+              <td class="text-center">
+                <span class="badge bg-info text-dark" title="Soporte Remoto">
+                  <i class="bi bi-headset"></i> {{ $i->cantidad_soporte_remoto == -1 ? '∞' : $i->cantidad_soporte_remoto }}
+                </span>
+                <span class="badge bg-primary" title="Visitas Presenciales">
+                  <i class="bi bi-geo-alt"></i> {{ $i->cantidad_visitas == -1 ? '∞' : $i->cantidad_visitas }}
+                </span>
+              </td>
+              <td>
+                <div class="d-flex flex-wrap gap-1">
+                  @if($i->mantenimiento_sw_hw)
+                    <span class="badge rounded-pill bg-light text-dark border" title="Mant. SW/HW">
+                      <i class="bi bi-cpu text-primary"></i> SW/HW
+                    </span>
+                  @endif
+                  @if($i->equipo_prestamo)
+                    <span class="badge rounded-pill bg-light text-dark border" title="Equipo Préstamo">
+                      <i class="bi bi-laptop text-primary"></i> Préstamo
+                    </span>
+                  @endif
+                  @if($i->asistencia_vip)
+                    <span class="badge rounded-pill bg-warning text-dark border" title="Asistencia VIP">
+                      <i class="bi bi-star-fill"></i> VIP
+                    </span>
+                  @endif
+                  @if(!$i->mantenimiento_sw_hw && !$i->equipo_prestamo && !$i->asistencia_vip)
+                    <span class="text-muted small">Ninguno</span>
+                  @endif
+                </div>
+              </td>
               <td class="text-center">
                 @if($i->activo)
                   <span class="badge bg-success">Sí</span>
@@ -89,14 +122,60 @@
                         <input type="text" name="nombre" class="form-control" value="{{ $i->nombre }}" required>
                       </div>
 
-                      <div class="mb-3">
-                        <label class="form-label">Descripción</label>
-                        <textarea name="descripcion" class="form-control" rows="3">{{ $i->descripcion }}</textarea>
+                      <div class="row">
+                        <div class="col-md-6 mb-3">
+                          <label class="form-label text-primary fw-bold small">Soportes Remotos</label>
+                          <div class="input-group">
+                            <input type="hidden" name="cantidad_soporte_remoto" id="remoto_hidden{{ $i->id }}" value="{{ $i->cantidad_soporte_remoto }}">
+                            <input type="{{ $i->cantidad_soporte_remoto == -1 ? 'text' : 'number' }}" 
+                                   id="remoto_display{{ $i->id }}" 
+                                   class="form-control" 
+                                   value="{{ $i->cantidad_soporte_remoto == -1 ? 'Ilimitada' : $i->cantidad_soporte_remoto }}" 
+                                   {{ $i->cantidad_soporte_remoto == -1 ? 'readonly' : '' }}
+                                   oninput="document.getElementById('remoto_hidden{{ $i->id }}').value = this.value">
+                            <div class="input-group-text">
+                              <input class="form-check-input mt-0" type="checkbox" title="Marcar como Ilimitado" onchange="handleIlimitadoToggle('remoto_display{{ $i->id }}', 'remoto_hidden{{ $i->id }}', this)" {{ $i->cantidad_soporte_remoto == -1 ? 'checked' : '' }}>
+                              <small class="ms-1">∞</small>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                          <label class="form-label text-primary fw-bold small">Visitas</label>
+                          <div class="input-group">
+                            <input type="hidden" name="cantidad_visitas" id="visita_hidden{{ $i->id }}" value="{{ $i->cantidad_visitas }}">
+                            <input type="{{ $i->cantidad_visitas == -1 ? 'text' : 'number' }}" 
+                                   id="visita_display{{ $i->id }}" 
+                                   class="form-control" 
+                                   value="{{ $i->cantidad_visitas == -1 ? 'Ilimitada' : $i->cantidad_visitas }}" 
+                                   {{ $i->cantidad_visitas == -1 ? 'readonly' : '' }}
+                                   oninput="document.getElementById('visita_hidden{{ $i->id }}').value = this.value">
+                            <div class="input-group-text">
+                              <input class="form-check-input mt-0" type="checkbox" title="Marcar como Ilimitado" onchange="handleIlimitadoToggle('visita_display{{ $i->id }}', 'visita_hidden{{ $i->id }}', this)" {{ $i->cantidad_visitas == -1 ? 'checked' : '' }}>
+                              <small class="ms-1">∞</small>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="card p-3 bg-light border-0 mb-3">
+                        <h6 class="mb-3 fw-bold text-secondary">Servicios Incluidos</h6>
+                        <div class="form-check form-switch mb-2">
+                          <input class="form-check-input" type="checkbox" name="mantenimiento_sw_hw" id="swhw{{ $i->id }}" {{ $i->mantenimiento_sw_hw ? 'checked' : '' }}>
+                          <label class="form-check-label" for="swhw{{ $i->id }}">Mant. Software y Hardware</label>
+                        </div>
+                        <div class="form-check form-switch mb-2">
+                          <input class="form-check-input" type="checkbox" name="equipo_prestamo" id="pres{{ $i->id }}" {{ $i->equipo_prestamo ? 'checked' : '' }}>
+                          <label class="form-check-label" for="pres{{ $i->id }}">Equipo de Préstamo</label>
+                        </div>
+                        <div class="form-check form-switch mb-2">
+                          <input class="form-check-input" type="checkbox" name="asistencia_vip" id="vip{{ $i->id }}" {{ $i->asistencia_vip ? 'checked' : '' }}>
+                          <label class="form-check-label" for="vip{{ $i->id }}">Asistencia VIP</label>
+                        </div>
                       </div>
 
                       <div class="form-check">
                         <input class="form-check-input" type="checkbox" name="activo" id="act{{ $i->id }}" {{ $i->activo ? 'checked' : '' }}>
-                        <label class="form-check-label" for="act{{ $i->id }}">Activo</label>
+                        <label class="form-check-label fw-bold" for="act{{ $i->id }}">Iguala Activa</label>
                       </div>
                     </div>
 
@@ -139,13 +218,54 @@
           </div>
 
           <div class="mb-3">
-            <label class="form-label">Descripción</label>
-            <textarea name="descripcion" class="form-control" rows="3"></textarea>
+            <label class="form-label">Descripción (Opcional)</label>
+            <textarea name="descripcion" class="form-control" rows="2" placeholder="Notas adicionales..."></textarea>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label text-primary fw-bold small">Soportes Remotos</label>
+              <div class="input-group">
+                <input type="hidden" name="cantidad_soporte_remoto" id="remoto_hiddenNew" value="0">
+                <input type="number" id="remoto_displayNew" class="form-control" value="0" oninput="document.getElementById('remoto_hiddenNew').value = this.value">
+                <div class="input-group-text">
+                  <input class="form-check-input mt-0" type="checkbox" title="Marcar como Ilimitado" onchange="handleIlimitadoToggle('remoto_displayNew', 'remoto_hiddenNew', this)">
+                  <small class="ms-1">∞</small>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label text-primary fw-bold small">Visitas</label>
+              <div class="input-group">
+                <input type="hidden" name="cantidad_visitas" id="visita_hiddenNew" value="0">
+                <input type="number" id="visita_displayNew" class="form-control" value="0" oninput="document.getElementById('visita_hiddenNew').value = this.value">
+                <div class="input-group-text">
+                  <input class="form-check-input mt-0" type="checkbox" title="Marcar como Ilimitado" onchange="handleIlimitadoToggle('visita_displayNew', 'visita_hiddenNew', this)">
+                  <small class="ms-1">∞</small>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card p-3 bg-light border-0 mb-3">
+            <h6 class="mb-3 fw-bold text-secondary">Servicios Incluidos</h6>
+            <div class="form-check form-switch mb-2">
+              <input class="form-check-input" type="checkbox" name="mantenimiento_sw_hw" id="swhwNew">
+              <label class="form-check-label" for="swhwNew">Mant. Software y Hardware</label>
+            </div>
+            <div class="form-check form-switch mb-2">
+              <input class="form-check-input" type="checkbox" name="equipo_prestamo" id="presNew">
+              <label class="form-check-label" for="presNew">Equipo de Préstamo</label>
+            </div>
+            <div class="form-check form-switch mb-2">
+              <input class="form-check-input" type="checkbox" name="asistencia_vip" id="vipNew">
+              <label class="form-check-label" for="vipNew">Asistencia VIP</label>
+            </div>
           </div>
 
           <div class="form-check">
             <input class="form-check-input" type="checkbox" name="activo" id="activoNuevo" checked>
-            <label class="form-check-label" for="activoNuevo">Activo</label>
+            <label class="form-check-label fw-bold" for="activoNuevo">Iguala Activa</label>
           </div>
         </div>
 
@@ -159,3 +279,24 @@
   </div>
 </div>
 @endsection
+
+  @push('scripts')
+  <script>
+  function handleIlimitadoToggle(displayId, hiddenId, checkbox) {
+      const display = document.getElementById(displayId);
+      const hidden = document.getElementById(hiddenId);
+      
+      if (checkbox.checked) {
+          display.type = "text";
+          display.value = "Ilimitada";
+          display.readOnly = true;
+          hidden.value = -1;
+      } else {
+          display.type = "number";
+          display.value = 0;
+          display.readOnly = false;
+          hidden.value = 0;
+      }
+  }
+  </script>
+  @endpush
