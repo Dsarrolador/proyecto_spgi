@@ -384,9 +384,10 @@ request()->routeIs('mantenimiento.categorias.*');
           const unreadCount = data.filter(n => n.leido_at === null).length;
 
           if (unreadCount > 0) {
-            countBadge.textContent = unreadCount;
+            countBadge.textContent = unreadCount > 99 ? '99+' : unreadCount;
             countBadge.classList.remove('d-none');
           } else {
+
             countBadge.classList.add('d-none');
           }
 

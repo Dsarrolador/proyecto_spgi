@@ -202,11 +202,11 @@
         <form action="{{ route('dashboard') }}" method="GET" class="toolbar-selects">
           
           <select name="estado" class="form-select" onchange="this.form.submit()">
-            <option value="">Estado: Pendientes</option>
+            <option value="Todos" {{ request('estado', 'Todos') == 'Todos' ? 'selected' : '' }}>Todos los estados</option>
             @foreach($estadosList as $e)
               <option value="{{ $e->id }}" {{ request('estado') == $e->id ? 'selected' : '' }}>{{ $e->nombre }}</option>
             @endforeach
-            <option value="Todos" {{ request('estado') == 'Todos' ? 'selected' : '' }}>Todos los estados</option>
+            <option value="Solo_Pendientes" {{ request('estado') == 'Solo_Pendientes' ? 'selected' : '' }}>Estados pendientes</option>
           </select>
 
           <select name="cliente_id" class="form-select" onchange="this.form.submit()">
@@ -217,8 +217,8 @@
           </select>
 
           <select name="asignado_id" class="form-select" onchange="this.form.submit()">
-            <option value="mios" {{ request('asignado_id', 'mios') === 'mios' ? 'selected' : '' }}>Mis requerimientos</option>
-            <option value="todos" {{ request('asignado_id') === 'todos' ? 'selected' : '' }}>Todos los usuarios</option>
+            <option value="todos" {{ request('asignado_id', 'todos') === 'todos' ? 'selected' : '' }}>Todos los usuarios</option>
+            <option value="mios" {{ request('asignado_id') === 'mios' ? 'selected' : '' }}>Mis requerimientos</option>
             @foreach($asignados as $u)
               <option value="{{ $u->id }}" {{ request('asignado_id') == $u->id ? 'selected' : '' }}>{{ $u->name }}</option>
             @endforeach
@@ -400,9 +400,9 @@
             @endif
           </div>
           {{-- Mantenemos los filtros simples actuales --}}
-          <input type="hidden" name="estado" value="{{ request('estado') }}">
+          <input type="hidden" name="estado" value="{{ request('estado', 'Todos') }}">
           <input type="hidden" name="cliente_id" value="{{ request('cliente_id') }}">
-          <input type="hidden" name="asignado_id" value="{{ request('asignado_id', 'mios') }}">
+          <input type="hidden" name="asignado_id" value="{{ request('asignado_id', 'todos') }}">
         </div>
         <div class="modal-footer border-0 p-4">
           <a href="{{ route('dashboard') }}" class="btn btn-light rounded-pill px-4">Limpiar</a>

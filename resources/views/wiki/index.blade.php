@@ -122,14 +122,34 @@
       </div>
 
       <div class="spgi-head-actions">
-        <span class="badge-spgi">
-          <i class="bi bi-file-earmark-text me-1"></i>
-          Total: {{ $documents->total() ?? 0 }}
-        </span>
+        <a href="{{ route('wiki.index', ['categoria' => 'Manual'] + request()->except('categoria')) }}" 
+           class="badge-spgi text-decoration-none {{ request('categoria') == 'Manual' ? 'active' : '' }}" 
+           style="{{ request('categoria') == 'Manual' ? 'background: #0d6efd; color: #fff; border-color: #0d6efd;' : 'color: #0d6efd; border-color: rgba(13,110,253,.2);' }}" title="Filtrar por Manuales">
+          <i class="bi bi-book me-1"></i> MANUALES
+        </a>
 
-        <button class="btn btn-spgi d-flex align-items-center" type="button" data-bs-toggle="modal" data-bs-target="#modalDocumento">
-          <i class="bi bi-cloud-arrow-up me-1"></i> Subir Documento
-        </button>
+        <a href="{{ route('wiki.index', ['categoria' => 'Script'] + request()->except('categoria')) }}" 
+           class="badge-spgi text-decoration-none {{ request('categoria') == 'Script' ? 'active' : '' }}" 
+           style="{{ request('categoria') == 'Script' ? 'background: #ffc107; color: #000; border-color: #ffc107;' : 'color: #856404; border-color: rgba(255,193,7,.3);' }}" title="Filtrar por Scripts">
+          <i class="bi bi-code-slash me-1"></i> SCRIPTS
+        </a>
+
+        <a href="{{ route('wiki.index', ['categoria' => 'Query'] + request()->except('categoria')) }}" 
+           class="badge-spgi text-decoration-none {{ request('categoria') == 'Query' ? 'active' : '' }}" 
+           style="{{ request('categoria') == 'Query' ? 'background: #198754; color: #fff; border-color: #198754;' : 'color: #198754; border-color: rgba(25,135,84,.2);' }}" title="Filtrar por Queries">
+          <i class="bi bi-database me-1"></i> QUERY
+        </a>
+
+        <div class="d-flex align-items-center gap-2 ms-lg-auto">
+          <a href="{{ route('wiki.index', ['categoria' => 'Todos'] + request()->except('categoria')) }}" class="badge-spgi text-decoration-none {{ request('categoria', 'Todos') == 'Todos' ? 'border-primary text-primary' : '' }}">
+            <i class="bi bi-file-earmark-text me-1"></i>
+            Total: {{ $documents->total() ?? 0 }}
+          </a>
+
+          <button class="btn btn-spgi d-flex align-items-center" type="button" data-bs-toggle="modal" data-bs-target="#modalDocumento">
+            <i class="bi bi-cloud-arrow-up me-1"></i> Subir Documento
+          </button>
+        </div>
       </div>
     </div>
 
@@ -186,8 +206,9 @@
           <table class="table table-spgi table-bordered align-middle mb-0" id="tabla-wiki" data-current-filter="{{ request('estado') }}">
             <thead>
               <tr>
-                <th style="width: 25%;">Documento</th>
-                <th style="width: 25%;">Descripción</th>
+                <th style="width: 20%;">Documento</th>
+                <th style="width: 20%;">Descripción</th>
+                <th>Categoría</th>
                 <th>Etiquetas</th>
                 <th>Estado</th>
                 <th class="text-center" style="width: 140px;">Acciones</th>
@@ -201,6 +222,19 @@
                 </td>
                 <td class="text-muted" style="font-size: .9rem;">
                     {{ \Illuminate\Support\Str::limit($doc->description, 60) }}
+                </td>
+                <td>
+                    @if($doc->categoria == 'Manual')
+                        <span class="badge rounded-pill bg-primary text-white" style="font-size: 0.75rem;">{{ $doc->categoria }}</span>
+                    @elseif($doc->categoria == 'Script')
+                        <span class="badge rounded-pill bg-warning text-dark" style="font-size: 0.75rem;">{{ $doc->categoria }}</span>
+                    @elseif($doc->categoria == 'Query')
+                        <span class="badge rounded-pill bg-success text-white" style="font-size: 0.75rem;">{{ $doc->categoria }}</span>
+                    @elseif($doc->categoria)
+                        <span class="badge rounded-pill bg-info text-dark" style="font-size: 0.75rem;">{{ $doc->categoria }}</span>
+                    @else
+                        <span class="text-muted small">-</span>
+                    @endif
                 </td>
                 <td>
                     @if($doc->tags)
@@ -337,6 +371,15 @@
               <input type="text" class="form-control" name="title" value="{{ $doc->title }}" required>
             </div>
             <div class="mb-3">
+              <label class="form-label fw-semibold">Categoría <span class="text-danger">*</span></label>
+              <select class="form-select" name="categoria" required>
+                <option value="" disabled>Seleccione una categoría</option>
+                <option value="Manual" {{ $doc->categoria == 'Manual' ? 'selected' : '' }}>Manual</option>
+                <option value="Script" {{ $doc->categoria == 'Script' ? 'selected' : '' }}>Script</option>
+                <option value="Query" {{ $doc->categoria == 'Query' ? 'selected' : '' }}>Query</option>
+              </select>
+            </div>
+            <div class="mb-3">
               <label class="form-label fw-semibold">Descripción</label>
               <textarea class="form-control" name="description" rows="3">{{ $doc->description }}</textarea>
             </div>
@@ -377,6 +420,15 @@
           <div class="mb-3">
             <label class="form-label fw-semibold">Título <span class="text-danger">*</span></label>
             <input type="text" class="form-control" name="title" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Categoría <span class="text-danger">*</span></label>
+            <select class="form-select" name="categoria" required>
+              <option value="" selected disabled>Seleccione una categoría</option>
+              <option value="Manual">Manual</option>
+              <option value="Script">Script</option>
+              <option value="Query">Query</option>
+            </select>
           </div>
           <div class="mb-3">
             <label class="form-label fw-semibold">Descripción</label>

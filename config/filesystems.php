@@ -54,16 +54,10 @@ return [
         ],
 
         'ftp' => [
-            'driver'   => 'ftp',
-            'host'     => env('FTP_HOST'),
-            'username' => env('FTP_USER'),
-            'password' => env('FTP_PASS'),
-            'root'     => env('FTP_ROOT'),
-            'port'     => 21,
-            'passive'  => true,
-            'ssl'      => false,
-            'timeout'  => 30,
+            'driver' => 'local',
+            'root'   => storage_path('app/ftp_local'),
         ],
+
 
     ],
 

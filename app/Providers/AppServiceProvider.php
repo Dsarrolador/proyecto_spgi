@@ -23,6 +23,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        // Fix for missing FTP extension constants
+        if (!defined('FTP_ASCII'))  define('FTP_ASCII', 1);
+        if (!defined('FTP_BINARY')) define('FTP_BINARY', 2);
+
         \Illuminate\Pagination\Paginator::useBootstrap();
     }
+
 }

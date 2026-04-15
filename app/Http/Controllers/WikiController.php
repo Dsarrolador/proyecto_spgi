@@ -31,6 +31,13 @@ class WikiController extends Controller
             }
         }
 
+        // 🔎 Filter by category (categoria)
+        if ($request->has('categoria') && !empty($request->categoria)) {
+            if ($request->categoria !== 'Todos') {
+                $query->where('categoria', $request->categoria);
+            }
+        }
+
         $documents = $query->orderByDesc('created_at')->paginate(10);
 
         return view('wiki.index', compact('documents'));
@@ -42,6 +49,7 @@ class WikiController extends Controller
             'title'       => 'required|string|max:255',
             'description' => 'nullable|string',
             'tags'        => 'nullable|string',
+            'categoria'   => 'nullable|string|max:100',
             'file'        => 'required|file|max:30720',
         ]);
 
@@ -73,6 +81,7 @@ class WikiController extends Controller
                 'title'       => $request->title,
                 'description' => $request->description,
                 'tags'        => $request->tags,
+                'categoria'   => $request->categoria,
                 'file_path'   => 'Wiki/' . $fileName,
                 'estado'      => 'Sin validar'
             ]);
@@ -116,11 +125,12 @@ class WikiController extends Controller
             'title'       => 'required|string|max:255',
             'description' => 'nullable|string',
             'tags'        => 'nullable|string',
+            'categoria'   => 'nullable|string|max:100',
             'file'        => 'nullable|file|max:30720',
         ]);
 
         try {
-            $data = $request->only(['title', 'description', 'tags']);
+            $data = $request->only(['title', 'description', 'tags', 'categoria']);
 
             if ($request->hasFile('file')) {
                 // Delete old file if exists

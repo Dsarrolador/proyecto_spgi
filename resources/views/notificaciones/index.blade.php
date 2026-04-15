@@ -30,8 +30,9 @@
         <div class="col-12 d-flex justify-content-between align-items-center bg-white p-3 shadow-sm rounded-4 mx-3" style="width: auto;">
             <div class="d-flex align-items-center gap-3">
                 <span class="badge bg-light text-dark border p-2 px-3 rounded-pill fw-normal">
-                    <i class="bi bi-info-circle me-1"></i> Total: {{ $notificaciones->total() }}
+                    <i class="bi bi-info-circle me-1"></i> Total: {{ $notificaciones->total() > 99 ? '99+' : $notificaciones->total() }}
                 </span>
+
             </div>
             <div class="d-flex gap-2">
                 <button type="button" onclick="confirmDeleteAll()" class="btn btn-outline-danger rounded-pill px-4">

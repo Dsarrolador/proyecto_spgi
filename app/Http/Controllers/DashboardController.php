@@ -73,7 +73,7 @@ class DashboardController extends Controller
         $desde            = $request->get('desde');
         $hasta            = $request->get('hasta');
         $facturado        = $request->get('facturado');
-        $asignado_id      = $request->get('asignado_id', $request->get('asignado_user_id', 'mios'));
+        $asignado_id      = $request->get('asignado_id', $request->get('asignado_user_id', 'todos'));
 
         if ($asignado_id === 'mios' || $asignado_id === null || $asignado_id === '') {
             if ($usuario) {
@@ -85,7 +85,11 @@ class DashboardController extends Controller
             $query->where('asignado_user_id', (int) $asignado_id);
         }
 
-        if (!$estado) {
+        if (!$estado || $estado === '') {
+            $estado = 'Todos';
+        }
+
+        if ($estado === 'Solo_Pendientes') {
             $query->where('estado_id', '!=', 3);
         } elseif ($estado !== 'Todos') {
             $query->where('estado_id', (int) $estado);

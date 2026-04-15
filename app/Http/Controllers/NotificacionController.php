@@ -29,8 +29,9 @@ class NotificacionController extends Controller
         $notificaciones = NotificacionSistema::where('user_id', Auth::id())
             ->with('sender:id,name')
             ->orderBy('created_at', 'desc')
-            ->limit(15) // Limitamos a las últimas 15 como pidió el usuario
+            ->limit(100) // Aumentamos el límite a 100 para permitir que el contador llegue a 99+
             ->get();
+
 
         return response()->json($notificaciones);
     }

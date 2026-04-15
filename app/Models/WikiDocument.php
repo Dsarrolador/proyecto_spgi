@@ -15,8 +15,10 @@ class WikiDocument extends Model
         'file_path',
         'tags',
         'estado',
-        'user_id'
+        'user_id',
+        'categoria'
     ];
+
 
     public function creator()
     {
