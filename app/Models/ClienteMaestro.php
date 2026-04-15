@@ -61,16 +61,21 @@ class ClienteMaestro extends Model
             elseif ($clase === 'visita') $usadosVisita++;
         }
 
+        $limiteRemoto = $plan->cantidad_soporte_remoto;
+        $limiteVisita = $plan->cantidad_visitas;
+
         return (object)[
             'plan_nombre' => $plan->nombre,
-            'limite_remoto' => $plan->cantidad_soporte_remoto,
-            'limite_visita' => $plan->cantidad_visitas,
+            'limite_remoto' => $limiteRemoto,
+            'limite_visita' => $limiteVisita,
             'usados_remoto' => $usadosRemoto,
             'usados_visita' => $usadosVisita,
-            'disponible_remoto' => max(0, $plan->cantidad_soporte_remoto - $usadosRemoto),
-            'disponible_visita' => max(0, $plan->cantidad_visitas - $usadosVisita),
-            'excedidos_remoto' => max(0, $usadosRemoto - $plan->cantidad_soporte_remoto),
-            'excedidos_visita' => max(0, $usadosVisita - $plan->cantidad_visitas),
+            'disponible_remoto' => ($limiteRemoto == -1) ? 999 : max(0, $limiteRemoto - $usadosRemoto),
+            'disponible_visita' => ($limiteVisita == -1) ? 999 : max(0, $limiteVisita - $usadosVisita),
+            'excedidos_remoto' => ($limiteRemoto == -1) ? 0 : max(0, $usadosRemoto - $limiteRemoto),
+            'excedidos_visita' => ($limiteVisita == -1) ? 0 : max(0, $usadosVisita - $limiteVisita),
+            'es_ilimitado_remoto' => ($limiteRemoto == -1),
+            'es_ilimitado_visita' => ($limiteVisita == -1),
         ];
     }
 
@@ -83,7 +88,26 @@ class ClienteMaestro extends Model
 
     public function contactos()
     {
-        // (si ya la tienes, déjala como está)
         return $this->hasMany(LibretaContacto::class, 'codigo_cliente_maestro', 'id');
+    }
+
+    public function entornoAnydesks()
+    {
+        return $this->hasMany(ClienteAnydesk::class, 'cliente_id');
+    }
+
+    public function entornoDocumentos()
+    {
+        return $this->hasMany(ClienteEntornoDocumento::class, 'cliente_id');
+    }
+
+    public function entornoBitacoras()
+    {
+        return $this->hasMany(ClienteBitacora::class, 'cliente_id');
+    }
+
+    public function entornoEquipos()
+    {
+        return $this->hasMany(ClienteEquipo::class, 'cliente_id');
     }
 }

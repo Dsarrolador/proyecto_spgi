@@ -57,7 +57,7 @@
                     @foreach($notificaciones as $n)
                         <div id="notif-row-{{ $n->id }}" class="list-group-item list-group-item-action border-0 border-bottom p-4 notification-row {{ $n->leido_at ? 'bg-light bg-opacity-50 opacity-75' : 'bg-white' }}">
                             <div class="d-flex justify-content-between align-items-center">
-                                <div class="d-flex align-items-start gap-4 flex-grow-1" style="cursor: pointer;" onclick="toggleExpand('{{ $n->id }}')">
+                                <div class="d-flex align-items-start gap-4 flex-grow-1" style="cursor: pointer;" onclick="handleHistoryClick('{{ $n->url }}', '{{ $n->id }}')">
                                     <div class="rounded-circle p-3 d-flex align-items-center justify-content-center {{ $n->leido_at ? 'bg-secondary bg-opacity-10 text-secondary' : 'bg-primary bg-opacity-10 text-primary' }}" style="width: 50px; height: 50px; flex-shrink: 0;">
                                         <i class="bi {{ $n->leido_at ? 'bi-envelope-open' : 'bi-envelope-fill' }} fs-4"></i>
                                     </div>
@@ -78,11 +78,11 @@
                                 </div>
                                 <div class="d-flex gap-2 ms-4">
                                     @if(!$n->leido_at)
-                                        <button onclick="localMarkAsRead({{ $n->id }})" class="btn btn-light rounded-circle shadow-sm" style="width: 40px; height: 40px;" title="Marcar como leída">
+                                        <button onclick="localMarkAsRead({{ $n->id }}, event)" class="btn btn-light rounded-circle shadow-sm" style="width: 40px; height: 40px;" title="Marcar como leída">
                                             <i class="bi bi-check-all text-primary"></i>
                                         </button>
                                     @endif
-                                    <button onclick="localDelete({{ $n->id }})" class="btn btn-light rounded-circle shadow-sm" style="width: 40px; height: 40px;" title="Eliminar">
+                                    <button onclick="localDelete({{ $n->id }}, event)" class="btn btn-light rounded-circle shadow-sm" style="width: 40px; height: 40px;" title="Eliminar">
                                         <i class="bi bi-trash text-danger"></i>
                                     </button>
                                 </div>
@@ -117,6 +117,14 @@
 
 @push('scripts')
 <script>
+    function handleHistoryClick(url, id) {
+        if (url && url !== '' && url !== '#') {
+            localMarkAsRead(id, null, url);
+        } else {
+            toggleExpand(id);
+        }
+    }
+
     function toggleExpand(id) {
         const p = document.getElementById('msg-' + id);
         if (p.style.maxHeight === 'none' || p.style.maxHeight === '') {
@@ -126,7 +134,9 @@
         }
     }
 
-    function localMarkAsRead(id) {
+    function localMarkAsRead(id, event = null, redirectUrl = null) {
+        if (event) event.stopPropagation();
+
         fetch(`{{ url('api/notificaciones') }}/${id}/read`, {
             method: 'POST',
             headers: {
@@ -134,14 +144,16 @@
                 'Content-Type': 'application/json'
             }
         }).then(() => {
-            const row = document.getElementById('notif-row-' + id);
-            row.classList.add('opacity-75', 'bg-light');
-            // Recargar para actualizar UI de la campana y estado
-            location.reload(); 
+            if (redirectUrl) {
+                window.location.href = redirectUrl;
+            } else {
+                location.reload(); 
+            }
         });
     }
 
-    function localDelete(id) {
+    function localDelete(id, event = null) {
+        if (event) event.stopPropagation();
         const row = document.getElementById('notif-row-' + id);
         row.classList.add('fade-out');
 

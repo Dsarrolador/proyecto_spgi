@@ -7,6 +7,8 @@ use App\Models\ClienteMaestro;
 use App\Models\LibretaContacto;
 use App\Models\Roles;
 use App\Models\CategoriaIguala;
+use App\Models\User;
+use App\Models\NotificacionSistema;
 use Illuminate\Http\Request;
 
 class ClienteMaestroController extends Controller
@@ -73,9 +75,31 @@ class ClienteMaestroController extends Controller
             $categoriaNombre = $plan ? $plan->nombre : null;
         }
 
-        ClienteMaestro::create(array_merge($validData, [
+        $nuevoCliente = ClienteMaestro::create(array_merge($validData, [
             'categoria_iguala' => $categoriaNombre
         ]));
+
+        // NOTIFICACIÓN GLOBAL
+        $usuarios = User::where('id', '!=', auth()->id())->get(['id']);
+        $notificaciones = [];
+        $sender_id = auth()->id();
+        $sender_name = auth()->user()->name ?? 'Un usuario';
+        
+        foreach ($usuarios as $u) {
+            $notificaciones[] = [
+                'user_id' => $u->id,
+                'sender_id' => $sender_id,
+                'titulo' => 'NUEVO CLIENTE REGISTRADO',
+                'mensaje' => "{$sender_name} creó al cliente <b>" . $nuevoCliente->nombre . "</b>",
+                'url' => route('clientes.index'),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+        }
+
+        if (count($notificaciones) > 0) {
+            NotificacionSistema::insert($notificaciones);
+        }
 
         return redirect()->route('clientes.index')
             ->with('success', 'Cliente creado correctamente');

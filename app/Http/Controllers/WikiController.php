@@ -6,6 +6,8 @@ use App\Models\WikiDocument;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
+use App\Models\NotificacionSistema;
+use App\Models\User;
 
 class WikiController extends Controller
 {
@@ -56,11 +58,11 @@ class WikiController extends Controller
             $fileName = time() . '_' . $originalName;
             
             // Ensure the directory exists
-            if (!Storage::disk('public')->exists('Wiki')) {
-                Storage::disk('public')->makeDirectory('Wiki');
+            if (!Storage::disk('ftp')->exists('Wiki')) {
+                Storage::disk('ftp')->makeDirectory('Wiki');
             }
 
-            $path = $file->storeAs('Wiki', $fileName, 'public');
+            $path = $file->storeAs('Wiki', $fileName, 'ftp');
 
             if (!$path) {
                 throw new \Exception("No se pudo guardar el archivo en el disco.");
@@ -74,6 +76,28 @@ class WikiController extends Controller
                 'file_path'   => 'Wiki/' . $fileName,
                 'estado'      => 'Sin validar'
             ]);
+
+            // NOTIFICACIÓN GLOBAL
+            $usuarios = User::where('id', '!=', auth()->id())->get(['id']);
+            $notificaciones = [];
+            $sender_id = auth()->id();
+            $sender_name = auth()->user()->name ?? 'Un usuario';
+            
+            foreach ($usuarios as $u) {
+                $notificaciones[] = [
+                    'user_id' => $u->id,
+                    'sender_id' => $sender_id,
+                    'titulo' => 'Nuevo Documento Wiki',
+                    'mensaje' => "{$sender_name} ha subido un nuevo documento a la Wiki: " . $request->title,
+                    'url' => route('wiki.index'),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            }
+
+            if (count($notificaciones) > 0) {
+                NotificacionSistema::insert($notificaciones);
+            }
 
             return redirect()->route('wiki.index')->with('success', 'Documento subido correctamente.');
         } catch (\Exception $e) {
@@ -100,8 +124,8 @@ class WikiController extends Controller
 
             if ($request->hasFile('file')) {
                 // Delete old file if exists
-                if ($doc->file_path && Storage::disk('public')->exists($doc->file_path)) {
-                    Storage::disk('public')->delete($doc->file_path);
+                if ($doc->file_path && Storage::disk('ftp')->exists($doc->file_path)) {
+                    Storage::disk('ftp')->delete($doc->file_path);
                 }
 
                 $file = $request->file('file');
@@ -112,7 +136,7 @@ class WikiController extends Controller
                 }
                 
                 $fileName = time() . '_' . $originalName;
-                $file->storeAs('Wiki', $fileName, 'public');
+                $file->storeAs('Wiki', $fileName, 'ftp');
                 $data['file_path'] = 'Wiki/' . $fileName;
             }
 
@@ -132,8 +156,8 @@ class WikiController extends Controller
         try {
             $doc = WikiDocument::findOrFail($id);
 
-            if ($doc->file_path && Storage::disk('public')->exists($doc->file_path)) {
-                return Storage::disk('public')->download($doc->file_path, $doc->title);
+            if ($doc->file_path && Storage::disk('ftp')->exists($doc->file_path)) {
+                return Storage::disk('ftp')->download($doc->file_path, $doc->title);
             }
 
             return redirect()->back()->with('error', 'El archivo no existe físicamente en el servidor.');
@@ -147,8 +171,8 @@ class WikiController extends Controller
         try {
             $doc = WikiDocument::findOrFail($id);
 
-            if ($doc->file_path && Storage::disk('public')->exists($doc->file_path)) {
-                Storage::disk('public')->delete($doc->file_path);
+            if ($doc->file_path && Storage::disk('ftp')->exists($doc->file_path)) {
+                Storage::disk('ftp')->delete($doc->file_path);
             }
 
             $doc->delete();

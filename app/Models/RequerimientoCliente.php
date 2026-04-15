@@ -28,6 +28,7 @@ class RequerimientoCliente extends Model
         'frecuencia',
         'proxima_fecha_ejecucion',
         'fecha_inicio_recurrencia',
+        'es_colaborativo',
     ];
 
     protected $casts = [
@@ -36,6 +37,7 @@ class RequerimientoCliente extends Model
         'proxima_fecha_ejecucion' => 'datetime',
         'fecha_inicio_recurrencia' => 'datetime',
         'es_recurrente' => 'boolean',
+        'es_colaborativo' => 'boolean',
     ];
 
     public function clienteRelation()
@@ -78,6 +80,11 @@ class RequerimientoCliente extends Model
     public function imagenes()
     {
         return $this->hasMany(RequerimientoImagen::class,'requerimiento_id');
+    }
+
+    public function colaboradores()
+    {
+        return $this->belongsToMany(\App\Models\User::class, 'requerimiento_colaboradores', 'requerimiento_id', 'user_id');
     }
 
     public function estadoRequerimiento()

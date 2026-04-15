@@ -12,7 +12,9 @@ class NotificacionSistema extends Model
     protected $fillable = [
         'user_id',
         'sender_id',
+        'titulo',
         'mensaje',
+        'url',
         'leido_at',
     ];
 

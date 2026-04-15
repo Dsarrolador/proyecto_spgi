@@ -107,12 +107,13 @@ class NotificacionController extends Controller
         }
 
         // Enviar un solo correo con todos los destinos en copia oculta (BCC)
+        // FUNCIONALIDAD DE CORREO PAUSADA POR SOLICITUD DEL USUARIO
+        /*
         if (count($emailsDestino) > 0) {
             $remitenteNombre = Auth::user()->name;
             $remitenteEmail = Auth::user()->email;
 
             try {
-                // Evitar límite de "Too many concurrent connections" enviando en bloque
                 Mail::to($remitenteEmail)
                     ->bcc($emailsDestino)
                     ->send(new NuevaNotificacionMail($mensaje, $remitenteNombre, $remitenteEmail));
@@ -120,6 +121,7 @@ class NotificacionController extends Controller
                 \Log::error('Error enviando correo masivo de notificacion: ' . $e->getMessage());
             }
         }
+        */
 
         return back()->with('success', 'Aviso enviado correctamente.');
     }

@@ -58,6 +58,38 @@
             </select>
         </div>
 
+        <!-- COLABORATIVO -->
+        <div class="mb-3">
+            <div class="form-check form-switch p-3 bg-light border rounded d-flex flex-column justify-content-center">
+                <div>
+                    <input class="form-check-input ms-0 me-2 mt-1" style="float:left;" type="checkbox" name="es_colaborativo" id="es_colaborativo" value="1">
+                    <label class="form-check-label fw-bold d-block" for="es_colaborativo">
+                        <i class="bi bi-people-fill me-1 text-primary"></i> Requerimiento Colaborativo / Compartido
+                    </label>
+                </div>
+                <small class="text-muted d-block ms-5 mt-1" style="margin-left: 2.5rem !important;">Permite que otros usuarios vean y colaboren en este requerimiento.</small>
+                
+                <div id="colaboradores_container" class="mt-3 d-none ms-5" style="margin-left: 2.5rem !important;">
+                    <label class="form-label small fw-bold text-dark">Selecciona colaboradores adicionales:</label>
+                    <div class="row g-2 border rounded p-3 bg-white shadow-sm" style="max-height: 200px; overflow-y: auto;">
+                        @foreach($usuarios as $u)
+                            @if($u->id != auth()->id())
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="colaboradores_ids[]" value="{{ $u->id }}" id="colab{{ $u->id }}">
+                                        <label class="form-check-label small" for="colab{{ $u->id }}">
+                                            {{ $u->name }}
+                                        </label>
+                                    </div>
+                                </div>
+                            @endif
+                        @endforeach
+                    </div>
+                    <small class="text-muted d-block mt-2">A estos usuarios les aparecerá el requerimiento en su lista de tareas.</small>
+                </div>
+            </div>
+        </div>
+
         <!-- ASIGNAR A USUARIO -->
         <div class="mb-3">
             <label class="form-label">Asignar a usuario</label>
@@ -136,13 +168,15 @@
             </small>
         </div>
 
-        <!-- RECURRENCIA -->
+        <!-- OPCIONES AVANZADAS -->
         <div class="card bg-light border-0 mb-3" style="border-radius: 12px;">
             <div class="card-body">
-                <div class="form-check form-switch">
+
+                <!-- RECURRENCIA -->
+                <div class="form-check form-switch mt-3">
                     <input class="form-check-input" type="checkbox" name="es_recurrente" id="es_recurrente" value="1">
                     <label class="form-check-label fw-bold" for="es_recurrente">
-                        <i class="bi bi-arrow-repeat me-1"></i> ¿Es un requerimiento recurrente?
+                        <i class="bi bi-arrow-repeat me-1 text-success"></i> ¿Es un requerimiento recurrente?
                     </label>
                 </div>
                 
@@ -436,6 +470,30 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (e) {
             console.error('Error al chequear balance de iguala:', e);
         }
+    }
+
+    const currentUserId = "{{ auth()->id() }}";
+    const asignadoSelect = document.getElementById('asignado_user_id');
+    const colaborativoCheck = document.getElementById('es_colaborativo');
+
+    if (asignadoSelect && colaborativoCheck) {
+        asignadoSelect.addEventListener('change', function() {
+            if (this.value && this.value !== currentUserId) {
+                // Si es un usuario diferente, se marca como colaborativo por defecto.
+                colaborativoCheck.checked = true;
+                // Disparar evento de cambio manualmente para que se muestre el contenedor
+                colaborativoCheck.dispatchEvent(new Event('change'));
+            }
+        });
+
+        colaborativoCheck.addEventListener('change', function() {
+            const container = document.getElementById('colaboradores_container');
+            if (this.checked) {
+                container.classList.remove('d-none');
+            } else {
+                container.classList.add('d-none');
+            }
+        });
     }
 });
 </script>

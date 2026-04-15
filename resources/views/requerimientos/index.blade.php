@@ -550,7 +550,29 @@
                   </td>
 
                   <td class="text-center">
-                    {{ $req->asignado?->name ?? 'Sin asignar' }}
+                    <div class="d-flex flex-column align-items-center">
+                      <span class="fw-bold">{{ $req->asignado?->name ?? 'Sin asignar' }}</span>
+                      
+                      @if($req->es_colaborativo)
+                        <span class="badge bg-info-subtle text-info border border-info-subtle mt-1" style="font-size: 0.65rem;">
+                          <i class="bi bi-people-fill me-1"></i> COLABORATIVO
+                        </span>
+                      @endif
+
+                      @if($req->colaboradores->count() > 0)
+                        <div class="mt-1">
+                          <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle" 
+                                title="Colaboradores: {{ $req->colaboradores->pluck('name')->implode(', ') }}" 
+                                data-bs-toggle="tooltip">
+                            <i class="bi bi-plus-circle me-1"></i> +{{ $req->colaboradores->count() }}
+                          </span>
+                        </div>
+                      @endif
+
+                      @if($req->user_id == auth()->id() && $req->asignado_user_id != auth()->id())
+                        <small class="text-muted italic mt-1" style="font-size: 0.7rem;">(Creado por ti)</small>
+                      @endif
+                    </div>
                   </td>
 
                   <td class="text-center">
@@ -632,6 +654,24 @@
                 </h5>
                 <div class="spgi-req-subtitle">
                   Asignado a: {{ $req->asignado?->name ?? 'Sin asignar' }}
+                  @if($req->user_id == auth()->id() && $req->asignado_user_id != auth()->id())
+                    <span class="small text-muted italic">(Creado por ti)</span>
+                  @endif
+                  
+                  @if($req->es_colaborativo)
+                    <div class="mt-1">
+                      <span class="badge bg-info-subtle text-info border border-info-subtle" style="font-size: 0.7rem;">
+                        <i class="bi bi-people-fill me-1"></i> Colaborativo
+                      </span>
+                    </div>
+                  @endif
+
+                  @if($req->colaboradores->count() > 0)
+                    <div class="mt-1 small text-info">
+                       <i class="bi bi-person-plus-fill me-1"></i> 
+                       Con: {{ $req->colaboradores->pluck('name')->implode(', ') }}
+                    </div>
+                  @endif
                 </div>
               </div>
 
@@ -1110,6 +1150,13 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+  // Inicializar tooltips de Bootstrap
+  document.addEventListener('DOMContentLoaded', function () {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+  });
 </script>
 @endpush
 

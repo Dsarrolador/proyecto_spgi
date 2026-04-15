@@ -149,6 +149,21 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.m
     }
   }
 
+  /* GLOBAL TABLE HEADER STYLE - Restore black design */
+  .table thead, 
+  .table thead th {
+    background-color: #0b1220 !important;
+    color: #ffffff !important;
+    border-color: rgba(255,255,255,0.12) !important;
+    vertical-align: middle !important;
+    text-align: center;
+  }
+
+  /* Ensure text in spans or badges inside headers also remains visible or follows theme */
+  .table thead th * {
+    color: inherit !important;
+  }
+
   /* Animación de desvanecimiento para notificaciones */
   .fade-out {
     animation: fadeOut 0.4s forwards;
@@ -195,6 +210,7 @@ $mantenimientoActive=
 request()->routeIs('mantenimiento.roles-usuario.*') ||
 request()->routeIs('mantenimiento.tipo-soporte.*') ||
 request()->routeIs('mantenimiento.iguala.*') ||
+request()->routeIs('mantenimiento.tipos-equipo.*') ||
 request()->routeIs('mantenimiento.categorias.*');
 
 @endphp
@@ -255,6 +271,8 @@ request()->routeIs('mantenimiento.categorias.*');
         <ul class="dropdown-menu dropdown-menu-dark w-100">
           <li><a class="dropdown-item" href="{{ route('mantenimiento.tipo-soporte.index') }}">Tipo de Soporte</a></li>
           <li><a class="dropdown-item" href="{{ route('mantenimiento.iguala.index') }}">Igualas</a></li>
+          <li><a class="dropdown-item" href="{{ route('mantenimiento.tipos-equipo.index') }}">Tipos de Equipo</a></li>
+          <li><a class="dropdown-item" href="{{ route('mantenimiento.equipos.index') }}">Equipos (Catálogo)</a></li>
           <li><a class="dropdown-item" href="{{ route('mantenimiento.categorias.index') }}">Categorías</a></li>
           <li><a class="dropdown-item" href="{{ route('mantenimiento.estados-requerimiento.index') }}">Estados de Req.</a></li>
         </ul>
@@ -372,17 +390,22 @@ request()->routeIs('mantenimiento.categorias.*');
             countBadge.classList.add('d-none');
           }
 
-          if (data.length > 0) {
+              if (data.length > 0) {
             list.innerHTML = '';
             data.forEach(n => {
               const item = document.createElement('li');
               const isRead = n.leido_at !== null;
               item.className = `border-bottom px-3 py-2 notification-item ${isRead ? 'is-read' : ''}`;
+              
+              const clickAction = n.url 
+                ? `onclick="handleNotifClick('${n.url}', ${n.id}, event)"` 
+                : `onclick="toggleNotif(this, event)"`;
+
               item.innerHTML = `
-                <div class="d-flex justify-content-between align-items-start w-100">
-                  <div class="pe-2 flex-grow-1" onclick="toggleNotif(this, event)">
+                <div class="d-flex justify-content-between align-items-start w-100" ${clickAction} style="cursor: pointer;">
+                  <div class="pe-2 flex-grow-1">
                     <div class="d-flex align-items-center gap-2 mb-1">
-                      <strong class="small" style="font-size: 0.8rem;">${n.sender ? n.sender.name : 'Sistema'}</strong>
+                      <strong class="small" style="font-size: 0.8rem;">${n.titulo ? n.titulo : (n.sender ? n.sender.name : 'Sistema')}</strong>
                       <span class="text-muted" style="font-size: 0.65rem;">${new Date(n.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
                     </div>
                     <p class="mb-0 text-dark notif-msg" style="font-size: 0.85rem; line-height: 1.3;">${n.mensaje}</p>
@@ -404,6 +427,21 @@ request()->routeIs('mantenimiento.categorias.*');
             countBadge.classList.add('d-none');
             list.innerHTML = '<li class="p-4 text-center text-muted small">No hay notificaciones</li>';
           }
+        });
+    }
+
+    function handleNotifClick(url, id, event) {
+        if (event) event.stopPropagation();
+        
+        // Marcar como leída y luego ir a la URL
+        fetch(`{{ url('api/notificaciones') }}/${id}/read`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Content-Type': 'application/json'
+            }
+        }).then(() => {
+            window.location.href = url;
         });
     }
 

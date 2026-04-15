@@ -19,6 +19,9 @@ use App\Http\Controllers\WikiController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\RoleUserController;
 use App\Http\Controllers\NotificacionController;
+use App\Http\Controllers\CatEquipoController;
+use App\Http\Controllers\CatTipoEquipoController;
+use App\Http\Controllers\ClienteEntornoController;
 
 /*
 |--------------------------------------------------------------------------
@@ -61,6 +64,15 @@ Route::middleware('auth')->group(function () {
     Route::delete('/api/notificaciones/{id}', [NotificacionController::class, 'destroy'])->name('api.notificaciones.destroy');
     Route::get('/notificaciones/admin', [NotificacionController::class, 'adminPanel'])->name('notificaciones.admin');
     Route::post('/notificaciones/send', [NotificacionController::class, 'send'])->name('notificaciones.send');
+
+    /*
+    |--------------------------------------------------------------------------
+    | 📦 STORAGE PROXY (FTP)
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/storage-proxy/{path}', [\App\Http\Controllers\FileProxyController::class, 'stream'])
+        ->where('path', '.*')
+        ->name('storage.proxy');
 
     /*
     |--------------------------------------------------------------------------
@@ -111,6 +123,8 @@ Route::middleware('auth')->group(function () {
     |--------------------------------------------------------------------------
     */
     Route::resource('proyectos', ProyectoController::class);
+    Route::get('/proyectos/download/{proyecto}', [ProyectoController::class, 'download'])
+        ->name('proyectos.download');
 
     /*
     |--------------------------------------------------------------------------
@@ -185,6 +199,10 @@ Route::middleware('auth')->group(function () {
             ->except(['create', 'show', 'edit'])
             ->parameters(['estados-requerimiento' => 'estado_requerimiento'])
             ->names('estados-requerimiento');
+
+        // Equipos
+        Route::resource('equipos', CatEquipoController::class);
+        Route::resource('tipos-equipo', CatTipoEquipoController::class);
     });
 
     /*
@@ -216,4 +234,30 @@ Route::middleware('auth')->group(function () {
             'update' => 'requerimientos_proyecto.update',
             'destroy' => 'requerimientos_proyecto.destroy',
         ]);
+
+    /*
+    |--------------------------------------------------------------------------
+    | 🧩 ENTORNO DE CLIENTES
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('clientes/{cliente}/entorno')->name('clientes.entorno.')->group(function () {
+        Route::get('/', [ClienteEntornoController::class, 'show'])->name('show');
+        
+        // AnyDesk
+        Route::post('/anydesk', [ClienteEntornoController::class, 'storeAnydesk'])->name('anydesk.store');
+        Route::put('/anydesk/{id}', [ClienteEntornoController::class, 'updateAnydesk'])->name('anydesk.update');
+        Route::delete('/anydesk/{id}', [ClienteEntornoController::class, 'destroyAnydesk'])->name('anydesk.destroy');
+        
+        // Bitácora
+        Route::post('/bitacora', [ClienteEntornoController::class, 'storeBitacora'])->name('bitacora.store');
+        
+        // Documentos
+        Route::post('/documento', [ClienteEntornoController::class, 'storeDocumento'])->name('documento.store');
+        Route::get('/documento/{id}/download', [ClienteEntornoController::class, 'downloadDocumento'])->name('documento.download');
+        Route::delete('/documento/{id}', [ClienteEntornoController::class, 'destroyDocumento'])->name('documento.destroy');
+        
+        // Inventario
+        Route::post('/equipo', [ClienteEntornoController::class, 'storeEquipo'])->name('equipo.store');
+        Route::delete('/equipo/{id}', [ClienteEntornoController::class, 'destroyEquipo'])->name('equipo.destroy');
+    });
 });

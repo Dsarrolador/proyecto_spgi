@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use App\Models\Proyecto;
 use App\Models\ClienteMaestro;
 use App\Models\TipoSoporte;
@@ -42,7 +43,7 @@ class RequerimientoProyectoController extends Controller
 
         $path = null;
         if ($request->hasFile('foto')) {
-            $path = $request->file('foto')->store('RequerimientoProyecto', 'public');
+            $path = $request->file('foto')->store('RequerimientoProyecto', 'ftp');
         }
 
         RequerimientoProyecto::create([
@@ -110,9 +111,9 @@ class RequerimientoProyectoController extends Controller
         if ($request->hasFile('foto')) {
             // Delete old photo if exists
             if ($requerimientos_proyecto->foto) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($requerimientos_proyecto->foto);
+                Storage::disk('ftp')->delete($requerimientos_proyecto->foto);
             }
-            $data['foto'] = $request->file('foto')->store('RequerimientoProyecto', 'public');
+            $data['foto'] = $request->file('foto')->store('RequerimientoProyecto', 'ftp');
         }
 
         $requerimientos_proyecto->update($data);
@@ -127,7 +128,7 @@ class RequerimientoProyectoController extends Controller
         $id_proyecto = $requerimientos_proyecto->id_proyecto;
 
         if ($requerimientos_proyecto->foto) {
-            \Illuminate\Support\Facades\Storage::disk('public')->delete($requerimientos_proyecto->foto);
+            Storage::disk('ftp')->delete($requerimientos_proyecto->foto);
         }
 
         $requerimientos_proyecto->delete();

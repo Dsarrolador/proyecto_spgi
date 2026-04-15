@@ -35,7 +35,7 @@
   $facturadoActual = (int) old('facturado', $requerimiento->facturado ?? 0);
 
   $fotoPrincipalUrl = !empty($requerimiento->foto)
-      ? url('storage/' . ltrim($requerimiento->foto, '/'))
+      ? route('storage.proxy', ['path' => $requerimiento->foto])
       : null;
 @endphp
 
@@ -149,6 +149,42 @@
 
             <div class="small text-muted mt-1">
               Puedes reasignar el responsable desde aquí.
+            </div>
+          </div>
+
+          <!-- COLABORATIVO -->
+          <div class="col-12">
+            <div class="form-check form-switch p-3 bg-light border rounded d-flex flex-column justify-content-center">
+                <div>
+                    <input class="form-check-input ms-0 me-2 mt-1" style="float:left;" type="checkbox" name="es_colaborativo" id="es_colaborativo" value="1" {{ old('es_colaborativo', $requerimiento->es_colaborativo) ? 'checked' : '' }}>
+                    <label class="form-check-label fw-bold d-block" for="es_colaborativo">
+                        <i class="bi bi-people-fill me-1 text-primary"></i> Requerimiento Colaborativo / Compartido
+                    </label>
+                </div>
+                <small class="text-muted d-block ms-5 mt-1" style="margin-left: 2.5rem !important;">Permite que otros usuarios vean y colaboren en este requerimiento.</small>
+
+                <div id="colaboradores_container" class="mt-3 {{ old('es_colaborativo', $requerimiento->es_colaborativo) ? '' : 'd-none' }} ms-5" style="margin-left: 2.5rem !important;">
+                    <label class="form-label small fw-bold text-dark">Selecciona colaboradores adicionales:</label>
+                    <div class="row g-2 border rounded p-3 bg-white shadow-sm" style="max-height: 200px; overflow-y: auto;">
+                        @php 
+                            $colabIds = $requerimiento->colaboradores->pluck('id')->toArray();
+                        @endphp
+                        @foreach($usuarios as $u)
+                            @if($u->id != auth()->id() && $u->id != $requerimiento->user_id)
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="colaboradores_ids[]" value="{{ $u->id }}" id="colab{{ $u->id }}" 
+                                            {{ in_array($u->id, old('colaboradores_ids', $colabIds)) ? 'checked' : '' }}>
+                                        <label class="form-check-label small" for="colab{{ $u->id }}">
+                                            {{ $u->name }}
+                                        </label>
+                                    </div>
+                                </div>
+                            @endif
+                        @endforeach
+                    </div>
+                    <small class="text-muted d-block mt-2">A estos usuarios les aparecerá el requerimiento en su lista de tareas.</small>
+                </div>
             </div>
           </div>
 
@@ -474,6 +510,30 @@
         inputImagenes.addEventListener('change', function() {
           previewImagenesMultiples(this);
         });
+      }
+
+      // ✅ Autocheck colaborativo si se asigna a otro usuario distinto al logueado
+      const currentUserId = "{{ auth()->id() }}";
+      const asignadoSelect = document.getElementById('asignado_user_id');
+      const colaborativoCheck = document.getElementById('es_colaborativo');
+
+      if (asignadoSelect && colaborativoCheck) {
+          asignadoSelect.addEventListener('change', function() {
+              if (this.value && this.value !== currentUserId) {
+                  colaborativoCheck.checked = true;
+                  colaborativoCheck.dispatchEvent(new Event('change'));
+              }
+          });
+
+          colaborativoCheck.addEventListener('change', function() {
+              const container = document.getElementById('colaboradores_container');
+              if (this.checked) {
+                  container.classList.remove('col-12'); // Evitar redundancia si aplica
+                  container.classList.remove('d-none');
+              } else {
+                  container.classList.add('d-none');
+              }
+          });
       }
     });
 

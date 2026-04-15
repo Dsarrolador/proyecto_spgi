@@ -10,8 +10,10 @@ use App\Models\User;
 use App\Models\EstadoRequerimiento;
 use App\Models\RequerimientoImagen;
 use App\Models\CategoriaIguala;
+use App\Models\NotificacionSistema;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
@@ -75,7 +77,13 @@ class RequerimientoClienteController extends Controller
 
         if ($asignado_id === 'mios' || $asignado_id === null || $asignado_id === '') {
             if ($usuario) {
-                $query->where('asignado_user_id', $usuario->id);
+                $query->where(function($q) use ($usuario) {
+                    $q->where('asignado_user_id', $usuario->id)
+                      ->orWhere('user_id', $usuario->id)
+                      ->orWhereHas('colaboradores', function($sq) use ($usuario) {
+                          $sq->where('users.id', $usuario->id);
+                      });
+                });
             }
         } elseif ($asignado_id === 'todos') {
             // sin filtro
@@ -148,6 +156,7 @@ class RequerimientoClienteController extends Controller
             'clienteRelation',
             'user',
             'asignado',
+            'colaboradores',
         ]);
 
         $query = $this->applyFilters($request, $query);
@@ -225,6 +234,7 @@ class RequerimientoClienteController extends Controller
         'user',
         'estadoRequerimiento',
         'imagenes',
+        'novedades.user',
     ])->findOrFail($id);
 
     $estados = EstadoRequerimiento::orderBy('nombre')->get();
@@ -261,12 +271,15 @@ class RequerimientoClienteController extends Controller
             'es_recurrente'    => 'nullable|boolean',
             'frecuencia'       => 'nullable|string',
             'fecha_inicio_recurrencia' => 'nullable|date',
+            'es_colaborativo'  => 'nullable|boolean',
+            'colaboradores_ids' => 'nullable|array',
+            'colaboradores_ids.*' => 'exists:users,id',
         ]);
 
         $rutaFoto = null;
 
         if ($request->hasFile('foto')) {
-            $rutaFoto = $request->file('foto')->store('Requerimientos', 'public');
+            $rutaFoto = $request->file('foto')->store('Requerimientos', 'ftp');
         }
 
         $creadoPor  = Auth::id();
@@ -287,6 +300,7 @@ class RequerimientoClienteController extends Controller
             'es_recurrente'    => $request->has('es_recurrente'),
             'frecuencia'       => $request->frecuencia,
             'fecha_inicio_recurrencia' => $request->fecha_inicio_recurrencia,
+            'es_colaborativo'  => $request->has('es_colaborativo'),
         ];
 
         if ($this->col('facturado')) {
@@ -301,15 +315,58 @@ class RequerimientoClienteController extends Controller
                 'proxima_fecha_ejecucion' => $requerimiento->calcularProximaFecha()
             ]);
         }
+        
+        // Sincronizar colaboradores
+        if ($requerimiento->es_colaborativo && $request->filled('colaboradores_ids')) {
+            $requerimiento->colaboradores()->sync($request->colaboradores_ids);
+        }
 
         if ($request->hasFile('imagenes')) {
             foreach ($request->file('imagenes') as $imagen) {
-                $ruta = $imagen->store('requerimientos', 'public');
+                $ruta = $imagen->store('requerimientos', 'ftp');
 
                 RequerimientoImagen::create([
                     'requerimiento_id' => $requerimiento->id,
                     'imagen'           => $ruta,
                 ]);
+            }
+        }
+
+        // NOTIFICACIONES INICIALES
+        $urlDeVista = route('requerimientos.show', $requerimiento->id);
+        
+        NotificacionSistema::create([
+            'user_id' => $creadoPor,
+            'sender_id' => $creadoPor,
+            'titulo' => 'Requerimiento Creado',
+            'mensaje' => 'Añadiste exitosamente el requerimiento #' . $requerimiento->id,
+            'url' => $urlDeVista,
+        ]);
+
+        if ($asignadoId && $asignadoId !== $creadoPor) {
+            $senderName = auth()->user()->name ?? 'Un usuario';
+            NotificacionSistema::create([
+                'user_id' => $asignadoId,
+                'sender_id' => $creadoPor,
+                'titulo' => 'Nueva Asignación (#'.$requerimiento->id.')',
+                'mensaje' => $senderName . ' te ha asignado a un requerimiento.',
+                'url' => $urlDeVista,
+            ]);
+        }
+
+        // Notificar a colaboradores
+        if ($requerimiento->es_colaborativo && $request->filled('colaboradores_ids')) {
+            $senderName = auth()->user()->name ?? 'Un usuario';
+            foreach ($request->colaboradores_ids as $colabId) {
+                if ($colabId != $creadoPor && $colabId != $asignadoId) {
+                    NotificacionSistema::create([
+                        'user_id' => $colabId,
+                        'sender_id' => $creadoPor,
+                        'titulo' => 'Colaboración asignada (#'.$requerimiento->id.')',
+                        'mensaje' => $senderName . ' te ha añadido como colaborador en un requerimiento.',
+                        'url' => $urlDeVista,
+                    ]);
+                }
             }
         }
 
@@ -325,6 +382,7 @@ class RequerimientoClienteController extends Controller
             'tipoSoporte',
             'user',
             'asignado',
+            'colaboradores',
             'imagenes',
             'estadoRequerimiento',
         ])->findOrFail($id);
@@ -344,6 +402,9 @@ class RequerimientoClienteController extends Controller
     {
         $req = RequerimientoCliente::findOrFail($id);
         $esAdmin = $this->esAdministracion();
+        
+        $oldAsignado = $req->asignado_user_id;
+        $oldEstado = $req->estado_id;
 
         $rules = [
             'cliente_id'       => 'nullable|exists:cliente_maestro,id',
@@ -359,6 +420,9 @@ class RequerimientoClienteController extends Controller
             'es_recurrente'    => 'nullable|boolean',
             'frecuencia'       => 'nullable|string',
             'fecha_inicio_recurrencia' => 'nullable|date',
+            'es_colaborativo'  => 'nullable|boolean',
+            'colaboradores_ids' => 'nullable|array',
+            'colaboradores_ids.*' => 'exists:users,id',
         ];
 
         if ($this->col('fecha_finalizado')) {
@@ -412,14 +476,24 @@ class RequerimientoClienteController extends Controller
                 $req->fecha_inicio_recurrencia = null;
             }
         }
+        
+        if ($request->has('es_colaborativo')) {
+            $req->es_colaborativo = $request->boolean('es_colaborativo');
+            
+            if ($req->es_colaborativo) {
+                $req->colaboradores()->sync($request->colaboradores_ids ?? []);
+            } else {
+                $req->colaboradores()->detach();
+            }
+        }
 
         if ($request->hasFile('foto')) {
-            $req->foto = $request->file('foto')->store('requerimientos', 'public');
+            $req->foto = $request->file('foto')->store('requerimientos', 'ftp');
         }
 
         if ($request->hasFile('imagenes')) {
             foreach ($request->file('imagenes') as $imagen) {
-                $ruta = $imagen->store('requerimientos', 'public');
+                $ruta = $imagen->store('requerimientos', 'ftp');
 
                 RequerimientoImagen::create([
                     'requerimiento_id' => $req->id,
@@ -451,6 +525,59 @@ class RequerimientoClienteController extends Controller
         }
 
         $req->save();
+
+        // NOTIFICACIONES DE SEGUIMIENTO (Si es colaborativo o reasignado)
+        $urlDeVista = route('requerimientos.show', $req->id);
+        $usuarioUpdater = Auth::id();
+        $senderName = auth()->user()->name ?? 'Un usuario';
+
+        // 1. Notificación por cambio de estado o actualización general en requerimientos colaborativos
+        if ($req->es_colaborativo) {
+            // Notificamos a los interesados (Creador y Asignado) si no son el que actualizó
+            $destinatarios = array_filter(array_unique([
+                $req->creador_user_id ?? $req->user_id, 
+                $req->asignado_user_id
+            ]));
+
+            foreach ($destinatarios as $userId) {
+                if ($userId && $userId != $usuarioUpdater) {
+                    $tituloNotif = ($oldEstado !== $req->estado_id) ? 'Actualización de Estado' : 'Actualización de Requerimiento';
+                    $mensajeNotif = ($oldEstado !== $req->estado_id) 
+                        ? 'Han cambiado el estado del Requerimiento #' . $req->id 
+                        : $senderName . ' actualizó los detalles del Requerimiento #' . $req->id;
+
+                    NotificacionSistema::create([
+                        'user_id' => $userId,
+                        'sender_id' => $usuarioUpdater,
+                        'titulo' => $tituloNotif,
+                        'mensaje' => $mensajeNotif,
+                        'url' => $urlDeVista,
+                    ]);
+                }
+            }
+        }
+
+        // 2. Notificación específica por Reasignación (siempre se notifica al nuevo y al viejo, sea colaborativo o no)
+        if ($oldAsignado !== $req->asignado_user_id) {
+            if ($req->asignado_user_id && $req->asignado_user_id != $usuarioUpdater) {
+                NotificacionSistema::create([
+                    'user_id' => $req->asignado_user_id,
+                    'sender_id' => $usuarioUpdater,
+                    'titulo' => 'Reasignación (#'.$req->id.')',
+                    'mensaje' => $senderName . ' te ha reasignado a un requerimiento.',
+                    'url' => $urlDeVista,
+                ]);
+            }
+            if ($oldAsignado && $oldAsignado != $usuarioUpdater) {
+                NotificacionSistema::create([
+                    'user_id' => $oldAsignado,
+                    'sender_id' => $usuarioUpdater,
+                    'titulo' => 'Asignación Retirada',
+                    'mensaje' => 'Se te ha retirado la asignación del Requerimiento #' . $req->id,
+                    'url' => $urlDeVista,
+                ]);
+            }
+        }
 
         return redirect()->route('requerimientos.index')
             ->with('success', 'Requerimiento actualizado correctamente');

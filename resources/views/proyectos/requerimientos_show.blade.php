@@ -83,7 +83,7 @@
             @if($r->foto)
               <div class="info-label">Archivo / Captura Adjunta:</div>
               <div class="photo-container">
-                <img src="{{ asset('storage/' . $r->foto) }}" alt="Captura">
+                <img src="{{ route('storage.proxy', ['path' => $r->foto]) }}" alt="Captura">
               </div>
             @endif
           </div>

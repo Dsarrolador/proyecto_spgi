@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\NovedadRequerimiento;
 use App\Models\RequerimientoCliente;
+use App\Models\NotificacionSistema;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class NovedadRequerimientoController extends Controller
 {
@@ -45,13 +47,34 @@ class NovedadRequerimientoController extends Controller
                 $file = $request->file('adjunto');
                 $fileName = $file->getClientOriginalName();
                 $path = 'novedades/' . $request->requerimiento_id;
-                $file->storeAs($path, $fileName, 'public');
+                $file->storeAs($path, $fileName, 'ftp');
                 
                 $data['adjunto'] = $path . '/' . $fileName;
                 $data['nombre_original'] = $fileName;
             }
 
             $novedad = NovedadRequerimiento::create($data);
+
+            // NOTIFICAR SEGUIMIENTOS (Si es colaborativo)
+            $req = RequerimientoCliente::find($request->requerimiento_id);
+            if ($req && $req->es_colaborativo) {
+                $urlDeVista = route('requerimientos.show', $req->id) . '#novedades';
+                $usuarioUpdater = auth()->id();
+                
+                $senderName = auth()->user()->name ?? 'Un usuario';
+                $participantes = array_filter(array_unique([$req->creador_user_id ?? $req->user_id, $req->asignado_user_id]));
+                foreach ($participantes as $p) {
+                    if ($p && $p != $usuarioUpdater) {
+                        NotificacionSistema::create([
+                            'user_id' => $p,
+                            'sender_id' => $usuarioUpdater,
+                            'titulo' => 'Nueva Novedad (#' . $req->id . ')',
+                            'mensaje' => $senderName . ' ha agregado un seguimiento al requerimiento.',
+                            'url' => $urlDeVista,
+                        ]);
+                    }
+                }
+            }
 
             if ($request->ajax()) {
                 return response()->json([
@@ -113,7 +136,7 @@ class NovedadRequerimientoController extends Controller
                 return redirect()->back()->with('error', 'Esta novedad no tiene un archivo adjunto.');
             }
 
-            $disk = \Illuminate\Support\Facades\Storage::disk('public');
+            $disk = Storage::disk('ftp');
             $path = $nov->adjunto;
 
             // 1. Try standard path

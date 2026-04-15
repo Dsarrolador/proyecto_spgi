@@ -7,6 +7,8 @@ use App\Models\ClienteMaestro;
 use App\Models\RequerimientoProyecto;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use App\Models\NotificacionSistema;
+use App\Models\User;
 
 class ProyectoController extends Controller
 {
@@ -85,10 +87,32 @@ class ProyectoController extends Controller
         $data['estado']    = $data['estado'] ?? 'Activo';
 
         if ($request->hasFile('adjunto')) {
-            $data['adjunto'] = $request->file('adjunto')->store('proyectos', 'public');
+            $data['adjunto'] = $request->file('adjunto')->store('proyectos', 'ftp');
         }
 
-        Proyecto::create($data);
+        $proyectoNuevo = Proyecto::create($data);
+
+        // NOTIFICACIÓN GLOBAL
+        $usuarios = User::where('id', '!=', auth()->id())->get(['id']);
+        $notificaciones = [];
+        $sender_id = auth()->id();
+        $sender_name = auth()->user()->name ?? 'Un usuario';
+        
+        foreach ($usuarios as $u) {
+            $notificaciones[] = [
+                'user_id' => $u->id,
+                'sender_id' => $sender_id,
+                'titulo' => 'Nuevo Proyecto Creado',
+                'mensaje' => "{$sender_name} ha registrado un nuevo Proyecto: " . $proyectoNuevo->nombre,
+                'url' => route('proyectos.index'),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+        }
+
+        if (count($notificaciones) > 0) {
+            NotificacionSistema::insert($notificaciones);
+        }
 
         return redirect()
             ->route('proyectos.index')
@@ -150,9 +174,9 @@ class ProyectoController extends Controller
 
         if ($request->hasFile('adjunto')) {
             if (!empty($proyecto->adjunto)) {
-                Storage::disk('public')->delete($proyecto->adjunto);
+                Storage::disk('ftp')->delete($proyecto->adjunto);
             }
-            $data['adjunto'] = $request->file('adjunto')->store('proyectos', 'public');
+            $data['adjunto'] = $request->file('adjunto')->store('proyectos', 'ftp');
         }
 
         $proyecto->update($data);
@@ -168,7 +192,7 @@ class ProyectoController extends Controller
     public function destroy(Proyecto $proyecto)
     {
         if (!empty($proyecto->adjunto)) {
-            Storage::disk('public')->delete($proyecto->adjunto);
+            Storage::disk('ftp')->delete($proyecto->adjunto);
         }
 
         $proyecto->delete();
@@ -176,5 +200,18 @@ class ProyectoController extends Controller
         return redirect()
             ->route('proyectos.index')
             ->with('success', 'Proyecto eliminado correctamente.');
+    }
+
+    public function download(Proyecto $proyecto)
+    {
+        if (!$proyecto->adjunto) {
+            return back()->with('error', 'Este proyecto no tiene adjunto.');
+        }
+
+        if (Storage::disk('ftp')->exists($proyecto->adjunto)) {
+            return Storage::disk('ftp')->download($proyecto->adjunto, basename($proyecto->adjunto));
+        }
+
+        return back()->with('error', 'El archivo no existe en el servidor externo.');
     }
 }

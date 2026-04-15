@@ -48,10 +48,10 @@
               </td>
               <td class="text-center">
                 <span class="badge bg-info text-dark" title="Soporte Remoto">
-                  <i class="bi bi-headset"></i> {{ $i->cantidad_soporte_remoto }}
+                  <i class="bi bi-headset"></i> {{ $i->cantidad_soporte_remoto == -1 ? '∞' : $i->cantidad_soporte_remoto }}
                 </span>
                 <span class="badge bg-primary" title="Visitas Presenciales">
-                  <i class="bi bi-geo-alt"></i> {{ $i->cantidad_visitas }}
+                  <i class="bi bi-geo-alt"></i> {{ $i->cantidad_visitas == -1 ? '∞' : $i->cantidad_visitas }}
                 </span>
               </td>
               <td>
@@ -124,12 +124,36 @@
 
                       <div class="row">
                         <div class="col-md-6 mb-3">
-                          <label class="form-label text-primary fw-bold">Soportes Remotos</label>
-                          <input type="number" name="cantidad_soporte_remoto" class="form-control" value="{{ $i->cantidad_soporte_remoto }}" min="0">
+                          <label class="form-label text-primary fw-bold small">Soportes Remotos</label>
+                          <div class="input-group">
+                            <input type="hidden" name="cantidad_soporte_remoto" id="remoto_hidden{{ $i->id }}" value="{{ $i->cantidad_soporte_remoto }}">
+                            <input type="{{ $i->cantidad_soporte_remoto == -1 ? 'text' : 'number' }}" 
+                                   id="remoto_display{{ $i->id }}" 
+                                   class="form-control" 
+                                   value="{{ $i->cantidad_soporte_remoto == -1 ? 'Ilimitada' : $i->cantidad_soporte_remoto }}" 
+                                   {{ $i->cantidad_soporte_remoto == -1 ? 'readonly' : '' }}
+                                   oninput="document.getElementById('remoto_hidden{{ $i->id }}').value = this.value">
+                            <div class="input-group-text">
+                              <input class="form-check-input mt-0" type="checkbox" title="Marcar como Ilimitado" onchange="handleIlimitadoToggle('remoto_display{{ $i->id }}', 'remoto_hidden{{ $i->id }}', this)" {{ $i->cantidad_soporte_remoto == -1 ? 'checked' : '' }}>
+                              <small class="ms-1">∞</small>
+                            </div>
+                          </div>
                         </div>
                         <div class="col-md-6 mb-3">
-                          <label class="form-label text-primary fw-bold">Visitas</label>
-                          <input type="number" name="cantidad_visitas" class="form-control" value="{{ $i->cantidad_visitas }}" min="0">
+                          <label class="form-label text-primary fw-bold small">Visitas</label>
+                          <div class="input-group">
+                            <input type="hidden" name="cantidad_visitas" id="visita_hidden{{ $i->id }}" value="{{ $i->cantidad_visitas }}">
+                            <input type="{{ $i->cantidad_visitas == -1 ? 'text' : 'number' }}" 
+                                   id="visita_display{{ $i->id }}" 
+                                   class="form-control" 
+                                   value="{{ $i->cantidad_visitas == -1 ? 'Ilimitada' : $i->cantidad_visitas }}" 
+                                   {{ $i->cantidad_visitas == -1 ? 'readonly' : '' }}
+                                   oninput="document.getElementById('visita_hidden{{ $i->id }}').value = this.value">
+                            <div class="input-group-text">
+                              <input class="form-check-input mt-0" type="checkbox" title="Marcar como Ilimitado" onchange="handleIlimitadoToggle('visita_display{{ $i->id }}', 'visita_hidden{{ $i->id }}', this)" {{ $i->cantidad_visitas == -1 ? 'checked' : '' }}>
+                              <small class="ms-1">∞</small>
+                            </div>
+                          </div>
                         </div>
                       </div>
 
@@ -200,12 +224,26 @@
 
           <div class="row">
             <div class="col-md-6 mb-3">
-              <label class="form-label text-primary fw-bold">Soportes Remotos</label>
-              <input type="number" name="cantidad_soporte_remoto" class="form-control" value="0" min="0">
+              <label class="form-label text-primary fw-bold small">Soportes Remotos</label>
+              <div class="input-group">
+                <input type="hidden" name="cantidad_soporte_remoto" id="remoto_hiddenNew" value="0">
+                <input type="number" id="remoto_displayNew" class="form-control" value="0" oninput="document.getElementById('remoto_hiddenNew').value = this.value">
+                <div class="input-group-text">
+                  <input class="form-check-input mt-0" type="checkbox" title="Marcar como Ilimitado" onchange="handleIlimitadoToggle('remoto_displayNew', 'remoto_hiddenNew', this)">
+                  <small class="ms-1">∞</small>
+                </div>
+              </div>
             </div>
             <div class="col-md-6 mb-3">
-              <label class="form-label text-primary fw-bold">Visitas</label>
-              <input type="number" name="cantidad_visitas" class="form-control" value="0" min="0">
+              <label class="form-label text-primary fw-bold small">Visitas</label>
+              <div class="input-group">
+                <input type="hidden" name="cantidad_visitas" id="visita_hiddenNew" value="0">
+                <input type="number" id="visita_displayNew" class="form-control" value="0" oninput="document.getElementById('visita_hiddenNew').value = this.value">
+                <div class="input-group-text">
+                  <input class="form-check-input mt-0" type="checkbox" title="Marcar como Ilimitado" onchange="handleIlimitadoToggle('visita_displayNew', 'visita_hiddenNew', this)">
+                  <small class="ms-1">∞</small>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -241,3 +279,24 @@
   </div>
 </div>
 @endsection
+
+  @push('scripts')
+  <script>
+  function handleIlimitadoToggle(displayId, hiddenId, checkbox) {
+      const display = document.getElementById(displayId);
+      const hidden = document.getElementById(hiddenId);
+      
+      if (checkbox.checked) {
+          display.type = "text";
+          display.value = "Ilimitada";
+          display.readOnly = true;
+          hidden.value = -1;
+      } else {
+          display.type = "number";
+          display.value = 0;
+          display.readOnly = false;
+          hidden.value = 0;
+      }
+  }
+  </script>
+  @endpush

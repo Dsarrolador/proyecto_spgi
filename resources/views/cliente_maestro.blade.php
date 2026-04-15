@@ -452,6 +452,12 @@
                 <td class="text-center">
                   <div class="d-flex justify-content-center gap-2 acciones flex-nowrap">
 
+                    <a href="{{ route('clientes.entorno.show', $cliente->id) }}"
+                       class="btn btn-dark btn-sm"
+                       title="Directorio de Entorno">
+                      <i class="bi bi-gear-wide-connected"></i>
+                    </a>
+
                     <button class="btn btn-secondary btn-sm"
                             data-bs-toggle="modal"
                             data-bs-target="#modalAgregarContacto{{ $cliente->id }}"
@@ -532,6 +538,11 @@
             </div>
 
             <div class="spgi-card-actions">
+              <a href="{{ route('clientes.entorno.show', $cliente->id) }}"
+                 class="btn btn-dark btn-sm">
+                <i class="bi bi-gear-wide-connected me-1"></i> Entorno
+              </a>
+
               <button class="btn btn-secondary btn-sm"
                       data-bs-toggle="modal"
                       data-bs-target="#modalAgregarContacto{{ $cliente->id }}">

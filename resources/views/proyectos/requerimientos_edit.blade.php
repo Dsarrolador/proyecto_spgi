@@ -146,7 +146,7 @@
                   @if($r->foto)
                     <div class="mt-2 text-muted small">Captura actual:</div>
                     <div class="current-photo">
-                      <img src="{{ asset('storage/' . $r->foto) }}" alt="Captura actual">
+                      <img src="{{ route('storage.proxy', ['path' => $r->foto]) }}" alt="Captura actual">
                     </div>
                   @endif
                 </div>

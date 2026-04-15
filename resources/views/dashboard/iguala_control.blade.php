@@ -45,12 +45,16 @@
                             <div class="d-flex justify-content-between align-items-end mb-2">
                                 <div>
                                     <label class="small fw-bold text-secondary mb-0">Soportes Remotos</label>
-                                    <div class="h4 fw-bold mb-0 {{ $metrics->disponible_remoto == 0 ? 'text-danger' : 'text-dark' }}">
-                                        {{ $metrics->usados_remoto }} <small class="text-muted fw-normal">/ {{ $metrics->limite_remoto }}</small>
+                                    <div class="h4 fw-bold mb-0 {{ ($metrics->limite_remoto != -1 && $metrics->disponible_remoto == 0) ? 'text-danger' : 'text-dark' }}">
+                                        {{ $metrics->usados_remoto }} <small class="text-muted fw-normal">/ {{ $metrics->limite_remoto == -1 ? '∞' : $metrics->limite_remoto }}</small>
                                     </div>
                                 </div>
                                 <div class="text-end">
-                                    @if($metrics->disponible_remoto > 0)
+                                    @if($metrics->limite_remoto == -1)
+                                        <span class="badge bg-info-subtle text-info rounded-pill small">
+                                            Ilimitado
+                                        </span>
+                                    @elseif($metrics->disponible_remoto > 0)
                                         <span class="badge bg-success-subtle text-success rounded-pill small">
                                             {{ $metrics->disponible_remoto }} disponibles
                                         </span>
@@ -63,8 +67,13 @@
                             </div>
                             <div class="progress" style="height: 10px; border-radius: 5px; background-color: #f1f5f9;">
                                 @php 
-                                    $percRem = ($metrics->limite_remoto > 0) ? min(100, ($metrics->usados_remoto / $metrics->limite_remoto) * 100) : 100;
-                                    $pbColorRem = ($metrics->disponible_remoto == 0) ? 'bg-danger' : 'bg-primary';
+                                    if ($metrics->limite_remoto == -1) {
+                                        $percRem = 0;
+                                        $pbColorRem = 'bg-info';
+                                    } else {
+                                        $percRem = ($metrics->limite_remoto > 0) ? min(100, ($metrics->usados_remoto / $metrics->limite_remoto) * 100) : 100;
+                                        $pbColorRem = ($metrics->disponible_remoto == 0) ? 'bg-danger' : 'bg-primary';
+                                    }
                                 @endphp
                                 <div class="progress-bar {{ $pbColorRem }}" role="progressbar" style="width: {{ $percRem }}%" aria-valuenow="{{ $percRem }}" aria-valuemin="0" aria-valuemax="100"></div>
                             </div>
@@ -75,12 +84,16 @@
                             <div class="d-flex justify-content-between align-items-end mb-2">
                                 <div>
                                     <label class="small fw-bold text-secondary mb-0">Visitas Presenciales</label>
-                                    <div class="h4 fw-bold mb-0 {{ $metrics->disponible_visita == 0 ? 'text-danger' : 'text-dark' }}">
-                                        {{ $metrics->usados_visita }} <small class="text-muted fw-normal">/ {{ $metrics->limite_visita }}</small>
+                                    <div class="h4 fw-bold mb-0 {{ ($metrics->limite_visita != -1 && $metrics->disponible_visita == 0) ? 'text-danger' : 'text-dark' }}">
+                                        {{ $metrics->usados_visita }} <small class="text-muted fw-normal">/ {{ $metrics->limite_visita == -1 ? '∞' : $metrics->limite_visita }}</small>
                                     </div>
                                 </div>
                                 <div class="text-end">
-                                    @if($metrics->disponible_visita > 0)
+                                    @if($metrics->limite_visita == -1)
+                                        <span class="badge bg-info-subtle text-info rounded-pill small">
+                                            Ilimitado
+                                        </span>
+                                    @elseif($metrics->disponible_visita > 0)
                                         <span class="badge bg-success-subtle text-success rounded-pill small">
                                             {{ $metrics->disponible_visita }} disponibles
                                         </span>
@@ -93,8 +106,13 @@
                             </div>
                             <div class="progress" style="height: 10px; border-radius: 5px; background-color: #f1f5f9;">
                                 @php 
-                                    $percVis = ($metrics->limite_visita > 0) ? min(100, ($metrics->usados_visita / $metrics->limite_visita) * 100) : 100;
-                                    $pbColorVis = ($metrics->disponible_visita == 0) ? 'bg-danger' : 'bg-primary';
+                                    if ($metrics->limite_visita == -1) {
+                                        $percVis = 0;
+                                        $pbColorVis = 'bg-info';
+                                    } else {
+                                        $percVis = ($metrics->limite_visita > 0) ? min(100, ($metrics->usados_visita / $metrics->limite_visita) * 100) : 100;
+                                        $pbColorVis = ($metrics->disponible_visita == 0) ? 'bg-danger' : 'bg-primary';
+                                    }
                                 @endphp
                                 <div class="progress-bar {{ $pbColorVis }}" role="progressbar" style="width: {{ $percVis }}%" aria-valuenow="{{ $percVis }}" aria-valuemin="0" aria-valuemax="100"></div>
                             </div>
