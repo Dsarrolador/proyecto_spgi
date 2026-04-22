@@ -327,7 +327,7 @@
 <div class="spgi-bg">
   <div class="container">
     <div class="mb-4">
-      <h3 class="fw-bold text-gradient">Requerimientos Industriales</h3>
+      <h3 class="fw-bold text-gradient">Requerimientos</h3>
       <p class="text-muted small mb-0">Gestión de requerimientos y soporte operativo.</p>
     </div>
 
@@ -800,12 +800,12 @@
         <div id="modal-content-novedades" class="d-none animate__animated animate__fadeIn">
             <div class="row g-0">
                 <!-- Historial -->
-                <div class="col-12 col-md-7 border-end p-4 bg-light bg-opacity-50 overflow-auto" style="height: 500px;" id="modal-historial-list">
+                <div class="col-12 col-md-7 border-end p-4 overflow-auto" style="height: 500px; background: var(--bg-master); border-color: var(--border-main) !important;" id="modal-historial-list">
                     <!-- Los items se cargan aquí -->
                 </div>
 
                 <!-- Formulario -->
-                <div class="col-12 col-md-5 p-4 d-flex flex-column" style="background: var(--bg-surface);">
+                <div class="col-12 col-md-5 p-4 d-flex flex-column" style="background: var(--bg-surface); border-color: var(--border-main) !important;">
                     <h6 class="fw-bold mb-3 small text-uppercase text-muted" id="modal-form-title">Agregar Seguimiento</h6>
                     <form id="modal-form-novedad-dinamico" enctype="multipart/form-data">
                         @csrf
@@ -814,7 +814,7 @@
                         <input type="hidden" name="tipo" id="modal-tipo-input">
 
                         <div class="mb-3">
-                            <textarea name="novedad" class="form-control border-0 shadow-sm" rows="6" placeholder="Escribe aquí..." required style="border-radius: 14px; resize: none; background: var(--bg-surface);"></textarea>
+                            <textarea name="novedad" class="form-control border-0 shadow-sm" rows="6" placeholder="Escribe aquí..." required style="border-radius: 14px; resize: none; background: var(--bg-master); color: var(--text-main);"></textarea>
                         </div>
 
                         <div class="mb-3">

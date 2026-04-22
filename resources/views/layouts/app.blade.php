@@ -393,9 +393,9 @@ request()->routeIs('mantenimiento.categorias.*');
           <i class="bi bi-bar-chart"></i> Reportes
         </a>
 
-        <div class="nav-section-title mt-4">Industriales</div>
+        <div class="nav-section-title mt-4">Requerimientos</div>
         <a class="nav-link" href="{{ route('requerimientos.index') }}">
-          <i class="bi bi-clipboard-check"></i> Requerimientos Industriales
+          <i class="bi bi-clipboard-check"></i> Requerimientos
         </a>
         <a class="nav-link" href="{{ route('bienvenido') }}" style="background: rgba(var(--spgi-primary), 0.05); margin-top: 10px;">
           <i class="bi bi-clipboard-check"></i> Requerimientos
@@ -407,7 +407,7 @@ request()->routeIs('mantenimiento.categorias.*');
           <i class="bi bi-grid-fill"></i> Inicio
         </a>
         <a class="nav-link {{ request()->routeIs('bienvenido') ? 'active' : '' }}" href="{{ route('bienvenido') }}">
-          <i class="bi bi-house-door"></i> Dashboard Operaciones
+          <i class="bi bi-house-door"></i> Acceso Rápido
         </a>
         @if(Route::has('dashboard') && (Auth::user()->es_admin || Auth::user()->es_encargado))
         <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
@@ -418,9 +418,9 @@ request()->routeIs('mantenimiento.categorias.*');
           <i class="bi bi-briefcase"></i> Comerciales
         </a>
 
-        <div class="nav-section-title">Industriales</div>
+        <div class="nav-section-title">Requerimientos</div>
         <a class="nav-link {{ request()->routeIs('requerimientos.*') ? 'active' : '' }}" href="{{ route('requerimientos.index') }}">
-          <i class="bi bi-clipboard-check"></i> Requerimientos Industriales
+          <i class="bi bi-clipboard-check"></i> Requerimientos
         </a>
         <a class="nav-link {{ request()->routeIs('proyectos.*') ? 'active' : '' }}" href="{{ route('proyectos.index') }}">
           <i class="bi bi-kanban"></i> Proyectos
