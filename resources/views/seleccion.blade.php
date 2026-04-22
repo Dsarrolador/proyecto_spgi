@@ -140,6 +140,7 @@
 
         <!-- Selection Grid -->
         <div class="selection-grid mb-5 animate__animated animate__fadeInUp" style="animation-delay: 0.2s;">
+            @if(auth()->user()->es_admin || auth()->user()->es_encargado)
             <a href="{{ route('leads.bienvenido') }}" class="selection-card glass-card-premium">
                 <span class="selection-badge">Ventas</span>
                 <div class="selection-icon icon-float">
@@ -148,6 +149,7 @@
                 <h2 class="selection-title">Comerciales</h2>
                 <p class="selection-desc">Gestión de Leads, cotizaciones y seguimiento de clientes potenciales.</p>
             </a>
+            @endif
 
             <a href="{{ route('bienvenido') }}" class="selection-card glass-card-premium">
                 <span class="selection-badge">Operaciones</span>

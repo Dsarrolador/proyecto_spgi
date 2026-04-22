@@ -50,11 +50,13 @@ class User extends Authenticatable
 
     public function getEsAdminAttribute()
     {
-        return $this->cod_roleUser == 1;
+        if ($this->cod_roleUser == 1) return true;
+        return $this->role && in_array(strtolower(str_replace(['ó', 'á', 'é', 'í', 'ú'], ['o', 'a', 'e', 'i', 'u'], $this->role->nombre)), ['administracion', 'admin']);
     }
 
     public function getEsEncargadoAttribute()
     {
-        return $this->cod_roleUser == 2;
+        if ($this->cod_roleUser == 2) return true;
+        return $this->role && strtolower($this->role->nombre) == 'encargado';
     }
 }

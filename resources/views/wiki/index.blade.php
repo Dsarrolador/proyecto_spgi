@@ -289,7 +289,7 @@
                 </td>
                 <td class="text-center">
                   <div class="acciones">
-                    @if($doc->estado == 'Validado' || (auth()->user()->role && in_array(auth()->user()->role->nombre, ['Administracion', 'Encargado'])))
+                    @if($doc->estado == 'Validado' || (auth()->user()->es_admin || auth()->user()->es_encargado))
                     <a href="{{ route('wiki.download', $doc->id) }}" class="btn btn-success text-white" style="width: 32px; height: 32px; padding: 0;" title="Descargar">
                       <i class="bi bi-download"></i>
                     </a>
@@ -307,7 +307,7 @@
                       <i class="bi bi-trash"></i>
                     </button>
 
-                    @if(auth()->user()->role && in_array(auth()->user()->role->nombre, ['Administracion', 'Encargado']) && $doc->estado !== 'Validado')
+                    @if((auth()->user()->es_admin || auth()->user()->es_encargado) && $doc->estado !== 'Validado')
                     <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#confirmarAprobar{{ $doc->id }}" style="width: 32px; height: 32px; padding: 0;" title="Validar">
                       <i class="bi bi-check-circle"></i>
                     </button>

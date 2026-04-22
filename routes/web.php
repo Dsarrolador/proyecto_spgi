@@ -53,16 +53,19 @@ Route::middleware('auth')->group(function () {
         return view('bienvenido');
     })->name('bienvenido');
 
-    Route::get('/comerciales/bienvenido', [LeadController::class, 'bienvenido'])->name('leads.bienvenido');
+    Route::middleware('comercial')->group(function () {
+        Route::get('/comerciales/bienvenido', [LeadController::class, 'bienvenido'])->name('leads.bienvenido');
+        Route::get('/comerciales/reportes', [LeadController::class, 'reportes'])->name('leads.reportes');
+        Route::resource('lead-requirements', LeadRequirementController::class);
+        Route::resource('leads', LeadController::class);
+    });
+
     Route::get('/administracion/bienvenido', function () {
         return view('administracion.bienvenido');
     })->name('administracion.bienvenido');
-    Route::get('/comerciales/reportes', [LeadController::class, 'reportes'])->name('leads.reportes');
-    Route::resource('lead-requirements', LeadRequirementController::class);
-    Route::resource('leads', LeadController::class);
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    Route::get('/dashboard/iguala-control', [DashboardController::class, 'igualaControl'])->name('dashboard.iguala-control')->middleware(\App\Http\Middleware\CheckAdmin::class);
+    Route::get('/dashboard/iguala-control', [DashboardController::class, 'igualaControl'])->name('dashboard.iguala-control')->middleware('comercial');
     Route::get('/api/cliente-metrics/{id}', [DashboardController::class, 'getClienteMetrics'])->name('api.cliente-metrics');
 
     /*
@@ -75,8 +78,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/api/notificaciones/{id}/read', [NotificacionController::class, 'markAsRead'])->name('api.notificaciones.read');
     Route::delete('/api/notificaciones/delete-all', [NotificacionController::class, 'destroyAll'])->name('api.notificaciones.destroyAll');
     Route::delete('/api/notificaciones/{id}', [NotificacionController::class, 'destroy'])->name('api.notificaciones.destroy');
-    Route::get('/notificaciones/admin', [NotificacionController::class, 'adminPanel'])->name('notificaciones.admin')->middleware(\App\Http\Middleware\CheckAdmin::class);
-    Route::post('/notificaciones/send', [NotificacionController::class, 'send'])->name('notificaciones.send')->middleware(\App\Http\Middleware\CheckAdmin::class);
+    Route::get('/notificaciones/admin', [NotificacionController::class, 'adminPanel'])->name('notificaciones.admin')->middleware('comercial');
+    Route::post('/notificaciones/send', [NotificacionController::class, 'send'])->name('notificaciones.send')->middleware('comercial');
 
     /*
     |--------------------------------------------------------------------------
@@ -105,7 +108,7 @@ Route::middleware('auth')->group(function () {
     | 👤 USUARIOS
     |--------------------------------------------------------------------------
     */
-    Route::resource('usuarios', UsuarioController::class);
+    Route::resource('usuarios', UsuarioController::class)->middleware(\App\Http\Middleware\CheckAdmin::class);
 
     /*
     |--------------------------------------------------------------------------

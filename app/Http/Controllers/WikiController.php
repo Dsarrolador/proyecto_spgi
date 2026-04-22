@@ -123,6 +123,10 @@ class WikiController extends Controller
 
     public function update(Request $request, $id)
     {
+        if (!auth()->user()->es_admin && !auth()->user()->es_encargado) {
+            return redirect()->back()->with('error', 'No tienes permiso para editar documentos.');
+        }
+
         $doc = WikiDocument::findOrFail($id);
 
         $request->validate([
@@ -195,6 +199,10 @@ class WikiController extends Controller
 
     public function destroy($id)
     {
+        if (!auth()->user()->es_admin && !auth()->user()->es_encargado) {
+            return redirect()->back()->with('error', 'No tienes permiso para eliminar documentos.');
+        }
+
         try {
             $doc = WikiDocument::findOrFail($id);
 
@@ -212,6 +220,10 @@ class WikiController extends Controller
 
     public function approve($id)
     {
+        if (!auth()->user()->es_admin && !auth()->user()->es_encargado) {
+            return response()->json(['success' => false, 'message' => 'No tienes permiso para validar documentos.'], 403);
+        }
+
         try {
             $doc = WikiDocument::findOrFail($id);
             $doc->update(['estado' => 'Validado']);
