@@ -123,27 +123,51 @@
 </style>
 
 <div class="selection-container">
-    <div class="selection-grid">
+    <div class="text-center w-100" style="max-width: 900px; position: relative; z-index: 2;">
         
-        @if(auth()->user()->es_admin || auth()->user()->es_encargado)
-        <a href="{{ route('leads.index') }}" class="selection-card">
-            <span class="selection-badge">Ventas</span>
-            <div class="selection-icon">
-                <i class="bi bi-briefcase"></i>
+        <!-- Welcome Header -->
+        <div class="mb-5 animate__animated animate__fadeInDown">
+            <div class="badge-chip mb-3" style="background: rgba(var(--spgi-primary), 0.1); color: var(--spgi-primary); border: 1px solid var(--border-main); padding: 8px 16px; border-radius: 999px; display: inline-flex; align-items: center; gap: 8px; font-weight: 800; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">
+                <i class="bi bi-shield-lock-fill"></i> Sesión Autorizada
             </div>
-            <h2 class="selection-title">Comerciales</h2>
-            <p class="selection-desc">Gestión de Leads, cotizaciones y seguimiento de clientes potenciales.</p>
-        </a>
-        @endif
+            <h1 class="selection-title" style="font-size: 3.5rem; font-weight: 900; letter-spacing: -2px; line-height: 1; margin-bottom: 15px;">
+                ¡Hola, <span class="text-gradient">{{ auth()->user()->name }}</span>!
+            </h1>
+            <p class="selection-desc" style="font-size: 1.1rem; opacity: 0.8; max-width: 500px; margin: 0 auto;">
+                Has ingresado al ecosistema <strong>SPGI</strong>. ¿En qué área deseas trabajar hoy?
+            </p>
+        </div>
 
-        <a href="{{ route('bienvenido') }}" class="selection-card">
-            <span class="selection-badge">Operaciones</span>
-            <div class="selection-icon">
-                <i class="bi bi-tools"></i>
-            </div>
-            <h2 class="selection-title">Requerimientos</h2>
-            <p class="selection-desc">Sistema de solicitudes, soporte técnico y mantenimiento de cuentas.</p>
-        </a>
+        <!-- Selection Grid -->
+        <div class="selection-grid mb-5 animate__animated animate__fadeInUp" style="animation-delay: 0.2s;">
+            @if(auth()->user()->es_admin || auth()->user()->es_encargado)
+            <a href="{{ route('leads.bienvenido') }}" class="selection-card glass-card-premium">
+                <span class="selection-badge">Ventas</span>
+                <div class="selection-icon icon-float">
+                    <i class="bi bi-briefcase-fill"></i>
+                </div>
+                <h2 class="selection-title">Comerciales</h2>
+                <p class="selection-desc">Gestión de Leads, cotizaciones y seguimiento de clientes potenciales.</p>
+            </a>
+            @endif
+
+            <a href="{{ route('bienvenido') }}" class="selection-card glass-card-premium">
+                <span class="selection-badge">Operaciones</span>
+                <div class="selection-icon icon-float">
+                    <i class="bi bi-tools"></i>
+                </div>
+                <h2 class="selection-title">Requerimientos</h2>
+                <p class="selection-desc">Sistema de solicitudes, soporte técnico y mantenimiento de cuentas.</p>
+            </a>
+        </div>
+
+        <!-- Logout Action -->
+        <div class="animate__animated animate__fadeIn" style="animation-delay: 0.4s;">
+            <a href="{{ route('logout') }}" class="btn btn-outline-danger px-5 rounded-pill py-3 fw-bold shadow-sm d-inline-flex align-items-center gap-2 hover-scale" style="border-width: 2px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);">
+                <i class="bi bi-box-arrow-right fs-5"></i>
+                Finalizar Sesión
+            </a>
+        </div>
 
     </div>
 </div>
