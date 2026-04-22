@@ -72,15 +72,7 @@
       Área Comercial
     </div>
 
-    <h1 class="welcome-title text-gradient">Bienvenido a Comerciales</h1>
-
-    <p class="welcome-subtitle">
-      Gestión de Leads y Ventas para el sistema <b>SPGI</b>.
-    </p>
-
     <div class="divider"></div>
-
-    <div class="quick-title">Herramientas Comerciales</div>
 
     <div class="quick-grid">
 
@@ -115,6 +107,11 @@
     <a href="{{ route('bienvenido') }}" class="btn btn-outline-secondary w-100 rounded-pill py-2 fw-bold">
       <i class="bi bi-arrow-left me-2"></i>
       Volver al Menu Principal
+    </a>
+
+    <a href="{{ route('seleccion') }}" class="btn btn-outline-info w-100 rounded-pill py-2 fw-bold mt-2">
+      <i class="bi bi-grid me-2"></i>
+      Volver Selección
     </a>
 
   </div>

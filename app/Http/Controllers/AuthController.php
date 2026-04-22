@@ -27,8 +27,8 @@ class AuthController extends Controller
             'password' => $request->password
         ])) {
 
-            // 🔥 Después del login → ir a página de bienvenida
-            return redirect()->route('bienvenido');
+            // 🔥 Después del login → ir a página de selección
+            return redirect()->route('seleccion');
         }
 
         return back()->with('error', 'Nombre o contraseña incorrectos');

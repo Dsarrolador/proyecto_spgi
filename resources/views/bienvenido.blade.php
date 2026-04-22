@@ -90,19 +90,11 @@
   <div class="welcome-card text-center">
 
     <div class="badge-chip">
-      <i class="bi bi-shield-check"></i>
-      Acceso concedido
+      <i class="bi bi-tools"></i>
+      Área Requerimientos
     </div>
 
-    <h1 class="welcome-title text-gradient">¡Bienvenido, {{ auth()->user()->name }}!</h1>
-
-    <p class="welcome-subtitle">
-      Has iniciado sesión correctamente en el sistema <b>SPGI</b>.
-    </p>
-
     <div class="divider"></div>
-
-    <div class="quick-title">Accesos Rápidos</div>
 
     <div class="quick-grid">
       
@@ -178,11 +170,6 @@
     </div>
 
     <div class="divider"></div>
-
-    <a href="{{ route('logout') }}" class="btn btn-outline-danger w-100 mt-2 welcome-logout">
-      <i class="bi bi-box-arrow-right me-2"></i>
-      Cerrar Sesión
-    </a>
 
   </div>
 </div>

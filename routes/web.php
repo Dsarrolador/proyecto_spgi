@@ -46,7 +46,7 @@ Route::get('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::middleware('auth')->group(function () {
 
     Route::get('/seleccion', function () {
-        return redirect()->route('bienvenido');
+        return view('seleccion');
     })->name('seleccion');
 
     Route::get('/bienvenido', function () {

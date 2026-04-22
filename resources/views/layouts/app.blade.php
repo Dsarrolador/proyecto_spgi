@@ -11,6 +11,7 @@
 
 <link rel="stylesheet"
 href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
 
 <style id="theme-reset">
   :root { --topbar-bg: #ffffff; }
@@ -376,8 +377,11 @@ request()->routeIs('mantenimiento.categorias.*');
       @if(request()->is('comerciales/*') || request()->is('lead-requirements*') || request()->routeIs('leads.*') || request()->routeIs('lead-requirements.*'))
         <!-- SIDEBAR COMERCIAL -->
         <div class="nav-section-title">Comerciales</div>
+        <a class="nav-link {{ request()->routeIs('seleccion') ? 'active' : '' }}" href="{{ route('seleccion') }}">
+          <i class="bi bi-grid-fill"></i> Inicio
+        </a>
         <a class="nav-link {{ request()->routeIs('leads.bienvenido') ? 'active' : '' }}" href="{{ route('leads.bienvenido') }}">
-          <i class="bi bi-house-door"></i> Inicio Comercial
+          <i class="bi bi-house-door"></i> Dashboard Ventas
         </a>
         <a class="nav-link {{ request()->routeIs('leads.index') || request()->routeIs('leads.create') || request()->routeIs('leads.edit') || request()->routeIs('leads.show') ? 'active' : '' }}" href="{{ route('leads.index') }}">
           <i class="bi bi-people"></i> Leads de clientes
@@ -388,22 +392,26 @@ request()->routeIs('mantenimiento.categorias.*');
         <a class="nav-link {{ request()->routeIs('leads.reportes') ? 'active' : '' }}" href="{{ route('leads.reportes') }}">
           <i class="bi bi-bar-chart-line"></i> Reportes de Ventas
         </a>
-
-        <div class="nav-section-title mt-4">Navegación</div>
-        <a class="nav-link" href="{{ route('bienvenido') }}" style="color: var(--spgi-primary);">
-          <i class="bi bi-grid-fill"></i> Menú Principal
+        <a class="nav-link" href="{{ route('bienvenido') }}" style="background: rgba(var(--spgi-primary), 0.05); margin-top: 10px;">
+          <i class="bi bi-clipboard-check"></i> Requerimientos
         </a>
       @else
         <!-- SIDEBAR ESTÁNDAR -->
         <div class="nav-section-title">Principal</div>
+        <a class="nav-link {{ request()->routeIs('seleccion') ? 'active' : '' }}" href="{{ route('seleccion') }}">
+          <i class="bi bi-grid-fill"></i> Inicio
+        </a>
         <a class="nav-link {{ request()->routeIs('bienvenido') ? 'active' : '' }}" href="{{ route('bienvenido') }}">
-          <i class="bi bi-house-door"></i> Inicio
+          <i class="bi bi-house-door"></i> Dashboard Operaciones
         </a>
         @if(Route::has('dashboard') && (Auth::user()->es_admin || Auth::user()->es_encargado))
         <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
           <i class="bi bi-speedometer2"></i> Dashboard
         </a>
         @endif
+        <a class="nav-link" href="{{ route('leads.bienvenido') }}" style="color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2); background: rgba(16, 185, 129, 0.05); margin-top: 10px;">
+          <i class="bi bi-briefcase"></i> Comerciales
+        </a>
 
         <div class="nav-section-title">Industriales</div>
         <a class="nav-link {{ request()->routeIs('requerimientos.*') ? 'active' : '' }}" href="{{ route('requerimientos.index') }}">
