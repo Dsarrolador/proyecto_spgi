@@ -140,6 +140,12 @@
           <i class="bi bi-database me-1"></i> QUERY
         </a>
 
+        <a href="{{ route('wiki.index', ['categoria' => 'Otros'] + request()->except('categoria')) }}" 
+           class="badge-spgi text-decoration-none {{ request('categoria') == 'Otros' ? 'active' : '' }}" 
+           style="{{ request('categoria') == 'Otros' ? 'background: #6c757d; color: #fff; border-color: #6c757d;' : 'color: #6c757d; border-color: rgba(108,117,125,.2);' }}" title="Filtrar por Otros">
+          <i class="bi bi-three-dots me-1"></i> OTROS
+        </a>
+
         <div class="d-flex align-items-center gap-2 ms-lg-auto">
           <a href="{{ route('wiki.index', ['categoria' => 'Todos'] + request()->except('categoria')) }}" class="badge-spgi text-decoration-none {{ request('categoria', 'Todos') == 'Todos' ? 'border-primary text-primary' : '' }}">
             <i class="bi bi-file-earmark-text me-1"></i>
@@ -230,6 +236,8 @@
                         <span class="badge rounded-pill bg-warning text-dark" style="font-size: 0.75rem;">{{ $doc->categoria }}</span>
                     @elseif($doc->categoria == 'Query')
                         <span class="badge rounded-pill bg-success text-white" style="font-size: 0.75rem;">{{ $doc->categoria }}</span>
+                    @elseif($doc->categoria == 'Otros')
+                        <span class="badge rounded-pill bg-secondary text-white" style="font-size: 0.75rem;">{{ $doc->categoria }}</span>
                     @elseif($doc->categoria)
                         <span class="badge rounded-pill bg-info text-dark" style="font-size: 0.75rem;">{{ $doc->categoria }}</span>
                     @else
@@ -377,6 +385,7 @@
                 <option value="Manual" {{ $doc->categoria == 'Manual' ? 'selected' : '' }}>Manual</option>
                 <option value="Script" {{ $doc->categoria == 'Script' ? 'selected' : '' }}>Script</option>
                 <option value="Query" {{ $doc->categoria == 'Query' ? 'selected' : '' }}>Query</option>
+                <option value="Otros" {{ $doc->categoria == 'Otros' ? 'selected' : '' }}>Otros</option>
               </select>
             </div>
             <div class="mb-3">
@@ -428,6 +437,7 @@
               <option value="Manual">Manual</option>
               <option value="Script">Script</option>
               <option value="Query">Query</option>
+              <option value="Otros">Otros</option>
             </select>
           </div>
           <div class="mb-3">
