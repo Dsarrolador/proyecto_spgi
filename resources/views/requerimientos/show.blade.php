@@ -38,9 +38,11 @@
   .spgi-card-body{ padding: 32px; }
 
   .spgi-section{
-    background: rgba(var(--text-main), 0.04); border: 1px solid var(--border-main);
+    background: var(--bg-surface); border: 1px solid var(--border-main);
     border-radius: 20px; padding: 24px; height: 100%;
+    transition: all 0.3s ease;
   }
+  .spgi-section:hover { border-color: var(--spgi-primary); background: var(--bg-surface-glass); }
 
   .spgi-label{
     color: var(--text-muted); font-size: .75rem; text-transform: uppercase;
@@ -50,8 +52,9 @@
 
   .spgi-text-box{
     border: 1px solid var(--border-main); border-radius: 16px;
-    background: rgba(0,0,0,0.2); padding: 20px; color: var(--text-main);
+    background: var(--bg-surface); padding: 20px; color: var(--text-main);
     white-space: pre-wrap; line-height: 1.7; font-size: 0.95rem;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
   }
 
   .spgi-image-wrap{ position: relative; border-radius: 20px; overflow: hidden; border: 1px solid var(--border-main); background: #000; }
@@ -100,7 +103,7 @@
   .novedad-item{ 
     border-bottom: 1px solid var(--border-main); padding: 20px; transition: all 0.2s ease;
   }
-  .novedad-item:hover{ background: rgba(var(--spgi-primary), 0.04); }
+  .novedad-item:hover{ background: var(--bg-surface); border-radius: 16px; }
 </style>
 
 <div class="spgi-page">
@@ -423,7 +426,7 @@
             </div>
 
             <!-- Formulario para agregar Novedad (Adaptable) -->
-            <div id="novedad-form-wrapper" class="p-4 rounded-4 border animate__animated animate__fadeInUp" style="background: rgba(var(--text-main), 0.04); border-color: var(--border-main) !important;">
+            <div id="novedad-form-wrapper" class="p-4 rounded-4 border animate__animated animate__fadeInUp" style="background: var(--bg-surface); border-color: var(--border-main) !important; box-shadow: var(--shadow-main);">
               <h6 class="fw-bold mb-3 small text-uppercase text-muted letter-spacing-1" id="form-novedad-title">Agregar Seguimiento</h6>
               <form action="{{ route('novedades.store') }}" method="POST" enctype="multipart/form-data" id="form-novedad">
                 @csrf
