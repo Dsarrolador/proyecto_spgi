@@ -3,118 +3,139 @@
 @section('page_title', 'Centro de Notificaciones')
 
 @section('content')
-<div class="container-fluid pb-5">
-    <!-- Header Decorativo -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card border-0 shadow-sm bg-primary text-white overflow-hidden" style="border-radius: 20px;">
-                <div class="card-body p-4 position-relative">
-                    <div class="d-flex align-items-center gap-4 position-relative" style="z-index: 2;">
-                        <div class="bg-white bg-opacity-25 rounded-circle p-3 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
-                            <i class="bi bi-bell-fill fs-1"></i>
-                        </div>
-                        <div>
-                            <h2 class="fw-bold mb-1">Tu Historial de Avisos</h2>
-                            <p class="mb-0 text-white-50">Gestiona y revisa todas tus notificaciones del sistema.</p>
-                        </div>
-                    </div>
-                    <!-- Decoración fondo -->
-                    <i class="bi bi-megaphone position-absolute top-50 end-0 translate-middle-y me-4 opacity-25" style="font-size: 10rem;"></i>
+<style>
+    .spgi-bg{ padding: 12px 0 24px 0; }
+    .spgi-title{ font-weight: 900; font-size: 1.8rem; color: var(--text-main); letter-spacing: -1px; margin:0; }
+    .spgi-subtitle{ color: var(--text-muted); font-size: 1rem; margin-top: 4px; }
+
+    .spgi-header-card{
+        background: var(--bg-surface-glass); border: 1px solid var(--border-main);
+        border-radius: 24px; box-shadow: var(--shadow-main); backdrop-filter: blur(24px);
+        padding: 40px; margin-bottom: 24px; position: relative; overflow: hidden;
+    }
+    .header-icon-box{
+        width: 80px; height: 80px; background: rgba(var(--spgi-primary), 0.1);
+        border-radius: 22px; display: flex; align-items: center; justify-content: center;
+        border: 1px solid var(--border-main); color: var(--spgi-primary);
+    }
+
+    .spgi-toolbar{
+        background: var(--bg-surface-glass); border: 1px solid var(--border-main);
+        border-radius: 20px; padding: 16px 24px; margin-bottom: 24px;
+        display: flex; justify-content: space-between; align-items: center; gap: 16px;
+    }
+
+    .spgi-notif-list{
+        background: var(--bg-surface-glass); border: 1px solid var(--border-main);
+        border-radius: 24px; overflow: hidden; backdrop-filter: blur(16px);
+    }
+    .notif-item{
+        padding: 24px 32px; border-bottom: 1px solid var(--border-main);
+        transition: all 0.3s ease; display: flex; align-items: center; justify-content: space-between;
+    }
+    .notif-item:last-child{ border-bottom: 0; }
+    .notif-item:hover{ background: rgba(var(--spgi-primary), 0.05); transform: scale(1.002); }
+    .notif-item.read{ opacity: 0.7; filter: grayscale(0.5); }
+    
+    .notif-icon-box{
+        width: 52px; height: 52px; border-radius: 14px; display: flex;
+        align-items: center; justify-content: center; flex-shrink: 0;
+        background: rgba(var(--text-main), 0.05); border: 1px solid var(--border-main);
+        color: var(--text-main); font-size: 1.35rem; transition: all 0.3s ease;
+    }
+    .unread .notif-icon-box{ background: rgba(var(--spgi-primary), 0.1); border-color: var(--spgi-primary); color: var(--spgi-primary); }
+
+    .notif-actions .btn{
+        width: 44px; height: 44px; border-radius: 12px; display: inline-flex;
+        align-items: center; justify-content: center; background: var(--bg-surface);
+        border: 1px solid var(--border-main); color: var(--text-main); transition: all 0.2s ease;
+    }
+    .notif-actions .btn:hover{ background: rgba(var(--spgi-primary), 0.1); border-color: var(--spgi-primary); transform: translateY(-2px); }
+    .notif-actions .btn-delete:hover{ background: rgba(239, 68, 68, 0.1); border-color: #ef4444; color: #ef4444; }
+
+    @media (max-width: 768px){ .spgi-toolbar{ flex-direction: column; align-items: stretch; } }
+</style>
+
+<div class="spgi-bg">
+    <div class="container">
+        
+        <div class="spgi-header-card">
+            <div class="d-flex align-items-center gap-4 position-relative" style="z-index: 2;">
+                <div class="header-icon-box">
+                    <i class="bi bi-bell-fill fs-1"></i>
+                </div>
+                <div>
+                    <h2 class="spgi-title">Centro de Notificaciones</h2>
+                    <p class="spgi-subtitle">Gestiona y revisa todas tus alertas del sistema.</p>
                 </div>
             </div>
+            <i class="bi bi-megaphone position-absolute top-50 end-0 translate-middle-y me-4 opacity-10" style="font-size: 10rem; color: var(--text-main);"></i>
         </div>
-    </div>
 
-    <!-- Acciones Globales -->
-    <div class="row mb-4">
-        <div class="col-12 d-flex justify-content-between align-items-center bg-white p-3 shadow-sm rounded-4 mx-3" style="width: auto;">
-            <div class="d-flex align-items-center gap-3">
-                <span class="badge bg-light text-dark border p-2 px-3 rounded-pill fw-normal">
-                    <i class="bi bi-info-circle me-1"></i> Total: {{ $notificaciones->total() > 99 ? '99+' : $notificaciones->total() }}
-                </span>
-
-            </div>
-            <div class="d-flex gap-2">
-                <button type="button" onclick="confirmDeleteAll()" class="btn btn-outline-danger rounded-pill px-4">
-                    <i class="bi bi-trash3 me-1"></i> Borrar Todo
-                </button>
-            </div>
+        <div class="spgi-toolbar">
+            <span class="badge" style="background: rgba(var(--spgi-primary), 0.1); color: var(--spgi-primary); border: 1px solid var(--border-main); padding: 10px 18px; border-radius: 12px; font-weight: 800;">
+                <i class="bi bi-info-circle me-1"></i> TOTAL: {{ $notificaciones->total() }}
+            </span>
+            <button type="button" onclick="confirmDeleteAll()" class="btn btn-outline-danger" style="border-radius: 12px; font-weight: 800; padding: 10px 24px;">
+                <i class="bi bi-trash3 me-1"></i> BORRAR TODO
+            </button>
         </div>
-    </div>
 
-    <!-- Lista de Notificaciones -->
-    <div class="row">
-        <div class="col-12">
-            @if($notificaciones->isEmpty())
-                <div class="card border-0 shadow-sm text-center py-5" style="border-radius: 20px;">
-                    <div class="card-body">
-                        <i class="bi bi-inbox text-muted" style="font-size: 4rem;"></i>
-                        <h4 class="mt-3 text-muted">No tienes notificaciones</h4>
-                        <p class="text-muted">Cuando recibas un aviso, aparecerá en este centro.</p>
+        <div class="row">
+            <div class="col-12">
+                @if($notificaciones->isEmpty())
+                    <div class="spgi-card text-center py-5">
+                        <div class="card-body">
+                            <i class="bi bi-inbox text-muted" style="font-size: 4rem;"></i>
+                            <h4 class="mt-3 spgi-title opacity-50">No tienes notificaciones</h4>
+                            <p class="spgi-subtitle">Cuando recibas un aviso, aparecerá aquí.</p>
+                        </div>
                     </div>
-                </div>
-            @else
-                <div class="list-group shadow-sm border-0" style="border-radius: 20px; overflow: hidden;">
-                    @foreach($notificaciones as $n)
-                        <div id="notif-row-{{ $n->id }}" class="list-group-item list-group-item-action border-0 border-bottom p-4 notification-row {{ $n->leido_at ? 'bg-light bg-opacity-50 opacity-75' : 'bg-white' }}">
-                            <div class="d-flex justify-content-between align-items-center">
+                @else
+                    <div class="spgi-notif-list">
+                        @foreach($notificaciones as $n)
+                            <div id="notif-row-{{ $n->id }}" class="notif-item {{ $n->leido_at ? 'read' : 'unread' }}">
                                 <div class="d-flex align-items-start gap-4 flex-grow-1" style="cursor: pointer;" onclick="handleHistoryClick('{{ $n->url }}', '{{ $n->id }}')">
-                                    <div class="rounded-circle p-3 d-flex align-items-center justify-content-center {{ $n->leido_at ? 'bg-secondary bg-opacity-10 text-secondary' : 'bg-primary bg-opacity-10 text-primary' }}" style="width: 50px; height: 50px; flex-shrink: 0;">
-                                        <i class="bi {{ $n->leido_at ? 'bi-envelope-open' : 'bi-envelope-fill' }} fs-4"></i>
+                                    <div class="notif-icon-box">
+                                        <i class="bi {{ $n->leido_at ? 'bi-envelope-open' : 'bi-envelope-fill' }}"></i>
                                     </div>
                                     <div class="flex-grow-1">
                                         <div class="d-flex align-items-center gap-3 mb-2">
-                                            <h6 class="fw-bold mb-0">{{ $n->sender ? $n->sender->name : 'Sistema de Gestión' }}</h6>
-                                            <span class="text-muted small fw-normal">
+                                            <h6 class="fw-bold mb-0" style="color: var(--text-main);">{{ $n->sender ? $n->sender->name : 'Sistema de Gestión' }}</h6>
+                                            <span class="text-muted small">
                                                 <i class="bi bi-clock me-1"></i>{{ $n->created_at->diffForHumans() }}
                                             </span>
                                             @if(!$n->leido_at)
-                                                <span class="badge bg-success rounded-pill fw-normal px-2">Nuevo</span>
+                                                <span class="badge bg-success rounded-pill px-2">NUEVO</span>
                                             @endif
                                         </div>
-                                        <p id="msg-{{ $n->id }}" class="mb-0 text-dark overflow-hidden" style="max-height: 2.6em; line-height: 1.3; transition: max-height 0.4s ease;">
+                                        <p id="msg-{{ $n->id }}" class="mb-0" style="max-height: 2.6em; line-height: 1.4; overflow: hidden; transition: max-height 0.4s ease; color: var(--text-muted);">
                                             {{ $n->mensaje }}
                                         </p>
                                     </div>
                                 </div>
-                                <div class="d-flex gap-2 ms-4">
+                                <div class="notif-actions d-flex gap-2 ms-4">
                                     @if(!$n->leido_at)
-                                        <button onclick="localMarkAsRead({{ $n->id }}, event)" class="btn btn-light rounded-circle shadow-sm" style="width: 40px; height: 40px;" title="Marcar como leída">
+                                        <button onclick="localMarkAsRead({{ $n->id }}, event)" class="btn" title="Marcar como leída">
                                             <i class="bi bi-check-all text-primary"></i>
                                         </button>
                                     @endif
-                                    <button onclick="localDelete({{ $n->id }}, event)" class="btn btn-light rounded-circle shadow-sm" style="width: 40px; height: 40px;" title="Eliminar">
-                                        <i class="bi bi-trash text-danger"></i>
+                                    <button onclick="localDelete({{ $n->id }}, event)" class="btn btn-delete" title="Eliminar">
+                                        <i class="bi bi-trash"></i>
                                     </button>
                                 </div>
                             </div>
-                        </div>
-                    @endforeach
-                </div>
-                
-                <div class="mt-4 px-3">
-                    {{ $notificaciones->links() }}
-                </div>
-            @endif
+                        @endforeach
+                    </div>
+                    
+                    <div class="mt-4">
+                        {{ $notificaciones->links() }}
+                    </div>
+                @endif
+            </div>
         </div>
     </div>
 </div>
-
-<style>
-    .notification-row {
-        transition: all 0.3s ease;
-    }
-    .notification-row:hover {
-        background-color: #f8fafc !important;
-        transform: scale(1.005);
-    }
-    .notification-row.fade-out {
-        animation: rowFadeOut 0.4s forwards;
-    }
-    @keyframes rowFadeOut {
-        to { opacity: 0; transform: translateX(30px); }
-    }
-</style>
 
 @push('scripts')
 <script>

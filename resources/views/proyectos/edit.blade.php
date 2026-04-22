@@ -10,60 +10,39 @@
 @endphp
 
 <style>
-    :root{
-        --bg1: rgba(59,130,246,.18);
-        --bg2: rgba(236,72,153,.14);
-        --bg3: rgba(34,197,94,.12);
-        --ink:#0f172a;
-        --muted:#64748b;
-        --line: rgba(15,23,42,.10);
-        --shadow:0 18px 60px rgba(0,0,0,.10);
-        --shadowSoft:0 10px 30px rgba(0,0,0,.06);
-    }
-    body{
-        background:
-            radial-gradient(900px 600px at 15% 18%, var(--bg1), transparent 55%),
-            radial-gradient(800px 600px at 90% 20%, var(--bg2), transparent 55%),
-            radial-gradient(700px 500px at 50% 90%, var(--bg3), transparent 60%),
-            linear-gradient(180deg, #f7f8fb 0%, #eef2f7 45%, #f7f8fb 100%);
-        background-attachment: fixed;
-    }
-    .spgi-wrap{ max-width: 1100px; margin: 28px auto 60px; }
-    .spgi-topbar{
-        background: rgba(255,255,255,.92);
-        border-radius: 20px;
-        box-shadow: var(--shadowSoft);
-        padding: 16px 20px;
-        backdrop-filter: blur(10px);
-    }
-    .spgi-title{ font-weight: 800; font-size: 1.05rem; color: var(--ink); margin:0; }
-    .spgi-subtitle{ color: var(--muted); font-size: .85rem; }
-    .btn-pill{ border-radius: 14px; padding: .55rem 1rem; font-weight: 700; transition:.15s ease; }
-    .btn-primary-pill{ background:#1d4ed8; color:#fff; }
-    .btn-primary-pill:hover{ background:#1e40af; transform:translateY(-1px); }
-    .btn-secondary-pill{ background:#eef2ff; color:#1e40af; }
-    .btn-secondary-pill:hover{ background:#e0e7ff; transform:translateY(-1px); }
-    .spgi-card{
-        margin-top:18px;
-        background: rgba(255,255,255,.92);
-        border-radius:22px;
-        box-shadow: var(--shadow);
-        backdrop-filter: blur(10px);
-    }
-    .spgi-card-header{ padding:16px 20px; border-bottom:1px solid var(--line); }
-    .spgi-card-body{ padding:20px; }
-    .spgi-label{ font-weight:700; font-size:.9rem; color:var(--ink); margin-bottom:.35rem; }
-    .spgi-control,.spgi-select{
-        border-radius:14px !important;
-        border:1px solid rgba(15,23,42,.10) !important;
-        padding:.7rem .9rem !important;
-        box-shadow:0 8px 18px rgba(2,6,23,.04);
-        transition:.15s ease;
-    }
-    .spgi-control:focus,.spgi-select:focus{
-        border-color:rgba(37,99,235,.35) !important;
-        box-shadow:0 0 0 .22rem rgba(37,99,235,.12) !important;
-    }
+  .spgi-wrap{ max-width: 1100px; margin: 28px auto 60px; }
+
+  .spgi-topbar{
+    background: var(--bg-surface-glass); border: 1px solid var(--border-main);
+    border-radius: 20px; box-shadow: var(--shadow-main); backdrop-filter: blur(16px); padding: 20px;
+  }
+
+  .spgi-title{ font-weight: 800; font-size: 1.4rem; color: var(--text-main); letter-spacing: -.5px; margin:0; }
+  .spgi-subtitle{ color: var(--text-muted); font-size: .95rem; margin-top: 4px; }
+
+  .btn-pill{ border-radius: 14px; padding: .65rem 1.5rem; font-weight: 700; transition:all 0.3s ease; }
+  .btn-primary-pill{ background: var(--spgi-primary); color:#fff; border: 0; box-shadow: 0 10px 25px var(--spgi-primary-glow); }
+  .btn-primary-pill:hover{ filter: brightness(1.1); transform:translateY(-2px); color: #fff; }
+
+  .btn-secondary-pill{ background: var(--bg-surface); color: var(--text-main); border: 1px solid var(--border-main); }
+  .btn-secondary-pill:hover{ background: rgba(var(--spgi-primary), 0.05); transform:translateY(-2px); }
+
+  .spgi-card{
+    margin-top:24px; background: var(--bg-surface-glass); border-radius:24px;
+    border: 1px solid var(--border-main); box-shadow: var(--shadow-main); backdrop-filter: blur(16px);
+    overflow: hidden;
+  }
+  .spgi-card-header{ padding:20px 24px; border-bottom:1px solid var(--border-main); font-weight: 800; color: var(--text-main); }
+  .spgi-card-body{ padding:32px; }
+
+  .spgi-label{ font-weight: 800; font-size:.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+
+  .spgi-control, .spgi-select{
+    background: var(--bg-surface) !important; color: var(--text-main) !important;
+    border-radius:12px !important; border:1px solid var(--border-main) !important;
+    padding:.75rem 1rem !important; box-shadow: none !important; transition: all 0.2s ease;
+  }
+  .spgi-control:focus, .spgi-select:focus{ border-color: var(--spgi-primary) !important; box-shadow: 0 0 0 4px rgba(var(--spgi-primary), 0.1) !important; }
 </style>
 
 <div class="spgi-wrap">

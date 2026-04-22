@@ -60,7 +60,7 @@
 
         <!-- COLABORATIVO -->
         <div class="mb-3">
-            <div class="form-check form-switch p-3 bg-light border rounded d-flex flex-column justify-content-center">
+            <div class="form-check form-switch p-3 border rounded d-flex flex-column justify-content-center" style="background: rgba(var(--text-main), 0.03); border-color: var(--border-main) !important;">
                 <div>
                     <input class="form-check-input ms-0 me-2 mt-1" style="float:left;" type="checkbox" name="es_colaborativo" id="es_colaborativo" value="1">
                     <label class="form-check-label fw-bold d-block" for="es_colaborativo">
@@ -70,8 +70,8 @@
                 <small class="text-muted d-block ms-5 mt-1" style="margin-left: 2.5rem !important;">Permite que otros usuarios vean y colaboren en este requerimiento.</small>
                 
                 <div id="colaboradores_container" class="mt-3 d-none ms-5" style="margin-left: 2.5rem !important;">
-                    <label class="form-label small fw-bold text-dark">Selecciona colaboradores adicionales:</label>
-                    <div class="row g-2 border rounded p-3 bg-white shadow-sm" style="max-height: 200px; overflow-y: auto;">
+                    <label class="form-label small fw-bold" style="color: var(--text-main);">Selecciona colaboradores adicionales:</label>
+                    <div class="row g-2 border rounded p-3 shadow-sm" style="max-height: 200px; overflow-y: auto; background: var(--bg-surface); border-color: var(--border-main) !important;">
                         @foreach($usuarios as $u)
                             @if($u->id != auth()->id())
                                 <div class="col-md-6">
@@ -169,7 +169,7 @@
         </div>
 
         <!-- OPCIONES AVANZADAS -->
-        <div class="card bg-light border-0 mb-3" style="border-radius: 12px;">
+        <div class="card border-0 mb-3" style="border-radius: 12px; background: rgba(var(--text-main), 0.03);">
             <div class="card-body">
 
                 <!-- RECURRENCIA -->
@@ -308,7 +308,9 @@ function previewImagenes(event) {
 
             reader.onload = function(e) {
                 const wrapper = document.createElement('div');
-                wrapper.className = 'border rounded p-1 bg-white';
+                wrapper.className = 'border rounded p-1';
+                wrapper.style.borderColor = 'var(--border-main)';
+                wrapper.style.background = 'var(--bg-surface)';
                 wrapper.style.width = '120px';
 
                 const img = document.createElement('img');

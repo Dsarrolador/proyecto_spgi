@@ -30,8 +30,22 @@
         <label class="form-label fw-bold small">Configuración Estándar / Base</label>
         <textarea name="configuracion_estandar" class="form-control rounded-3" rows="3" placeholder="Ej: Baudios: 9600, Paridad: None, Protocolo: ZPL">{{ $equipo->configuracion_estandar ?? '' }}</textarea>
     </div>
+    <div class="col-12 mt-2">
+        <label class="form-label fw-bold small"><i class="bi bi-cloud-upload me-1 text-primary"></i>Cargar Driver Universal (Catálogo)</label>
+        <input type="file" name="driver_file" class="form-control rounded-3">
+        @if(isset($equipo) && $equipo->driverDoc)
+            <div class="mt-2 d-flex align-items-center gap-2">
+                <span class="badge bg-success-soft text-success border border-success-subtle">
+                    <i class="bi bi-check-circle-fill me-1"></i> Driver cargado
+                </span>
+                <a href="{{ route('wiki.download', $equipo->driverDoc->id) }}" class="btn btn-link btn-sm p-0 text-decoration-none">
+                    Ver actual
+                </a>
+            </div>
+        @endif
+    </div>
     <div class="col-12">
-        <label class="form-label fw-bold small">URL de Drivers</label>
+        <label class="form-label fw-bold small">URL Externa de Drivers (Opcional)</label>
         <input type="url" name="driver_url" class="form-control rounded-3" value="{{ $equipo->driver_url ?? '' }}" placeholder="https://ejemplo.com/descarga-drivers">
     </div>
     @if(isset($equipo))

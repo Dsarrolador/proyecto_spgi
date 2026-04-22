@@ -11,233 +11,77 @@
 @endphp
 
 <style>
-  :root{
-    --spgi-primary:#0d6efd;
-    --spgi-primary-2:#2b7bff;
-    --spgi-ink:#0f172a;
-    --spgi-muted:#64748b;
-    --spgi-border: rgba(15, 23, 42, .10);
-  }
+  .spgi-page{ padding: 12px 0 24px 0; }
+  .spgi-header{ display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:32px; flex-wrap:wrap; }
 
-  body{
-    background:
-      radial-gradient(900px 400px at 20% 10%, rgba(13,110,253,.14), transparent 60%),
-      radial-gradient(900px 450px at 85% 20%, rgba(168,85,247,.12), transparent 55%),
-      radial-gradient(900px 450px at 70% 90%, rgba(34,197,94,.10), transparent 55%),
-      linear-gradient(135deg, rgba(13,110,253,.10), rgba(168,85,247,.08) 45%, rgba(34,197,94,.08));
-    background-attachment: fixed;
-  }
+  .spgi-title{ margin:0; font-weight:900; color:var(--text-main); letter-spacing:-1px; font-size:1.8rem; }
+  .spgi-subtitle{ margin:4px 0 0 0; color:var(--text-muted); font-size:1rem; }
 
-  .spgi-page{
-    padding: 12px 0 24px 0;
+  .spgi-btn-action, .spgi-btn-back{
+    min-height:46px; border-radius:14px; padding:0 24px;
+    display:inline-flex; align-items:center; justify-content:center;
+    font-weight: 700; transition: all 0.3s ease;
   }
-
-  .spgi-header{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    gap:12px;
-    margin-bottom:16px;
-    flex-wrap:wrap;
+  .btn-warning.spgi-btn-action{ background: #f59e0b; color: #000; border: 0; box-shadow: 0 10px 20px rgba(245, 158, 11, 0.2); }
+  .btn-warning.spgi-btn-action:hover{ background: #d97706; transform: translateY(-2px); color: #000; }
+  
+  .btn-secondary.spgi-btn-action, .spgi-btn-back{ 
+    background: var(--bg-surface); color: var(--text-main); border: 1px solid var(--border-main);
   }
-
-  .spgi-title{
-    margin:0;
-    font-weight:800;
-    color:var(--spgi-ink);
-    letter-spacing:-.3px;
-    font-size:1.45rem;
-  }
-
-  .spgi-subtitle{
-    margin:4px 0 0 0;
-    color:var(--spgi-muted);
-    font-size:.92rem;
-  }
-
-  .spgi-header-actions{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    flex-wrap:wrap;
-  }
-
-  .spgi-btn-back,
-  .spgi-btn-action{
-    min-height:44px;
-    border-radius:12px;
-    padding:0 14px;
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    white-space:nowrap;
-    box-shadow: 0 10px 24px rgba(2,6,23,.07);
-  }
+  .btn-secondary.spgi-btn-action:hover, .spgi-btn-back:hover{ background: rgba(var(--spgi-primary), 0.05); transform: translateY(-2px); }
 
   .spgi-card{
-    background: rgba(255,255,255,.92);
-    border: 1px solid var(--spgi-border);
-    border-radius: 20px;
-    box-shadow: 0 18px 45px rgba(2, 6, 23, .10);
-    backdrop-filter: blur(6px);
+    background: var(--bg-surface-glass); border: 1px solid var(--border-main);
+    border-radius: 24px; box-shadow: var(--shadow-main); backdrop-filter: blur(16px);
     overflow: hidden;
   }
-
-  .spgi-card-body{
-    padding: 22px;
-  }
+  .spgi-card-body{ padding: 32px; }
 
   .spgi-section{
-    background: rgba(255,255,255,.72);
-    border: 1px solid rgba(15, 23, 42, .08);
-    border-radius: 16px;
-    padding: 16px;
-    height: 100%;
+    background: rgba(var(--text-main), 0.04); border: 1px solid var(--border-main);
+    border-radius: 20px; padding: 24px; height: 100%;
   }
 
   .spgi-label{
-    color: var(--spgi-muted);
-    font-size: .78rem;
-    text-transform: uppercase;
-    letter-spacing: .4px;
-    font-weight: 700;
-    margin-bottom: 6px;
+    color: var(--text-muted); font-size: .75rem; text-transform: uppercase;
+    letter-spacing: 1px; font-weight: 800; margin-bottom: 8px;
   }
-
-  .spgi-value{
-    color: var(--spgi-ink);
-    font-weight: 600;
-    word-break: break-word;
-  }
-
-  .spgi-badge{
-    font-size: .82rem;
-    padding: .5rem .8rem;
-    border-radius: 999px;
-  }
-
-  .spgi-contact-box,
-  .spgi-text-box{
-    border: 1px solid rgba(15, 23, 42, .08);
-    border-radius: 14px;
-    background: #f8fafc;
-    padding: 14px;
-  }
+  .spgi-value{ color: var(--text-main); font-weight: 700; font-size: 1.05rem; }
 
   .spgi-text-box{
-    color: var(--spgi-ink);
-    white-space: pre-wrap;
+    border: 1px solid var(--border-main); border-radius: 16px;
+    background: rgba(0,0,0,0.2); padding: 20px; color: var(--text-main);
+    white-space: pre-wrap; line-height: 1.7; font-size: 0.95rem;
   }
 
-  .spgi-image-wrap{
-    margin-top: 10px;
-  }
-
-  .spgi-image{
-    width: 100%;
-    max-height: 420px;
-    object-fit: contain;
-    border-radius: 16px;
-    border: 1px solid rgba(15, 23, 42, .10);
-    background: #fff;
-    cursor: pointer;
-    display:block;
-  }
-
-  .spgi-gallery{
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    margin-top: 12px;
-  }
+  .spgi-image-wrap{ position: relative; border-radius: 20px; overflow: hidden; border: 1px solid var(--border-main); background: #000; }
+  .spgi-image{ width: 100%; max-height: 520px; object-fit: contain; }
 
   .spgi-thumb{
-    width: 160px;
-    height: 160px;
-    object-fit: cover;
-    border-radius: 14px;
-    border: 1px solid rgba(15, 23, 42, .10);
-    background: #fff;
-    cursor: pointer;
-    transition: transform .15s ease, box-shadow .15s ease;
-    display:block;
+    width: 140px; height: 140px; object-fit: cover; border-radius: 16px;
+    border: 1px solid var(--border-main); background: var(--bg-surface);
+    cursor: pointer; transition: all 0.3s ease;
   }
-
-  .spgi-thumb:hover{
-    transform: translateY(-2px);
-    box-shadow: 0 10px 20px rgba(2,6,23,.10);
-  }
-
-  .spgi-footer-actions{
-    margin-top: 6px;
-  }
+  .spgi-thumb:hover{ transform: scale(1.05); border-color: var(--spgi-primary); box-shadow: 0 10px 20px var(--spgi-primary-glow); }
 
   .spgi-btn-save{
-    min-height: 46px;
-    border-radius: 12px;
-    padding: 0 16px;
-    box-shadow: 0 10px 24px rgba(2,6,23,.07);
+    min-height: 52px; border-radius: 16px; padding: 0 32px;
+    background: var(--spgi-primary); color: #fff; border: 0; font-weight: 800;
+    box-shadow: 0 10px 25px var(--spgi-primary-glow); transition: all 0.3s ease;
+  }
+  .spgi-btn-save:hover{ filter: brightness(1.1); transform: translateY(-2px); }
+
+  @media (max-width: 768px){
+    .spgi-header-actions{ width: 100%; flex-direction: column; }
+    .spgi-btn-action, .spgi-btn-back{ width: 100%; }
+    .spgi-card-body{ padding: 20px; }
   }
 
-  @media (max-width: 767.98px){
-    .spgi-page .container{
-      padding-left: 0;
-      padding-right: 0;
-    }
-
-    .spgi-title{
-      font-size: 1.2rem;
-    }
-
-    .spgi-header{
-      align-items:stretch;
-    }
-
-    .spgi-header-actions{
-      width:100%;
-      flex-direction:column;
-      align-items:stretch;
-    }
-
-    .spgi-btn-back,
-    .spgi-btn-action{
-      width:100%;
-    }
-
-    .spgi-card-body{
-      padding: 14px;
-    }
-
-    .spgi-section{
-      padding: 14px;
-      border-radius: 14px;
-    }
-
-    .spgi-btn-save{
-      width: 100%;
-    }
-
-    .spgi-thumb{
-      width: 100%;
-      height: auto;
-      max-height: 260px;
-      object-fit: contain;
-    }
+  /* Timeline */
+  .novedad-item{ 
+    border-bottom: 1px solid var(--border-main); padding: 20px; transition: all 0.2s ease;
   }
-
-  /* Timeline Novedades */
-  .novedades-timeline {
-    position: relative;
-  }
-  .novedad-item {
-    transition: background-color 0.3s ease;
-  }
-  .novedad-item:hover {
-    background-color: rgba(15, 23, 42, 0.01);
-  }
-  .letter-spacing-1 {
-    letter-spacing: 1px;
-  }
+  .novedad-item:hover{ background: rgba(var(--spgi-primary), 0.04); }
 </style>
 
 <div class="spgi-page">
@@ -323,7 +167,7 @@
                         <div class="spgi-label small">Colaboradores adicionales</div>
                         <div class="d-flex flex-wrap gap-2">
                           @foreach($requerimiento->colaboradores as $colab)
-                            <span class="badge bg-light text-dark border fw-normal">
+                            <span class="badge border fw-normal" style="background: rgba(var(--text-main), 0.05); color: var(--text-main);">
                               <i class="bi bi-person me-1"></i> {{ $colab->name }}
                             </span>
                           @endforeach
@@ -480,10 +324,31 @@
 
     <!-- SECCIÓN DE NOVEDADES / SEGUIMIENTOS -->
     <div id="novedades" class="mt-5">
+
+      {{-- Alertas de seguimientos --}}
+      @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show mb-3" role="alert" id="alert-novedad-ok">
+          <i class="bi bi-check-circle me-2"></i>{{ session('success') }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      @endif
+      @if(session('warning'))
+        <div class="alert alert-warning alert-dismissible fade show mb-3" role="alert">
+          <i class="bi bi-exclamation-triangle me-2"></i>{{ session('warning') }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      @endif
+      @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show mb-3" role="alert">
+          <i class="bi bi-x-circle me-2"></i>{{ session('error') }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      @endif
+
       <div class="spgi-card">
         <div class="spgi-card-body p-4">
           <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
-            <h5 class="fw-bold mb-0 text-dark">
+            <h5 class="fw-bold mb-0" style="color: var(--text-main);">
               <i class="bi bi-journal-text me-2"></i> Seguimientos y Novedades
             </h5>
             <span class="badge bg-primary rounded-pill">{{ $requerimiento->novedades->count() }} Notas</span>
@@ -495,7 +360,7 @@
               <div class="novedad-item mb-4 pb-3 border-bottom position-relative">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                   <div class="d-flex align-items-center gap-2">
-                    <div class="bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 32px; height: 32px; font-size: 0.75rem;">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 32px; height: 32px; font-size: 0.75rem; background: rgba(59, 130, 246, 0.15); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.2);">
                       {{ strtoupper(substr($nov->user->name ?? 'U', 0, 1)) }}
                     </div>
                     <div>
@@ -505,7 +370,7 @@
                   </div>
                 </div>
                 <div class="ps-1">
-                  <p class="mb-2 text-dark" style="white-space: pre-wrap; font-size: 0.95rem;">{{ $nov->novedad }}</p>
+                  <p class="mb-2" style="white-space: pre-wrap; font-size: 0.95rem; color: var(--text-main);">{{ $nov->novedad }}</p>
                   @if($nov->adjunto)
                     <a href="{{ route('novedades.download', $nov->id) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3 mt-1" style="font-size: 0.8rem;">
                       <i class="bi bi-download me-1"></i> {{ $nov->nombre_original ?? 'Descargar Adjunto' }}
@@ -521,8 +386,8 @@
             @endforelse
           </div>
 
-          <!-- Formulario para agregar Novedad (Solo para el asignado o el creador si el sistema lo permite) -->
-          <div class="p-3 bg-light rounded-4 border">
+          <!-- Formulario para agregar Novedad -->
+          <div class="p-4 rounded-4 border" style="background: rgba(var(--text-main), 0.04); border-color: var(--border-main) !important;">
             <h6 class="fw-bold mb-3 small text-uppercase text-muted letter-spacing-1">Agregar Seguimiento</h6>
             <form action="{{ route('novedades.store') }}" method="POST" enctype="multipart/form-data">
               @csrf
@@ -530,7 +395,7 @@
               <input type="hidden" name="cliente_id" value="{{ $requerimiento->cliente_id }}">
               
               <div class="mb-3">
-                <textarea name="novedad" class="form-control border-0 bg-white" rows="4" placeholder="Escribe aquí el detalle del seguimiento..." style="border-radius: 12px; resize: none;" required></textarea>
+                <textarea name="novedad" class="form-control border-0" rows="4" placeholder="Escribe aquí el detalle del seguimiento..." style="border-radius: 12px; resize: none; background: var(--bg-surface); color: var(--text-main);" required></textarea>
               </div>
               
               <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">

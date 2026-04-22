@@ -6,9 +6,9 @@
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-8">
-            <div class="card shadow-sm border-0" style="border-radius: 20px;">
-                <div class="card-header bg-white border-0 pt-4 px-4">
-                    <h4 class="fw-bold mb-0">Enviar Aviso del Sistema</h4>
+            <div class="card shadow-sm border-0" style="border-radius: 20px; background: var(--bg-surface);">
+                <div class="card-header border-0 pt-4 px-4" style="background: transparent;">
+                    <h4 class="fw-bold mb-0" style="color: var(--text-main);">Enviar Aviso del Sistema</h4>
                     <p class="text-muted small">Envía mensajes individuales o globales a los colaboradores.</p>
                 </div>
 
@@ -23,13 +23,13 @@
                     <form action="{{ route('notificaciones.send') }}" method="POST">
                         @csrf
                         <div class="mb-4">
-                            <label class="form-label fw-bold small text-uppercase">Destinatarios</label>
+                            <label class="form-label fw-bold small text-uppercase" style="color: var(--text-main);">Destinatarios</label>
                             
-                            <div class="card border p-3" style="max-height: 300px; overflow-y: auto; border-radius: 12px;">
-                                <div class="form-check mb-3 pb-2 border-bottom">
+                            <div class="card border p-3" style="max-height: 300px; overflow-y: auto; border-radius: 12px; background: rgba(var(--text-main), 0.03); border-color: var(--border-color) !important;">
+                                <div class="form-check mb-3 pb-2 border-bottom" style="border-color: var(--border-color) !important;">
                                     <input class="form-check-input" type="checkbox" id="checkAll" value="all" name="destinatario_global">
                                     <label class="form-check-label fw-bold text-primary" for="checkAll">
-                                        📢 SELECCIONAR PROXIMOS TODOS (GLOBAL)
+                                        📢 SELECCIONAR TODOS (GLOBAL)
                                     </label>
                                 </div>
 
@@ -60,8 +60,8 @@
                         </script>
 
                         <div class="mb-4">
-                            <label class="form-label fw-bold small text-uppercase">Mensaje</label>
-                            <textarea name="mensaje" class="form-control" rows="4" placeholder="Escribe el mensaje aquí..." required maxlength="500"></textarea>
+                            <label class="form-label fw-bold small text-uppercase" style="color: var(--text-main);">Mensaje</label>
+                            <textarea name="mensaje" class="form-control" rows="4" placeholder="Escribe el mensaje aquí..." required maxlength="500" style="background: rgba(var(--text-main), 0.03); color: var(--text-main); border-color: var(--border-color);"></textarea>
                             <div class="form-text">Máximo 500 caracteres.</div>
                         </div>
 

@@ -37,13 +37,13 @@ class RequerimientoProyectoController extends Controller
             'contacto_id'       => 'nullable|exists:libreta_contacto,id',
             'tipo_soporte_id'   => 'nullable|exists:tipo_soporte,id',
             'texto_imagen'      => 'required|string|max:2000',
-            'foto'              => 'nullable|image|max:30720',
+            'foto'              => 'nullable|image|max:5242880',
             'estado_id'         => 'nullable|exists:estado_requerimientos,id',
         ]);
 
         $path = null;
         if ($request->hasFile('foto')) {
-            $path = $request->file('foto')->store('RequerimientoProyecto', 'ftp');
+            $path = $request->file('foto')->store('RequerimientoProyecto', 'public');
         }
 
         RequerimientoProyecto::create([
@@ -96,7 +96,7 @@ class RequerimientoProyectoController extends Controller
             'contacto_id'     => 'nullable|exists:libreta_contacto,id',
             'tipo_soporte_id' => 'nullable|exists:tipo_soporte,id',
             'texto_imagen'    => 'required|string|max:2000',
-            'foto'            => 'nullable|image|max:30720',
+            'foto'            => 'nullable|image|max:5242880',
             'estado_id'       => 'nullable|exists:estado_requerimientos,id',
         ]);
 
@@ -111,9 +111,9 @@ class RequerimientoProyectoController extends Controller
         if ($request->hasFile('foto')) {
             // Delete old photo if exists
             if ($requerimientos_proyecto->foto) {
-                Storage::disk('ftp')->delete($requerimientos_proyecto->foto);
+                Storage::disk('public')->delete($requerimientos_proyecto->foto);
             }
-            $data['foto'] = $request->file('foto')->store('RequerimientoProyecto', 'ftp');
+            $data['foto'] = $request->file('foto')->store('RequerimientoProyecto', 'public');
         }
 
         $requerimientos_proyecto->update($data);
@@ -128,7 +128,7 @@ class RequerimientoProyectoController extends Controller
         $id_proyecto = $requerimientos_proyecto->id_proyecto;
 
         if ($requerimientos_proyecto->foto) {
-            Storage::disk('ftp')->delete($requerimientos_proyecto->foto);
+            Storage::disk('public')->delete($requerimientos_proyecto->foto);
         }
 
         $requerimientos_proyecto->delete();

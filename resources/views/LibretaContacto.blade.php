@@ -3,7 +3,50 @@
 @section('title', 'Libreta de Contactos')
 
 @section('content')
-<div class="container py-4">
+<style>
+  .spgi-bg{ padding: 24px 0; }
+  .spgi-title{ font-weight: 800; font-size: 1.6rem; color: var(--text-main); letter-spacing: -.5px; margin:0; }
+  
+  .btn-spgi{
+    background: linear-gradient(135deg, var(--spgi-primary), #2563eb);
+    border: 0; color: #fff !important; min-height:46px; border-radius:14px; padding:0 20px;
+    box-shadow: 0 10px 25px var(--spgi-primary-glow); font-weight:700;
+  }
+  .btn-spgi:hover{ filter: brightness(1.1); transform: translateY(-1px); }
+
+  .spgi-card{
+    background: var(--bg-surface-glass); border: 1px solid var(--border-main);
+    border-radius: 20px; box-shadow: var(--shadow-main); backdrop-filter: blur(16px);
+    overflow: hidden;
+  }
+  
+  .table-spgi{ margin: 0; }
+  .table-spgi thead th{
+    background: #0b1220; color:#fff; border-color: rgba(255,255,255,0.08) !important;
+    font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; padding: 14px;
+  }
+  .table-spgi tbody td{ border-color: var(--border-main) !important; color: var(--text-main); padding: 14px; }
+  .table-spgi tbody tr:hover{ background: rgba(var(--spgi-primary), 0.05); }
+
+  /* Modal Styling */
+  .modal-content{ 
+    background: var(--bg-surface-glass); border: 1px solid var(--border-main);
+    backdrop-filter: blur(20px); border-radius: 24px; color: var(--text-main);
+  }
+  .modal-header{ border-bottom: 1px solid var(--border-main); padding: 24px; }
+  .modal-footer{ border-top: 1px solid var(--border-main); padding: 20px 24px; }
+  
+  .form-label{ font-weight: 800; color: var(--text-muted); font-size: .75rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+  .form-control, .form-select{
+    background: rgba(0,0,0,0.1) !important; color: white !important;
+    border-radius:12px !important; border:1px solid var(--border-main) !important;
+    padding:.75rem 1rem !important; box-shadow: none !important;
+  }
+  .form-control:focus, .form-select:focus{ border-color: var(--spgi-primary) !important; }
+</style>
+
+<div class="spgi-bg">
+  <div class="container">
 
     {{-- ALERTAS --}}
     @if(session('success'))
@@ -25,22 +68,22 @@
     @endif
 
     {{-- HEADER --}}
-    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-        <h4 class="fw-bold mb-0">Libreta de Contactos</h4>
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <h4 class="spgi-title">Libreta de Contactos</h4>
 
         <div class="d-flex gap-2">
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalCrearContacto">
+            <button class="btn btn-spgi" data-bs-toggle="modal" data-bs-target="#modalCrearContacto">
                 <i class="bi bi-person-plus"></i> Nuevo Contacto
             </button>
         </div>
     </div>
 
     {{-- TABLA --}}
-    <div class="card shadow-sm">
+    <div class="spgi-card">
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-striped table-bordered mb-0 align-middle">
-                    <thead class="table-dark">
+                <table class="table table-spgi align-middle">
+                    <thead>
                         <tr>
                             <th style="width: 70px;">ID</th>
                             <th>Nombre</th>
@@ -55,7 +98,7 @@
                         @forelse($contactos as $c)
                             <tr>
                                 <td class="text-center">{{ $c->id }}</td>
-                                <td class="fw-semibold">{{ $c->nombre }}</td>
+                                <td class="fw-bold">{{ $c->nombre }}</td>
                                 <td>{{ $c->telefono ?? '-' }}</td>
                                 <td>{{ $c->correo ?? '-' }}</td>
                                 <td>{{ $c->rol->nombre ?? 'Sin rol' }}</td>
@@ -114,9 +157,9 @@
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
 
-                <div class="modal-header bg-primary text-white">
+                <div class="modal-header">
                     <h5 class="modal-title">
-                        <i class="bi bi-person-plus"></i> Agregar Contacto
+                        <i class="bi bi-person-plus me-2"></i> Agregar Contacto
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
@@ -177,7 +220,7 @@
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                             <i class="bi bi-x-circle"></i> Cancelar
                         </button>
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn btn-spgi">
                             <i class="bi bi-check-circle"></i> Guardar
                         </button>
                     </div>
@@ -196,11 +239,11 @@
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
 
-                <div class="modal-header bg-warning">
+                <div class="modal-header">
                     <h5 class="modal-title">
-                        <i class="bi bi-pencil-square"></i> Editar Contacto
+                        <i class="bi bi-pencil-square me-2"></i> Editar Contacto
                     </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
 
                 <form id="formEditarContacto" method="POST">

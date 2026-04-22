@@ -17,6 +17,7 @@ class CatEquipo extends Model
         'caracteristicas',
         'configuracion_estandar',
         'driver_url',
+        'driver_doc_id',
         'activo',
     ];
 
@@ -28,5 +29,10 @@ class CatEquipo extends Model
     public function asignaciones()
     {
         return $this->hasMany(ClienteEquipo::class, 'cat_equipo_id');
+    }
+
+    public function driverDoc()
+    {
+        return $this->belongsTo(WikiDocument::class, 'driver_doc_id');
     }
 }

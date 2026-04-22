@@ -19,15 +19,15 @@ class FileProxyController extends Controller
         // Decode path in case it's encoded in the URL
         $decodedPath = urldecode($path);
 
-        if (!Storage::disk('ftp')->exists($decodedPath)) {
-            abort(404, 'Archivo no encontrado en el servidor externo.');
+        if (!Storage::disk('public')->exists($decodedPath)) {
+            abort(404, 'Archivo no encontrado en el servidor local.');
         }
 
         $headers = [
-            'Content-Type' => Storage::disk('ftp')->mimeType($decodedPath),
+            'Content-Type' => Storage::disk('public')->mimeType($decodedPath),
             'Content-Disposition' => 'inline; filename="' . basename($decodedPath) . '"',
         ];
 
-        return Storage::disk('ftp')->download($decodedPath, basename($decodedPath), $headers);
+        return Storage::disk('public')->download($decodedPath, basename($decodedPath), $headers);
     }
 }

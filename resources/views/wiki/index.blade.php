@@ -5,157 +5,180 @@
 @section('content')
 
 <style>
-  :root{
-    --spgi-primary:#0d6efd;
-    --spgi-primary-2:#2b7bff;
-    --spgi-ink:#0f172a;
-    --spgi-muted:#64748b;
-    --spgi-border: rgba(15, 23, 42, .10);
-    --spgi-radius: 16px;
-    --spgi-shadow: 0 18px 45px rgba(2, 6, 23, .10);
-  }
-
   .spgi-page{ padding: 12px 0 24px 0; }
-  .spgi-head{ display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; margin-bottom: 14px; }
-  .page-title{ font-size: 1.65rem; font-weight: 800; letter-spacing: .2px; margin: 0; color: var(--spgi-ink); }
-  .page-sub{ color: var(--spgi-muted); font-size: .95rem; margin-top: 4px; }
-  .spgi-head-actions{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .spgi-head{ display:flex; flex-direction:column; gap:16px; margin-bottom: 32px; }
+  .spgi-head-top{ display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; }
+
+  .page-title{ font-weight: 900; font-size: 1.8rem; color: var(--text-main); letter-spacing: -1px; margin:0; }
+  .page-sub{ color: var(--text-muted); font-size: 1rem; margin-top: 4px; }
   
   .badge-spgi{
-    border-radius: 999px; padding: 8px 12px; font-weight: 700; font-size: .82rem;
-    border: 1px solid rgba(0,0,0,.08); background: rgba(255,255,255,.9); color: #495057; box-shadow: 0 10px 24px rgba(2,6,23,.07);
+    border-radius: 999px; padding: 10px 20px; font-weight: 800; font-size: .75rem;
+    border: 1px solid var(--border-main); background: var(--bg-surface); color: var(--text-main);
+    box-shadow: var(--shadow-main); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    display: inline-flex; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: 0.5px;
   }
+  .badge-spgi.active{ background: var(--spgi-primary); color: #fff; border-color: var(--spgi-primary); }
+  .badge-spgi:hover:not(.active){ transform: translateY(-2px); background: rgba(var(--spgi-primary), 0.1); border-color: var(--spgi-primary); }
 
   .btn-spgi{
-    background: linear-gradient(135deg, var(--spgi-primary), var(--spgi-primary-2));
-    border: 0; color: #fff !important; min-height:44px; border-radius:12px; padding:0 14px; white-space:nowrap;
-    box-shadow: 0 10px 24px rgba(2,6,23,.07); font-weight:700;
+    background: linear-gradient(135deg, var(--spgi-primary), #2563eb);
+    border: 0; color: #fff !important; min-height:46px; border-radius:14px; padding:0 24px;
+    box-shadow: 0 10px 25px var(--spgi-primary-glow); font-weight:700;
   }
-  .btn-spgi:hover{ filter: brightness(.98); transform: translateY(-1px); }
+  .btn-spgi:hover{ filter: brightness(1.1); transform: translateY(-2px); }
 
   .spgi-card{
-    border: 1px solid var(--spgi-border); border-radius: var(--spgi-radius);
-    box-shadow: var(--spgi-shadow); background: rgba(255,255,255,.92);
-    backdrop-filter: blur(6px); overflow: hidden;
+    background: var(--bg-surface-glass); border: 1px solid var(--border-main);
+    border-radius: 24px; box-shadow: var(--shadow-main); backdrop-filter: blur(24px);
+    overflow: hidden;
   }
-  .spgi-card .card-head{
-    padding: 14px 16px; border-bottom: 1px solid rgba(0,0,0,.06);
-    display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap;
-  }
-  .spgi-card .card-body-spgi{ padding: 0; }
+  .spgi-card .card-head{ padding: 24px; border-bottom: 1px solid var(--border-main); display: flex; gap: 16px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
 
-  .search-wrap{ display: flex; gap: 10px; align-items: center; flex-wrap: wrap; width: 100%; }
   .search-group{
     display:flex; align-items:center; flex: 1 1 340px; min-width: 0;
-    background:#fff; border:1px solid var(--spgi-border); border-radius:12px;
-    box-shadow: 0 8px 20px rgba(2,6,23,.05); overflow:hidden;
+    background: rgba(var(--text-main), 0.03); border: 1px solid var(--border-main); border-radius: 14px;
+    overflow:hidden; transition: all 0.3s ease;
   }
-  .search-group .search-icon{
-    min-width:44px; height:44px; display:flex; align-items:center; justify-content:center;
-    color:#64748b; background:#fff;
-  }
-  .search-input{ border:0 !important; box-shadow:none !important; border-radius:0 !important; height:44px; min-width:0; }
-  .btn-search, .btn-clear{ min-height:44px; border-radius:12px; padding:0 14px; white-space:nowrap; font-weight:700; }
-  .btn-clear{ border: 1px solid rgba(0,0,0,.08); background:#fff; }
+  .search-group:focus-within { border-color: var(--spgi-primary); box-shadow: 0 0 0 4px var(--spgi-primary-glow); }
+  .search-input{ background: transparent !important; color: var(--text-main) !important; border: 0 !important; padding: 12px 16px; width: 100%; }
 
-  .table-spgi{ margin: 0; }
+  .search-wrap {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  .search-group { flex: 1 1 340px; }
+  .filter-group { flex-shrink: 0; }
+  .btn-search {
+    height: 48px;
+    border-radius: 14px;
+    padding: 0 24px;
+    font-weight: 700;
+  }
+  .btn-clear {
+    height: 48px;
+    display: inline-flex;
+    align-items: center;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .btn-clear:hover { color: var(--spgi-primary); }
+
   .table-spgi thead th{
-    font-size: .92rem; letter-spacing: .2px; background: #0b1220; color:#fff;
-    border-bottom: 1px solid rgba(255,255,255,.08) !important; padding: 12px 14px; vertical-align: middle;
+    background: #0b1220; color: #fff; text-align:center;
+    border-color: rgba(255,255,255,0.08) !important;
+    font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; padding: 16px;
   }
-  .table-spgi tbody td{ padding: 12px 14px; vertical-align: middle; border-color: rgba(15,23,42,.08) !important; }
-  .table-spgi tbody tr:hover{ background: #fbfcff; }
-  
-  .acciones{ display: inline-flex; gap: 8px; align-items: center; justify-content: center; flex-wrap: wrap; }
-  .acciones .btn{
-    height: 38px; padding: 0 12px; border-radius: 10px; display: inline-flex;
-    align-items: center; justify-content: center; gap: 6px; font-weight: 600; font-size: .88rem; white-space: nowrap;
+  .table-spgi tbody td{ border-color: var(--border-main) !important; color: var(--text-main); padding: 16px; }
+  .table-spgi tbody tr:hover{ background: rgba(var(--spgi-primary), 0.05); }
+  /* Tags & Chips */
+  .tag-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    margin: 2px;
+    font-size: 0.7rem;
+    background: rgba(var(--spgi-primary), 0.1);
+    color: var(--spgi-primary);
+    border: 1px solid rgba(var(--spgi-primary), 0.2);
+    border-radius: 8px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  [data-bs-theme="dark"] .tag-badge {
+    background: rgba(var(--spgi-primary), 0.2);
+    color: #93c5fd;
+    border-color: rgba(var(--spgi-primary), 0.3);
   }
 
-  .tag-badge { background-color: #e2e8f0; color: #334155; padding: 4px 8px; border-radius: 6px; font-size: 0.8rem; margin-right: 4px; display: inline-block; margin-bottom: 4px; }
-  .modal-content{ border-radius: 16px; border: 1px solid rgba(0,0,0,.08); box-shadow: 0 18px 40px rgba(0,0,0,.12); }
-  .modal-header{ border-top-left-radius: 16px; border-top-right-radius: 16px; }
-  .form-control{ border-radius: 12px; }
-
-  @media (max-width: 767.98px){
-    .spgi-head{ align-items:stretch; }
-    .spgi-head-actions{ width:100%; justify-content:stretch; }
-    .badge-spgi, .spgi-head-actions .btn{ width:100%; justify-content:center; }
-    .search-wrap{ flex-direction:column; align-items:stretch; gap:8px; }
-    .search-group{ flex: 0 0 auto !important; width:100%; }
-    .btn-search, .btn-clear{ width:100%; }
-  }
-
-  /* Tag Input Styles */
   .tag-input-container {
-    display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
-    padding: 8px 12px; background: #fff; border: 1px solid var(--spgi-border);
-    border-radius: 12px; box-shadow: 0 8px 18px rgba(2,6,23,.03); min-height: 45px;
-    cursor: text;
+    border: 1px solid var(--border-main);
+    border-radius: 12px;
+    padding: 8px 12px;
+    background: var(--bg-surface);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-height: 52px;
+    align-items: center;
+    transition: all 0.2s ease;
   }
   .tag-input-container:focus-within {
-    border-color: rgba(13,110,253, 0.4);
-    box-shadow: 0 0 0 0.2rem rgba(13,110,253, 0.15);
+    border-color: var(--spgi-primary);
+    box-shadow: 0 0 0 4px var(--spgi-primary-glow);
   }
-  .tag-list { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+
   .tag-chip {
-    background: #e0f2fe; color: #0369a1; padding: 4px 8px; border-radius: 6px;
-    font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;
-    border: 1px solid #bae6fd;
+    background: var(--spgi-primary);
+    color: #fff;
+    padding: 4px 12px;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 10px rgba(var(--spgi-primary), 0.2);
   }
-  .tag-chip .remove-tag { cursor: pointer; color: #0284c7; font-weight: bold; font-size: 0.95rem; }
-  .tag-chip .remove-tag:hover { color: #0369a1; }
-  .tag-input-field {
-    border: 0 !important; outline: none !important; padding: 4px 0 !important;
-    background: transparent !important; flex-grow: 1; font-size: 0.9rem; min-width: 120px;
-    box-shadow: none !important;
+
+  .remove-tag {
+    cursor: pointer;
+    font-size: 1.2rem;
+    line-height: 1;
+    opacity: 0.8;
+    transition: all 0.2s;
   }
+  .remove-tag:hover { opacity: 1; transform: scale(1.1); }
 </style>
 
 <div class="spgi-page">
   <div class="container">
 
     <div class="spgi-head">
-      <div>
-        <h3 class="page-title">Wiki Documental</h3>
-        <div class="page-sub">Consulta y sube documentos para base de conocimiento.</div>
+      <div class="spgi-head-top">
+        <div>
+          <h3 class="page-title">Wiki Documental</h3>
+          <div class="page-sub">Consulta y sube documentos para base de conocimiento.</div>
+        </div>
+        <button class="btn btn-spgi d-flex align-items-center" type="button" data-bs-toggle="modal" data-bs-target="#modalDocumento">
+          <i class="bi bi-cloud-arrow-up me-1"></i> Subir Documento
+        </button>
       </div>
 
-      <div class="spgi-head-actions">
+      <div class="spgi-head-filters d-flex gap-2 flex-wrap">
         <a href="{{ route('wiki.index', ['categoria' => 'Manual'] + request()->except('categoria')) }}" 
-           class="badge-spgi text-decoration-none {{ request('categoria') == 'Manual' ? 'active' : '' }}" 
-           style="{{ request('categoria') == 'Manual' ? 'background: #0d6efd; color: #fff; border-color: #0d6efd;' : 'color: #0d6efd; border-color: rgba(13,110,253,.2);' }}" title="Filtrar por Manuales">
+           class="badge-spgi text-decoration-none {{ request('categoria') == 'Manual' ? 'active' : '' }}" title="Filtrar por Manuales">
           <i class="bi bi-book me-1"></i> MANUALES
         </a>
 
         <a href="{{ route('wiki.index', ['categoria' => 'Script'] + request()->except('categoria')) }}" 
-           class="badge-spgi text-decoration-none {{ request('categoria') == 'Script' ? 'active' : '' }}" 
-           style="{{ request('categoria') == 'Script' ? 'background: #ffc107; color: #000; border-color: #ffc107;' : 'color: #856404; border-color: rgba(255,193,7,.3);' }}" title="Filtrar por Scripts">
+           class="badge-spgi text-decoration-none {{ request('categoria') == 'Script' ? 'active' : '' }}" title="Filtrar por Scripts">
           <i class="bi bi-code-slash me-1"></i> SCRIPTS
         </a>
 
         <a href="{{ route('wiki.index', ['categoria' => 'Query'] + request()->except('categoria')) }}" 
-           class="badge-spgi text-decoration-none {{ request('categoria') == 'Query' ? 'active' : '' }}" 
-           style="{{ request('categoria') == 'Query' ? 'background: #198754; color: #fff; border-color: #198754;' : 'color: #198754; border-color: rgba(25,135,84,.2);' }}" title="Filtrar por Queries">
+           class="badge-spgi text-decoration-none {{ request('categoria') == 'Query' ? 'active' : '' }}" title="Filtrar por Queries">
           <i class="bi bi-database me-1"></i> QUERY
         </a>
 
+        <a href="{{ route('wiki.index', ['categoria' => 'Sistemas'] + request()->except('categoria')) }}" 
+           class="badge-spgi text-decoration-none {{ request('categoria') == 'Sistemas' ? 'active' : '' }}" title="Filtrar por Sistemas">
+          <i class="bi bi-cpu me-1"></i> SISTEMAS
+        </a>
+
         <a href="{{ route('wiki.index', ['categoria' => 'Otros'] + request()->except('categoria')) }}" 
-           class="badge-spgi text-decoration-none {{ request('categoria') == 'Otros' ? 'active' : '' }}" 
-           style="{{ request('categoria') == 'Otros' ? 'background: #6c757d; color: #fff; border-color: #6c757d;' : 'color: #6c757d; border-color: rgba(108,117,125,.2);' }}" title="Filtrar por Otros">
+           class="badge-spgi text-decoration-none {{ request('categoria') == 'Otros' ? 'active' : '' }}" title="Filtrar por Otros">
           <i class="bi bi-three-dots me-1"></i> OTROS
         </a>
 
-        <div class="d-flex align-items-center gap-2 ms-lg-auto">
-          <a href="{{ route('wiki.index', ['categoria' => 'Todos'] + request()->except('categoria')) }}" class="badge-spgi text-decoration-none {{ request('categoria', 'Todos') == 'Todos' ? 'border-primary text-primary' : '' }}">
-            <i class="bi bi-file-earmark-text me-1"></i>
-            Total: {{ $documents->total() ?? 0 }}
-          </a>
-
-          <button class="btn btn-spgi d-flex align-items-center" type="button" data-bs-toggle="modal" data-bs-target="#modalDocumento">
-            <i class="bi bi-cloud-arrow-up me-1"></i> Subir Documento
-          </button>
-        </div>
+        <a href="{{ route('wiki.index', ['categoria' => 'Todos'] + request()->except('categoria')) }}" class="badge-spgi text-decoration-none {{ request('categoria', 'Todos') == 'Todos' ? 'active' : '' }}">
+          <i class="bi bi-file-earmark-text me-1"></i>
+          Total: {{ $documents->total() ?? 0 }}
+        </a>
       </div>
     </div>
 
@@ -199,10 +222,14 @@
             </select>
           </div>
 
-          <button class="btn btn-outline-success btn-search" type="submit">Buscar</button>
+          <button class="btn btn-outline-success btn-search px-4 py-2" type="submit">
+            <i class="bi bi-search me-1"></i> Buscar
+          </button>
 
           @if(request('search') || (request('estado') && request('estado') !== 'Todos'))
-            <a href="{{ route('wiki.index') }}" class="btn btn-clear">Limpiar</a>
+            <a href="{{ route('wiki.index') }}" class="btn btn-clear">
+              <i class="bi bi-x-circle me-1"></i> Limpiar
+            </a>
           @endif
         </form>
       </div>
@@ -234,8 +261,8 @@
                         <span class="badge rounded-pill bg-primary text-white" style="font-size: 0.75rem;">{{ $doc->categoria }}</span>
                     @elseif($doc->categoria == 'Script')
                         <span class="badge rounded-pill bg-warning text-dark" style="font-size: 0.75rem;">{{ $doc->categoria }}</span>
-                    @elseif($doc->categoria == 'Query')
-                        <span class="badge rounded-pill bg-success text-white" style="font-size: 0.75rem;">{{ $doc->categoria }}</span>
+                    @elseif($doc->categoria == 'Sistemas')
+                        <span class="badge rounded-pill bg-danger text-white" style="font-size: 0.75rem;">{{ $doc->categoria }}</span>
                     @elseif($doc->categoria == 'Otros')
                         <span class="badge rounded-pill bg-secondary text-white" style="font-size: 0.75rem;">{{ $doc->categoria }}</span>
                     @elseif($doc->categoria)
@@ -301,7 +328,7 @@
       </div>
       
       @if($documents->hasPages())
-      <div class="card-footer bg-white border-top border-light px-4 py-3">
+      <div class="card-footer border-top px-4 py-3" style="background: var(--bg-surface); border-color: var(--border-main) !important;">
           {{ $documents->links() }}
       </div>
       @endif
@@ -385,6 +412,7 @@
                 <option value="Manual" {{ $doc->categoria == 'Manual' ? 'selected' : '' }}>Manual</option>
                 <option value="Script" {{ $doc->categoria == 'Script' ? 'selected' : '' }}>Script</option>
                 <option value="Query" {{ $doc->categoria == 'Query' ? 'selected' : '' }}>Query</option>
+                <option value="Sistemas" {{ $doc->categoria == 'Sistemas' ? 'selected' : '' }}>Sistemas</option>
                 <option value="Otros" {{ $doc->categoria == 'Otros' ? 'selected' : '' }}>Otros</option>
               </select>
             </div>
@@ -437,6 +465,7 @@
               <option value="Manual">Manual</option>
               <option value="Script">Script</option>
               <option value="Query">Query</option>
+              <option value="Sistemas">Sistemas</option>
               <option value="Otros">Otros</option>
             </select>
           </div>

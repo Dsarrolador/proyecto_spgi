@@ -3,18 +3,22 @@
 @section('page_title', 'Control de Igualas Mensual')
 
 @section('content')
-<div class="container-fluid">
+<div class="container-fluid py-4">
     <div class="row mb-4">
         <div class="col-12">
-            <div class="d-flex align-items-center justify-content-between bg-white p-3 rounded-3 shadow-sm">
-                <div>
-                    <h4 class="fw-bold mb-1">Centro de Gestión de Igualas</h4>
-                    <p class="text-muted mb-0">Seguimiento de consumos para el mes de <strong>{{ now()->translatedFormat('F Y') }}</strong></p>
-                </div>
-                <div class="text-end">
-                    <span class="badge bg-primary px-3 py-2 rounded-pill">
-                        <i class="bi bi-calendar3 me-1"></i> Ciclo Actual
-                    </span>
+            <div class="spgi-card p-4">
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                    <div>
+                        <h4 class="fw-bold mb-1">Centro de Gestión de Igualas</h4>
+                        <p class="text-muted mb-0">Seguimiento de consumos para el mes de <strong class="text-primary">{{ now()->translatedFormat('F Y') }}</strong></p>
+                    </div>
+                    <div class="text-end">
+                        <div class="rounded-pill px-4 py-2 border shadow-sm d-inline-flex align-items-center gap-2" 
+                             style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.1)); border-color: var(--spgi-primary) !important;">
+                            <i class="bi bi-cpu-fill text-primary"></i>
+                            <span class="fw-bold text-primary small">CICLO ACTUAL</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

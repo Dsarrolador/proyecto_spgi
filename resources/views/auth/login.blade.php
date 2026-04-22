@@ -9,116 +9,71 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
     <style>
-        body{
-            min-height:100vh;
-            margin:0;
-            display:grid;
-            place-items:center;
-            padding:20px;
-
-            background:
-                radial-gradient(900px 600px at 15% 18%, rgba(59,130,246,.18), transparent 55%),
-                radial-gradient(800px 600px at 90% 20%, rgba(236,72,153,.14), transparent 55%),
-                radial-gradient(700px 500px at 50% 90%, rgba(34,197,94,.12), transparent 60%),
-                linear-gradient(180deg, #f7f8fb 0%, #eef2f7 45%, #f7f8fb 100%);
+        :root {
+            --spgi-primary: #3b82f6;
+            --spgi-primary-glow: rgba(59, 130, 246, 0.5);
+            --bg-deep: #050b18;
+            --bg-surface-glass: rgba(15, 23, 42, 0.8);
+            --border-main: rgba(255, 255, 255, 0.08);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --shadow-main: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
 
-        .login-card{
-            width:100%;
-            max-width:500px;
-            border-radius:22px;
-            background:rgba(255,255,255,.88);
-            border:1px solid rgba(0,0,0,.08);
-            box-shadow:0 30px 80px rgba(0,0,0,.18);
-            backdrop-filter:blur(12px);
-            padding:35px;
-            position:relative;
-
-            transform:translateY(15px) scale(.98);
-            opacity:0;
-            animation:cardIn .7s cubic-bezier(.2,.8,.2,1) forwards;
+        body {
+            min-height: 100vh; margin: 0; display: grid; place-items: center; padding: 20px;
+            background: 
+                radial-gradient(circle at 15% 15%, rgba(59, 130, 246, 0.15), transparent 40%),
+                radial-gradient(circle at 85% 85%, rgba(37, 99, 235, 0.1), transparent 40%),
+                var(--bg-deep);
+            color: var(--text-main); font-family: 'Inter', system-ui, -apple-system, sans-serif;
         }
 
-        @keyframes cardIn{
-            to{transform:translateY(0) scale(1); opacity:1;}
+        .login-card {
+            width: 100%; max-width: 480px; border-radius: 28px;
+            background: var(--bg-surface-glass); border: 1px solid var(--border-main);
+            box-shadow: var(--shadow-main); backdrop-filter: blur(24px); padding: 48px;
+            position: relative; animation: cardIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0; transform: translateY(20px);
         }
 
-        .badge-chip{
-            display:inline-flex;
-            align-items:center;
-            gap:6px;
-            padding:7px 12px;
-            border-radius:999px;
-            background:rgba(0,0,0,.05);
-            font-weight:700;
-            font-size:.9rem;
-            margin-bottom:18px;
+        @keyframes cardIn { to { opacity: 1; transform: translateY(0); } }
+
+        .badge-chip {
+            display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; border-radius: 999px;
+            background: rgba(59, 130, 246, 0.1); font-weight: 800; font-size: .8rem;
+            color: var(--spgi-primary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 24px;
+            border: 1px solid var(--border-main);
         }
 
-        .title{
-            font-weight:900;
-            font-size:1.9rem;
-            margin-bottom:8px;
+        .title { font-weight: 900; font-size: 2.2rem; margin-bottom: 8px; letter-spacing: -1px; }
+        .subtitle { color: var(--text-muted); margin-bottom: 32px; font-size: 1.05rem; }
+
+        .divider { height: 1px; background: var(--border-main); margin: 24px 0 32px; }
+
+        .form-label { font-weight: 700; color: var(--text-muted); font-size: .8rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+
+        .form-control {
+            background: rgba(0,0,0,0.2) !important; color: white !important;
+            border-radius: 14px; padding: 14px; border: 1px solid var(--border-main); transition: all 0.3s ease;
+        }
+        .form-control:focus {
+            background: rgba(0,0,0,0.3) !important; border-color: var(--spgi-primary);
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
         }
 
-        .subtitle{
-            color:#6b7280;
-            margin-bottom:20px;
+        .btn-main {
+            border-radius: 16px; font-weight: 800; padding: 16px; transition: all 0.3s ease;
+            background: linear-gradient(135deg, var(--spgi-primary), #2563eb); border: none;
+            color: white; font-size: 1.1rem; box-shadow: 0 10px 20px var(--spgi-primary-glow);
+        }
+        .btn-main:hover {
+            transform: translateY(-2px); box-shadow: 0 15px 30px var(--spgi-primary-glow); filter: brightness(1.1);
         }
 
-        .divider{
-            height:1px;
-            background:linear-gradient(90deg, transparent, rgba(0,0,0,.2), transparent);
-            margin:15px 0 25px;
-        }
-
-        .form-label{
-            font-weight:600;
-        }
-
-        .form-control{
-            border-radius:12px;
-            padding:11px;
-        }
-
-        .btn-main{
-            border-radius:14px;
-            font-weight:800;
-            padding:12px;
-            transition:.2s;
-            position:relative;
-            overflow:hidden;
-        }
-
-        .btn-main:hover{
-            transform:translateY(-2px);
-            box-shadow:0 15px 30px rgba(37,99,235,.2);
-        }
-
-        .btn-main::after{
-            content:"";
-            position:absolute;
-            top:-50%;
-            left:-30%;
-            width:40%;
-            height:200%;
-            background:linear-gradient(90deg, transparent, rgba(255,255,255,.5), transparent);
-            transform:rotate(20deg);
-            transition:left .5s;
-        }
-
-        .btn-main:hover::after{
-            left:120%;
-        }
-
-        .brand{
-            position:fixed;
-            bottom:15px;
-            left:0;
-            right:0;
-            text-align:center;
-            font-size:.9rem;
-            color:rgba(0,0,0,.5);
+        .brand {
+            position: fixed; bottom: 20px; text-align: center; font-size: .9rem;
+            color: var(--text-muted); font-weight: 600; letter-spacing: 1px;
         }
     </style>
 </head>

@@ -36,23 +36,31 @@ class NovedadRequerimientoController extends Controller
             'requerimiento_id' => 'required',
             'cliente_id'       => 'required',
             'novedad'          => 'required',
-            'adjunto'          => 'nullable|file|max:30720',
+            'adjunto'          => 'nullable|file|max:5242880',
         ]);
 
-        try {
-            $data = $request->only(['requerimiento_id', 'cliente_id', 'novedad']);
-            $data['user_id'] = auth()->id();
+        $data = $request->only(['requerimiento_id', 'cliente_id', 'novedad']);
+        $data['user_id'] = auth()->id();
+        $ftpWarning = null;
 
-            if ($request->hasFile('adjunto')) {
+        // Intentar subir el archivo al almacenamiento local
+        if ($request->hasFile('adjunto')) {
+            try {
                 $file = $request->file('adjunto');
                 $fileName = $file->getClientOriginalName();
                 $path = 'novedades/' . $request->requerimiento_id;
-                $file->storeAs($path, $fileName, 'ftp');
-                
+                $file->storeAs($path, $fileName, 'public');
+
                 $data['adjunto'] = $path . '/' . $fileName;
                 $data['nombre_original'] = $fileName;
+            } catch (\Exception $e) {
+                \Log::error("Error subiendo adjunto de novedad: " . $e->getMessage());
+                $ftpWarning = 'El seguimiento fue guardado, pero el archivo adjunto no pudo guardarse.';
             }
+        }
 
+        // Siempre guardar el texto de la novedad en la BD
+        try {
             $novedad = NovedadRequerimiento::create($data);
 
             // NOTIFICAR SEGUIMIENTOS (Si es colaborativo)
@@ -60,17 +68,17 @@ class NovedadRequerimientoController extends Controller
             if ($req && $req->es_colaborativo) {
                 $urlDeVista = route('requerimientos.show', $req->id) . '#novedades';
                 $usuarioUpdater = auth()->id();
-                
+
                 $senderName = auth()->user()->name ?? 'Un usuario';
                 $participantes = array_filter(array_unique([$req->creador_user_id ?? $req->user_id, $req->asignado_user_id]));
                 foreach ($participantes as $p) {
                     if ($p && $p != $usuarioUpdater) {
                         NotificacionSistema::create([
-                            'user_id' => $p,
+                            'user_id'   => $p,
                             'sender_id' => $usuarioUpdater,
-                            'titulo' => 'Nueva Novedad (#' . $req->id . ')',
-                            'mensaje' => $senderName . ' ha agregado un seguimiento al requerimiento.',
-                            'url' => $urlDeVista,
+                            'titulo'    => 'Nueva Novedad (#' . $req->id . ')',
+                            'mensaje'   => $senderName . ' ha agregado un seguimiento al requerimiento.',
+                            'url'       => $urlDeVista,
                         ]);
                     }
                 }
@@ -78,19 +86,27 @@ class NovedadRequerimientoController extends Controller
 
             if ($request->ajax()) {
                 return response()->json([
-                    'success' => true,
-                    'novedad' => $novedad,
+                    'success'   => true,
+                    'warning'   => $ftpWarning,
+                    'novedad'   => $novedad,
                     'user_name' => auth()->user()->name,
-                    'created_at' => $novedad->created_at->format('d/m/Y H:i'),
-                    'file_url' => $novedad->adjunto ? route('novedades.download', $novedad->id) : null,
-                    'file_name' => $novedad->nombre_original ?? basename($novedad->adjunto)
+                    'created_at'=> $novedad->created_at->format('d/m/Y H:i'),
+                    'file_url'  => $novedad->adjunto ? route('novedades.download', $novedad->id) : null,
+                    'file_name' => $novedad->nombre_original ?? ($novedad->adjunto ? basename($novedad->adjunto) : null),
                 ]);
             }
 
-            return back()->with('success', 'Novedad agregada correctamente.');
+            $successMsg = $ftpWarning ?? 'Novedad agregada correctamente.';
+            return back()->with($ftpWarning ? 'warning' : 'success', $successMsg);
+
         } catch (\Exception $e) {
-            \Log::error("Error guardando novedad: " . $e->getMessage());
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            \Log::error("Error guardando novedad en BD: " . $e->getMessage());
+
+            if ($request->ajax()) {
+                return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            }
+
+            return back()->with('error', 'Error al guardar el seguimiento: ' . $e->getMessage());
         }
     }
 
@@ -136,7 +152,7 @@ class NovedadRequerimientoController extends Controller
                 return redirect()->back()->with('error', 'Esta novedad no tiene un archivo adjunto.');
             }
 
-            $disk = Storage::disk('ftp');
+            $disk = Storage::disk('public');
             $path = $nov->adjunto;
 
             // 1. Try standard path

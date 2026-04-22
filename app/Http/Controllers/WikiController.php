@@ -50,7 +50,7 @@ class WikiController extends Controller
             'description' => 'nullable|string',
             'tags'        => 'nullable|string',
             'categoria'   => 'nullable|string|max:100',
-            'file'        => 'required|file|max:30720',
+            'file'        => 'required|file|max:5242880',
         ]);
 
         try {
@@ -65,12 +65,16 @@ class WikiController extends Controller
             
             $fileName = time() . '_' . $originalName;
             
+            // Subcarpeta por categoría
+            $catFolder = !empty($request->categoria) ? trim($request->categoria) : 'Otros';
+            $basePath = 'Wiki/' . $catFolder;
+
             // Ensure the directory exists
-            if (!Storage::disk('ftp')->exists('Wiki')) {
-                Storage::disk('ftp')->makeDirectory('Wiki');
+            if (!Storage::disk('ftp')->exists($basePath)) {
+                Storage::disk('ftp')->makeDirectory($basePath);
             }
 
-            $path = $file->storeAs('Wiki', $fileName, 'ftp');
+            $path = $file->storeAs($basePath, $fileName, 'ftp');
 
             if (!$path) {
                 throw new \Exception("No se pudo guardar el archivo en el disco.");
@@ -82,7 +86,7 @@ class WikiController extends Controller
                 'description' => $request->description,
                 'tags'        => $request->tags,
                 'categoria'   => $request->categoria,
-                'file_path'   => 'Wiki/' . $fileName,
+                'file_path'   => $basePath . '/' . $fileName,
                 'estado'      => 'Sin validar'
             ]);
 
@@ -126,7 +130,7 @@ class WikiController extends Controller
             'description' => 'nullable|string',
             'tags'        => 'nullable|string',
             'categoria'   => 'nullable|string|max:100',
-            'file'        => 'nullable|file|max:30720',
+            'file'        => 'nullable|file|max:5242880',
         ]);
 
         try {
@@ -145,9 +149,17 @@ class WikiController extends Controller
                     $originalName = substr($originalName, 0, 190) . '.' . $ext;
                 }
                 
+                // Subcarpeta
+                $catFolder = !empty($request->categoria) ? trim($request->categoria) : (!empty($doc->categoria) ? trim($doc->categoria) : 'Otros');
+                $basePath = 'Wiki/' . $catFolder;
+
+                if (!Storage::disk('ftp')->exists($basePath)) {
+                    Storage::disk('ftp')->makeDirectory($basePath);
+                }
+
                 $fileName = time() . '_' . $originalName;
-                $file->storeAs('Wiki', $fileName, 'ftp');
-                $data['file_path'] = 'Wiki/' . $fileName;
+                $file->storeAs($basePath, $fileName, 'ftp');
+                $data['file_path'] = $basePath . '/' . $fileName;
             }
 
             $doc->update($data);
@@ -167,7 +179,12 @@ class WikiController extends Controller
             $doc = WikiDocument::findOrFail($id);
 
             if ($doc->file_path && Storage::disk('ftp')->exists($doc->file_path)) {
-                return Storage::disk('ftp')->download($doc->file_path, $doc->title);
+                $ext = pathinfo($doc->file_path, PATHINFO_EXTENSION);
+                $downloadName = $doc->title;
+                if (!str_ends_with(strtolower($downloadName), '.' . strtolower($ext))) {
+                    $downloadName .= '.' . $ext;
+                }
+                return Storage::disk('ftp')->download($doc->file_path, $downloadName);
             }
 
             return redirect()->back()->with('error', 'El archivo no existe físicamente en el servidor.');
@@ -214,6 +231,45 @@ class WikiController extends Controller
                 return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
             }
             return redirect()->back()->with('error', 'Error al validar el documento: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Sincroniza las rutas de la base de datos con la estructura de carpetas por categoría (FTP).
+     * Se debe ejecutar después de que el usuario mueva físicamente los archivos.
+     */
+    public function syncPaths()
+    {
+        if (!auth()->user()->es_admin) {
+            return redirect()->back()->with('error', 'No tienes permiso para realizar esta acción.');
+        }
+
+        try {
+            $documents = WikiDocument::all();
+            $updatedcount = 0;
+
+            foreach ($documents as $doc) {
+                // Si la ruta ya tiene subcarpeta (ej: Wiki/Manuales/...), no hacemos nada
+                // Buscamos si hay un slash después de 'Wiki/'
+                $currentPath = $doc->file_path;
+                if (!$currentPath) continue;
+
+                $parts = explode('/', $currentPath);
+                
+                // Si partes es [Wiki, filename.ext], significa que está en la raíz
+                if (count($parts) === 2 && $parts[0] === 'Wiki') {
+                    $category = !empty($doc->categoria) ? trim($doc->categoria) : 'Otros';
+                    // Reemplazamos Wiki/ por Wiki/Categoria/
+                    $newPath = 'Wiki/' . $category . '/' . $parts[1];
+                    
+                    $doc->update(['file_path' => $newPath]);
+                    $updatedcount++;
+                }
+            }
+
+            return redirect()->route('wiki.index')->with('success', "Se han sincronizado {$updatedcount} registros en la base de datos. Recuerda mover los archivos físicamente en el FTP.");
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Error en la sincronización: ' . $e->getMessage());
         }
     }
 }

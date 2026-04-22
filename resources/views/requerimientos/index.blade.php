@@ -5,205 +5,64 @@
 @section('content')
 
 <style>
-  :root{
-    --spgi-primary:#0d6efd;
-    --spgi-primary-2:#2b7bff;
-    --spgi-ink:#0f172a;
-    --spgi-muted:#64748b;
-    --spgi-border: rgba(15, 23, 42, .10);
-  }
-
-  body{
-    background:
-      radial-gradient(900px 400px at 20% 10%, rgba(13,110,253,.14), transparent 60%),
-      radial-gradient(900px 450px at 85% 20%, rgba(168,85,247,.12), transparent 55%),
-      radial-gradient(900px 450px at 70% 90%, rgba(34,197,94,.10), transparent 55%),
-      linear-gradient(135deg, rgba(13,110,253,.10), rgba(168,85,247,.08) 45%, rgba(34,197,94,.08));
-    background-attachment: fixed;
-  }
-
-  .spgi-bg{
-    background: transparent !important;
-    padding: 12px 0 24px 0;
-  }
+  .spgi-bg{ padding: 12px 0 24px 0; }
 
   .btn-spgi{
-    background: linear-gradient(135deg, var(--spgi-primary), var(--spgi-primary-2));
-    border: 0;
-    color: #fff !important;
+    background: linear-gradient(135deg, var(--spgi-primary), #2563eb);
+    border: 0; color: #fff !important; min-height:46px; border-radius:14px; padding:0 24px;
+    box-shadow: 0 10px 25px var(--spgi-primary-glow); font-weight:700;
   }
-
-  .btn-spgi:hover{
-    filter: brightness(.98);
-    transform: translateY(-1px);
-  }
+  .btn-spgi:hover{ filter: brightness(1.1); transform: translateY(-1px); }
 
   .btn-outline-spgi{
-    border: 1px solid rgba(13,110,253,.35);
-    background: #fff;
+    border: 1px solid var(--border-main); background: var(--bg-surface);
+    color: var(--text-main); border-radius: 12px; height: 46px; font-weight: 700;
   }
+  .btn-outline-spgi:hover{ background: rgba(var(--spgi-primary), 0.05); }
 
   .spgi-toolbar{
-    background: rgba(255,255,255,.92);
-    border: 1px solid var(--spgi-border);
-    border-radius: 18px;
-    box-shadow: 0 18px 45px rgba(2, 6, 23, .10);
-    backdrop-filter: blur(6px);
-    padding: 16px;
+    background: var(--bg-surface-glass); border: 1px solid var(--border-main);
+    border-radius: 20px; box-shadow: var(--shadow-main); backdrop-filter: blur(16px);
+    padding: 24px; margin-bottom: 24px;
   }
 
-  .toolbar-actions{
-    display:flex;
-    justify-content:flex-end;
-    gap:10px;
-    flex-wrap:wrap;
-    margin-bottom: 12px;
-  }
+  .toolbar-actions{ display:flex; justify-content:flex-end; gap:10px; flex-wrap:wrap; margin-bottom: 20px; }
+  .toolbar-actions .btn{ min-height:46px; border-radius:14px; padding:0 24px; font-weight: 700; }
 
-  .toolbar-actions .btn{
-    min-height:44px;
-    border-radius:12px;
-    padding:0 14px;
-    white-space:nowrap;
-    box-shadow: 0 10px 24px rgba(2,6,23,.07);
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-  }
-
-  .toolbar-selects{
-    display:flex;
-    gap:12px;
-    align-items:center;
-    flex-wrap:wrap;
-    margin:0;
-  }
-
+  .toolbar-selects{ display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin:0; }
   .toolbar-selects .form-select{
-    height:44px;
-    border-radius:12px;
-    border:1px solid var(--spgi-border);
-    box-shadow: 0 8px 20px rgba(2,6,23,.05);
-    min-width:240px;
-    font-weight:400;
-  }
-
-  .spgi-table-wrap{
-    padding: 0;
+    height:46px; border-radius:12px; border:1px solid var(--border-main);
+    background-color: var(--bg-surface); color: var(--text-main); min-width:200px;
+    box-shadow: none !important;
   }
 
   .spgi-table-box{
-    background: rgba(255,255,255,.92);
-    border: 1px solid var(--spgi-border);
-    border-radius: 18px;
-    box-shadow: 0 18px 45px rgba(2, 6, 23, .10);
-    overflow: hidden;
-    backdrop-filter: blur(6px);
+    background: var(--bg-surface-glass); border: 1px solid var(--border-main);
+    border-radius: 22px; box-shadow: var(--shadow-main); overflow: hidden; backdrop-filter: blur(16px);
   }
 
-  .spgi-table{
-    margin-bottom: 0;
-    background: #fff;
-  }
-
-  .spgi-table thead{
-    background: #0b1220;
-  }
-
+  .spgi-table{ margin-bottom: 0; }
   .spgi-table thead th{
-    border-color: rgba(255,255,255,.12) !important;
-    font-weight: 700;
-    letter-spacing: .2px;
-    color: #fff;
-    text-align:center;
-    vertical-align: middle;
-    white-space: nowrap;
+    background: #0b1220; color: #fff; text-align:center;
+    border-color: rgba(255,255,255,0.08) !important;
+    font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; padding: 16px;
   }
+  .spgi-table tbody td{ border-color: var(--border-main) !important; color: var(--text-main); padding: 16px; }
+  .spgi-table tbody tr:hover{ background: rgba(var(--spgi-primary), 0.05); }
 
-  .spgi-table tbody td{
-    border-color: rgba(15,23,42,.08) !important;
-    font-weight: 400;
-    vertical-align: middle;
-  }
-
-  .acciones .btn{
-    width: 38px;
-    height: 38px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-    border-radius: 10px;
-  }
-
-  .acciones form{
-    margin: 0;
-  }
-
-  .col-acciones{
-    min-width: 160px;
-    width: 160px;
-    white-space: nowrap;
-  }
-
-  .col-fecha{ width: 130px; }
-  .col-estado{ width: 140px; }
-  .col-facturacion{ width: 140px; }
-
-  .td-cliente{
-    min-width: 260px;
-    white-space: normal;
-    word-break: break-word;
-    font-weight: 400;
-  }
-
-  .td-preview{
-    min-width: 280px;
-    max-width: 340px;
-    width: 340px;
-  }
+  .acciones .btn{ width: 38px; height: 38px; display: inline-flex; align-items: center; justify-content: center; padding: 0; border-radius: 10px; }
 
   .preview-box{
-    background: #f8fafc;
-    border: 1px solid rgba(15,23,42,.08);
-    border-radius: 12px;
-    padding: 10px 12px;
-    color: #334155;
-    font-size: .84rem;
-    line-height: 1.4;
-    word-break: break-word;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    min-height: 64px;
-    cursor: pointer;
+    background: rgba(var(--text-main), 0.03); border: 1px solid var(--border-main);
+    border-radius: 14px; padding: 12px; color: var(--text-main); font-size: .85rem;
     transition: all 0.2s ease;
   }
-
-  .preview-box.expanded{
-    -webkit-line-clamp: unset !important;
-    max-height: none !important;
-    display: block;
-  }
-
-  .preview-box:hover{
-    background: #eef4ff;
-    border-color: rgba(13,110,253,.20);
-    box-shadow: 0 4px 12px rgba(13,110,253,.08);
-  }
-
-  .spgi-mobile-list{
-    display:none;
-  }
+  .preview-box:hover{ background: rgba(var(--spgi-primary), 0.1); border-color: var(--spgi-primary); }
 
   .spgi-req-card{
-    background: rgba(255,255,255,.95);
-    border: 1px solid var(--spgi-border);
-    border-radius: 18px;
-    box-shadow: 0 12px 30px rgba(2,6,23,.08);
-    padding: 14px;
+    background: var(--bg-surface-glass); border: 1px solid var(--border-main);
+    border-radius: 20px; box-shadow: var(--shadow-main); padding: 20px;
+    backdrop-filter: blur(12px);
   }
 
   .spgi-req-card + .spgi-req-card{
@@ -258,26 +117,15 @@
   }
 
   .spgi-field{
-    background:#fff;
-    border:1px solid rgba(15,23,42,.07);
-    border-radius:12px;
-    padding:10px 12px;
+    background: rgba(0,0,0,0.02);
+    border: 1px solid var(--border-main);
+    border-radius: 14px; padding: 12px;
   }
+  [data-bs-theme="dark"] .spgi-field { background: rgba(255,255,255,0.03); }
 
   .spgi-field-label{
-    font-size:.78rem;
-    font-weight:700;
-    color:var(--spgi-muted);
-    text-transform:uppercase;
-    letter-spacing:.4px;
-    display:block;
-    margin-bottom:2px;
-  }
-
-  .spgi-field-value{
-    color:var(--spgi-ink);
-    font-weight:600;
-    word-break:break-word;
+    font-size:.7rem; font-weight:800; color:var(--text-muted);
+    text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;
   }
 
   .spgi-badge{
@@ -331,11 +179,7 @@
   }
 
   .spgi-pagination-wrap{
-    margin-top: 16px;
-    display: flex;
-    justify-content: center;
-    overflow-x: auto;
-    padding-bottom: 4px;
+    margin-top: 24px; display: flex; justify-content: center;
   }
 
   .spgi-pagination-wrap nav{
@@ -461,9 +305,8 @@
   }
 
   @media (min-width: 768px){
-    .spgi-table-desktop{
-      display:block;
-    }
+    .spgi-mobile-list{ display:none !important; }
+    .spgi-table-desktop{ display:block; }
   }
 </style>
 
@@ -611,7 +454,7 @@
                       </a>
 
                       <button type="button"
-                              class="btn btn-info btn-sm"
+                              class="btn btn-outline-info btn-sm"
                               data-bs-toggle="modal"
                               data-bs-target="#modalNovedades{{ $req->id }}"
                               title="Novedades">
@@ -717,7 +560,7 @@
               </a>
 
               <button type="button"
-                      class="btn btn-info btn-sm"
+                      class="btn btn-outline-info btn-sm"
                       data-bs-toggle="modal"
                       data-bs-target="#modalNovedades{{ $req->id }}">
                 <i class="bi bi-journal-text me-1"></i> Novedades
@@ -894,7 +737,7 @@
   <div class="modal-dialog modal-xl modal-dialog-centered">
     <div class="modal-content">
 
-      <div class="modal-header bg-info text-white">
+      <div class="modal-header text-white" style="background: linear-gradient(135deg, var(--spgi-primary), #2563eb);">
         <h5 class="modal-title">
           Novedades de: {{ $req->clienteRelation->nombre ?? 'Cliente no asignado' }}
         </h5>
@@ -904,14 +747,14 @@
       <div class="modal-body">
         <div class="row g-0">
 
-          <div class="col-12 col-md-7 border-end spgi-historial-box">
+          <div class="col-12 col-md-7 border-end spgi-historial-box p-4" style="background: rgba(var(--text-main), 0.02);">
             <h5 class="fw-bold mb-3">Historial</h5>
 
             <div id="historial-container-{{ $req->id }}">
               @forelse ($req->novedades->sortBy('created_at') as $item)
                 <div class="mb-3 d-flex flex-column" id="novedad-wrapper-{{ $item->id }}">
                   <div class="d-flex justify-content-between align-items-center mb-1 gap-2">
-                    <span class="fw-bold text-primary small">
+                    <span class="fw-bold small" style="color: var(--spgi-primary);">
                       @if($item->adjunto)
                         <i class="bi bi-paperclip me-1 text-success"></i>
                       @endif
@@ -940,8 +783,8 @@
                     </div>
                   </div>
 
-                  <div class="p-3 rounded-3 shadow-sm bg-white" style="border: 1px solid var(--spgi-border);">
-                    <p class="mb-1 small" id="novedad-texto-{{ $item->id }}" style="white-space: pre-wrap;">{{ $item->novedad }}</p>
+                  <div class="p-3 rounded-3 shadow-sm border" style="background: var(--bg-surface); border-color: var(--border-main) !important;">
+                    <p class="mb-1 small" id="novedad-texto-{{ $item->id }}" style="white-space: pre-wrap; color: var(--text-main);">{{ $item->novedad }}</p>
 
                     <div id="novedad-edit-{{ $item->id }}" class="d-none">
                       <textarea class="form-control form-control-sm mb-2" id="novedad-area-{{ $item->id }}"></textarea>
@@ -980,7 +823,7 @@
               <input type="hidden" name="cliente_id" value="{{ $req->cliente_id }}">
 
               <div class="mb-3">
-                <textarea name="novedad" class="form-control" rows="5" placeholder="Escribe aquí..." required></textarea>
+                <textarea name="novedad" class="form-control" rows="5" placeholder="Escribe aquí..." required style="background: var(--bg-surface); color: var(--text-main); border-radius: 12px;"></textarea>
               </div>
 
               <div class="mb-3">
@@ -1032,7 +875,7 @@ function enviarNovedad(event, reqId) {
             const html = `
                 <div class="mb-3 d-flex flex-column" id="novedad-wrapper-${data.novedad.id}">
                     <div class="d-flex justify-content-between align-items-center mb-1 gap-2">
-                        <span class="fw-bold text-primary small">${data.user_name}</span>
+                        <span class="fw-bold small" style="color: var(--spgi-primary);">${data.user_name}</span>
                         <div class="dropdown">
                             <button class="btn btn-link btn-sm text-muted p-0" type="button" data-bs-toggle="dropdown">
                                 <i class="bi bi-three-dots"></i>
@@ -1051,8 +894,8 @@ function enviarNovedad(event, reqId) {
                             </ul>
                         </div>
                     </div>
-                    <div class="p-3 rounded-3 shadow-sm bg-white" style="border: 1px solid var(--spgi-border);">
-                        <p class="mb-1 small" id="novedad-texto-${data.novedad.id}" style="white-space: pre-wrap;">${data.novedad.novedad}</p>
+                    <div class="p-3 rounded-3 shadow-sm border" style="background: var(--bg-surface); border-color: var(--border-main) !important;">
+                        <p class="mb-1 small" id="novedad-texto-${data.novedad.id}" style="white-space: pre-wrap; color: var(--text-main);">${data.novedad.novedad}</p>
                         <div id="novedad-edit-${data.novedad.id}" class="d-none">
                             <textarea class="form-control form-control-sm mb-2" id="novedad-area-${data.novedad.id}"></textarea>
                             <div class="d-flex gap-2 flex-wrap">

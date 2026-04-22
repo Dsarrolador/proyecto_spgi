@@ -77,39 +77,7 @@
                             </td>
                         </tr>
 
-                        <!-- Modal Editar -->
-                        <div class="modal fade" id="modalEditar{{ $t->id }}" tabindex="-1" aria-hidden="true">
-                            <div class="modal-dialog modal-dialog-centered">
-                                <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
-                                    <form action="{{ route('mantenimiento.tipos-equipo.update', $t->id) }}" method="POST">
-                                        @csrf
-                                        @method('PUT')
-                                        <div class="modal-header bg-warning text-dark border-0">
-                                            <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i> Editar Tipo</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                        </div>
-                                        <div class="modal-body p-4">
-                                            <div class="mb-3">
-                                                <label class="form-label fw-bold small">Nombre</label>
-                                                <input type="text" name="nombre" class="form-control rounded-3" value="{{ $t->nombre }}" required>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label class="form-label fw-bold small">Descripción</label>
-                                                <textarea name="descripcion" class="form-control rounded-3" rows="3">{{ $t->descripcion }}</textarea>
-                                            </div>
-                                            <div class="form-check form-switch mt-3">
-                                                <input class="form-check-input" type="checkbox" name="activo" value="1" {{ $t->activo ? 'checked' : '' }}>
-                                                <label class="form-check-label small fw-bold">Activo</label>
-                                            </div>
-                                        </div>
-                                        <div class="modal-footer border-0 p-4">
-                                            <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
-                                            <button type="submit" class="btn btn-warning rounded-pill px-4 fw-bold">Guardar Cambios</button>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
+
 
                     @empty
                         <tr>
@@ -157,4 +125,41 @@
         </div>
     </div>
 </div>
+
+@foreach($tipos as $t)
+<!-- Modal Editar -->
+<div class="modal fade" id="modalEditar{{ $t->id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+            <form action="{{ route('mantenimiento.tipos-equipo.update', $t->id) }}" method="POST">
+                @csrf
+                @method('PUT')
+                <div class="modal-header bg-warning text-dark border-0">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i> Editar Tipo</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Nombre</label>
+                        <input type="text" name="nombre" class="form-control rounded-3" value="{{ $t->nombre }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Descripción</label>
+                        <textarea name="descripcion" class="form-control rounded-3" rows="3">{{ $t->descripcion }}</textarea>
+                    </div>
+                    <div class="form-check form-switch mt-3">
+                        <input class="form-check-input" type="checkbox" name="activo" value="1" {{ $t->activo ? 'checked' : '' }}>
+                        <label class="form-check-label small fw-bold">Activo</label>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 p-4">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-warning rounded-pill px-4 fw-bold">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endforeach
+
 @endsection

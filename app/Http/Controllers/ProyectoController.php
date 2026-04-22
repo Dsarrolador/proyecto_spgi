@@ -75,7 +75,7 @@ class ProyectoController extends Controller
             'fecha_fin'      => 'nullable|date|after_or_equal:fecha_inicio',
             'prioridad'      => 'nullable|string|max:20',
             'estado'         => 'nullable|string|max:20',
-            'adjunto'        => 'nullable|file|max:8192|mimes:jpg,jpeg,png,pdf,doc,docx,xls,xlsx',
+            'adjunto'        => 'nullable|file|max:5242880|mimes:jpg,jpeg,png,pdf,doc,docx,xls,xlsx',
         ]);
 
         // ✅ Mapear alcance => descripcion (columna real)
@@ -87,7 +87,7 @@ class ProyectoController extends Controller
         $data['estado']    = $data['estado'] ?? 'Activo';
 
         if ($request->hasFile('adjunto')) {
-            $data['adjunto'] = $request->file('adjunto')->store('proyectos', 'ftp');
+            $data['adjunto'] = $request->file('adjunto')->store('proyectos', 'public');
         }
 
         $proyectoNuevo = Proyecto::create($data);
@@ -165,7 +165,7 @@ class ProyectoController extends Controller
             'fecha_fin'      => 'nullable|date|after_or_equal:fecha_inicio',
             'prioridad'      => 'nullable|string|max:20',
             'estado'         => 'nullable|string|max:20',
-            'adjunto'        => 'nullable|file|max:8192|mimes:jpg,jpeg,png,pdf,doc,docx,xls,xlsx',
+            'adjunto'        => 'nullable|file|max:5242880|mimes:jpg,jpeg,png,pdf,doc,docx,xls,xlsx',
         ]);
 
         // ✅ Mapear alcance => descripcion
@@ -173,10 +173,10 @@ class ProyectoController extends Controller
         unset($data['alcance']);
 
         if ($request->hasFile('adjunto')) {
-            if (!empty($proyecto->adjunto)) {
-                Storage::disk('ftp')->delete($proyecto->adjunto);
+            if ($proyecto->adjunto) {
+                Storage::disk('public')->delete($proyecto->adjunto);
             }
-            $data['adjunto'] = $request->file('adjunto')->store('proyectos', 'ftp');
+            $data['adjunto'] = $request->file('adjunto')->store('proyectos', 'public');
         }
 
         $proyecto->update($data);
@@ -192,7 +192,7 @@ class ProyectoController extends Controller
     public function destroy(Proyecto $proyecto)
     {
         if (!empty($proyecto->adjunto)) {
-            Storage::disk('ftp')->delete($proyecto->adjunto);
+            Storage::disk('public')->delete($proyecto->adjunto);
         }
 
         $proyecto->delete();
@@ -208,8 +208,8 @@ class ProyectoController extends Controller
             return back()->with('error', 'Este proyecto no tiene adjunto.');
         }
 
-        if (Storage::disk('ftp')->exists($proyecto->adjunto)) {
-            return Storage::disk('ftp')->download($proyecto->adjunto, basename($proyecto->adjunto));
+        if (Storage::disk('public')->exists($proyecto->adjunto)) {
+            return Storage::disk('public')->download($proyecto->adjunto, basename($proyecto->adjunto));
         }
 
         return back()->with('error', 'El archivo no existe en el servidor externo.');

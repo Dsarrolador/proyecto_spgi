@@ -49,7 +49,7 @@ Route::middleware('auth')->group(function () {
     })->name('bienvenido');
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    Route::get('/dashboard/iguala-control', [DashboardController::class, 'igualaControl'])->name('dashboard.iguala-control');
+    Route::get('/dashboard/iguala-control', [DashboardController::class, 'igualaControl'])->name('dashboard.iguala-control')->middleware(\App\Http\Middleware\CheckAdmin::class);
     Route::get('/api/cliente-metrics/{id}', [DashboardController::class, 'getClienteMetrics'])->name('api.cliente-metrics');
 
     /*
@@ -62,8 +62,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/api/notificaciones/{id}/read', [NotificacionController::class, 'markAsRead'])->name('api.notificaciones.read');
     Route::delete('/api/notificaciones/delete-all', [NotificacionController::class, 'destroyAll'])->name('api.notificaciones.destroyAll');
     Route::delete('/api/notificaciones/{id}', [NotificacionController::class, 'destroy'])->name('api.notificaciones.destroy');
-    Route::get('/notificaciones/admin', [NotificacionController::class, 'adminPanel'])->name('notificaciones.admin');
-    Route::post('/notificaciones/send', [NotificacionController::class, 'send'])->name('notificaciones.send');
+    Route::get('/notificaciones/admin', [NotificacionController::class, 'adminPanel'])->name('notificaciones.admin')->middleware(\App\Http\Middleware\CheckAdmin::class);
+    Route::post('/notificaciones/send', [NotificacionController::class, 'send'])->name('notificaciones.send')->middleware(\App\Http\Middleware\CheckAdmin::class);
 
     /*
     |--------------------------------------------------------------------------
@@ -85,6 +85,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/wiki/{wikiDocument}/download', [WikiController::class, 'download'])->name('wiki.download');
     Route::delete('/wiki/{wikiDocument}', [WikiController::class, 'destroy'])->name('wiki.destroy');
     Route::post('/wiki/{wikiDocument}/approve', [WikiController::class, 'approve'])->name('wiki.approve');
+    Route::post('/wiki/sync-paths', [WikiController::class, 'syncPaths'])->name('wiki.sync-paths');
 
     /*
     |--------------------------------------------------------------------------
@@ -250,6 +251,8 @@ Route::middleware('auth')->group(function () {
         
         // Bitácora
         Route::post('/bitacora', [ClienteEntornoController::class, 'storeBitacora'])->name('bitacora.store');
+        Route::put('/bitacora/{id}', [ClienteEntornoController::class, 'updateBitacora'])->name('bitacora.update');
+        Route::delete('/bitacora/{id}', [ClienteEntornoController::class, 'destroyBitacora'])->name('bitacora.destroy');
         
         // Documentos
         Route::post('/documento', [ClienteEntornoController::class, 'storeDocumento'])->name('documento.store');
@@ -258,6 +261,7 @@ Route::middleware('auth')->group(function () {
         
         // Inventario
         Route::post('/equipo', [ClienteEntornoController::class, 'storeEquipo'])->name('equipo.store');
+        Route::put('/equipo/{id}', [ClienteEntornoController::class, 'updateEquipo'])->name('equipo.update');
         Route::delete('/equipo/{id}', [ClienteEntornoController::class, 'destroyEquipo'])->name('equipo.destroy');
     });
 });

@@ -5,190 +5,80 @@
 @section('content')
 
 <style>
-  :root{
-    --spgi-primary:#0d6efd;
-    --spgi-border: rgba(15, 23, 42, .10);
-    --spgi-ink:#0f172a;
-    --spgi-muted:#64748b;
-  }
-
-  body{
-    background:
-      radial-gradient(900px 400px at 20% 10%, rgba(13,110,253,.15), transparent 60%),
-      radial-gradient(800px 450px at 85% 20%, rgba(168,85,247,.12), transparent 55%),
-      linear-gradient(135deg, rgba(13,110,253,.10), rgba(168,85,247,.08) 45%);
-    background-attachment: fixed;
-  }
-
   .spgi-toolbar{
-    background: rgba(255,255,255,.94);
-    border: 1px solid var(--spgi-border);
-    border-radius: 18px;
-    box-shadow: 0 15px 40px rgba(2, 6, 23, .08);
-    backdrop-filter: blur(8px);
-    padding: 16px;
+    background: var(--bg-surface-glass); border: 1px solid var(--border-main);
+    border-radius: 20px; box-shadow: var(--shadow-main); backdrop-filter: blur(16px); padding: 20px;
   }
 
-  .toolbar-selects{
-    display:flex;
-    gap:12px;
-    align-items:center;
-    flex-wrap:wrap;
-  }
-
-  .toolbar-selects .form-select,
-  .toolbar-selects .form-control{
-    height:42px;
-    border-radius:10px;
-    border:1px solid var(--spgi-border);
-    min-width:180px;
-    font-size:.9rem;
+  .toolbar-selects .form-select, .toolbar-selects .form-control{
+    height:44px; border-radius:12px; border:1px solid var(--border-main);
+    background-color: var(--bg-surface); color: var(--text-main); font-size:.9rem;
   }
 
   .chart-box{
-    background: rgba(255,255,255,.92);
-    border: 1px solid var(--spgi-border);
-    border-radius: 20px;
-    box-shadow: 0 14px 35px rgba(2, 6, 23, .07);
-    padding: 24px;
-    height: 100%;
-    backdrop-filter: blur(8px);
+    background: var(--bg-surface-glass); border: 1px solid var(--border-main);
+    border-radius: 24px; box-shadow: var(--shadow-main); padding: 24px; height: 100%;
+    backdrop-filter: blur(16px);
   }
 
   .chart-title{
-    font-weight: 800;
-    font-size: 1.1rem;
-    color: var(--spgi-ink);
-    margin-bottom: 20px;
-    text-align: center;
-    letter-spacing: -.2px;
+    font-weight: 800; font-size: 0.85rem; color: var(--text-muted);
+    margin-bottom: 24px; text-align: center; text-transform: uppercase; letter-spacing: 2px;
   }
 
-  .canvas-container {
-    position: relative;
-    height: 350px;
-  }
-
-  .canvas-container canvas {
-    cursor: pointer;
-  }
-
-  .btn-filter{
-    background: linear-gradient(135deg, var(--spgi-primary), #2b7bff);
-    color: #fff;
-    border-radius: 10px;
-    min-width: 100px;
-    border: 0;
-    box-shadow: 0 8px 15px rgba(13,110,253,.2);
-  }
+  .canvas-container { position: relative; height: 350px; }
 
   /* Summary Row Styles */
-  .summary-container{
-    margin-top: 40px;
-  }
-
   .summary-card{
-    background: rgba(255,255,255,.94);
-    border: 1px solid var(--spgi-border);
-    border-radius: 16px;
-    box-shadow: 0 10px 30px rgba(2, 6, 23, .05);
-    padding: 18px 24px;
-    margin-bottom: 16px;
-    transition: all 0.2s ease;
-    border-left: 4px solid var(--spgi-primary);
+    background: var(--bg-surface-glass); border: 1px solid var(--border-main);
+    border-radius: 20px; box-shadow: var(--shadow-main); padding: 24px;
+    margin-bottom: 20px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); backdrop-filter: blur(16px);
+    border-left: 6px solid var(--spgi-primary);
   }
 
   .summary-card:hover{
-    transform: translateX(4px);
-    box-shadow: 0 15px 40px rgba(2, 6, 23, .08);
-    background: #fff;
+    transform: translateY(-4px); 
+    border-left-color: #60a5fa;
+    background: rgba(var(--text-main), 0.05);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
   }
 
   .summary-client-name{
-    font-weight: 800;
-    font-size: 1.05rem;
-    color: var(--spgi-ink);
-    margin: 0;
-    text-transform: uppercase;
-    letter-spacing: .5px;
+    font-weight: 800; font-size: 1.1rem; color: var(--text-main);
+    margin: 0; text-transform: uppercase; letter-spacing: 1.5px;
   }
 
-  .summary-grid{
-    display: flex;
-    flex-wrap: wrap;
-    gap: 30px;
-    margin-top: 12px;
-  }
-
-  .summary-item{
-    display: flex;
-    flex-direction: column;
-    min-width: 80px;
-  }
+  .summary-grid{ display: flex; flex-wrap: wrap; gap: 32px; margin-top: 20px; }
 
   .summary-label{
-    font-size: .7rem;
-    font-weight: 700;
-    color: var(--spgi-muted);
-    text-transform: uppercase;
-    letter-spacing: .8px;
-    margin-bottom: 4px;
+    font-size: .65rem; font-weight: 800; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px;
   }
 
   .summary-value{
-    font-size: 1.3rem;
-    font-weight: 900;
-    color: var(--spgi-ink);
-    text-decoration: none;
-    line-height: 1;
+    font-size: 1.6rem; font-weight: 900; color: var(--text-main);
+    text-decoration: none; line-height: 1; transition: all 0.2s ease;
   }
-
-  .summary-value:hover{
-    color: var(--spgi-primary);
-  }
-
-  .summary-value.total{
-    color: var(--spgi-primary);
-  }
-
-  .summary-value.zero{
-    color: #cbd5e1;
-    pointer-events: none;
-  }
+  .summary-value:hover{ color: var(--spgi-primary); transform: scale(1.1); }
+  .summary-value.total{ color: var(--spgi-primary); }
+  .summary-value.zero{ color: var(--text-muted); opacity: 0.2; pointer-events: none; }
 
   .toggle-container{
-    background: rgba(15, 23, 42, .05);
-    padding: 4px;
-    border-radius: 12px;
-    display: inline-flex;
-    gap: 4px;
+    background: rgba(var(--text-main), 0.05); padding: 6px; border-radius: 14px;
+    display: inline-flex; gap: 6px; border: 1px solid var(--border-main);
   }
 
   .btn-toggle{
-    border: 0;
-    padding: 6px 16px;
-    border-radius: 8px;
-    font-size: .85rem;
-    font-weight: 700;
-    color: var(--spgi-muted);
-    background: transparent;
-    transition: all 0.2s ease;
+    border: 0; padding: 8px 24px; border-radius: 10px;
+    font-size: .8rem; font-weight: 800; color: var(--text-muted);
+    background: transparent; transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 1px;
   }
 
   .btn-toggle.active{
-    background: #fff;
-    color: var(--spgi-primary);
-    box-shadow: 0 4px 10px rgba(2, 6, 23, .05);
+    background: var(--spgi-primary); color: #fff;
+    box-shadow: 0 4px 12px var(--spgi-primary-glow);
   }
-
-  .summary-view{
-    transition: opacity 0.3s ease;
-  }
-
-  .summary-view.d-none{
-    display: none;
-    opacity: 0;
-  }
+</style>
 
 </style>
 
@@ -355,46 +245,45 @@
 <!-- Modal Advanced Filters -->
 <div class="modal fade" id="modalAdvancedFilters" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg" style="border-radius: 18px;">
+    <div class="modal-content">
       <form action="{{ route('dashboard') }}" method="GET">
-        <div class="modal-header bg-dark text-white border-0">
-          <h5 class="modal-title fw-bold">Filtros Avanzados</h5>
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold">
+            <i class="bi bi-filter-circle me-2 text-primary"></i>Filtros Avanzados
+          </h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body p-4">
-          <div class="row g-3">
-            <div class="col-12">
-              <label class="form-label small fw-bold">Desde</label>
+          <div class="row g-4">
+            <div class="col-md-6">
+              <label class="form-label">Desde</label>
               <input type="date" name="desde" class="form-control" value="{{ request('desde') }}">
             </div>
-            <div class="col-12">
-              <label class="form-label small fw-bold">Hasta</label>
+            <div class="col-md-6">
+              <label class="form-label">Hasta</label>
               <input type="date" name="hasta" class="form-control" value="{{ request('hasta') }}">
             </div>
+            <div class="col-12 text-divider">
+                <span>Configuración Adicional</span>
+            </div>
             <div class="col-12">
-              <label class="form-label small fw-bold">Categoría Iguala</label>
+              <label class="form-label">Categoría Iguala</label>
               <select name="categoria_iguala" class="form-select">
-                <option value="">Todas</option>
+                <option value="">Todas las categorías</option>
                 @foreach($categoriasIguala as $plan)
                   <option value="{{ $plan->id }}" {{ (string)request('categoria_iguala') === (string)$plan->id ? 'selected' : '' }}>
                     {{ $plan->nombre }}
                   </option>
                 @endforeach
-                {{-- Opciones legacy --}}
-                <option value="Cliente de iguala solo sistema" {{ request('categoria_iguala') == 'Cliente de iguala solo sistema' ? 'selected' : '' }}>Solo sistema (viejo)</option>
-                <option value="Cliente de iguala premium" {{ request('categoria_iguala') == 'Cliente de iguala premium' ? 'selected' : '' }}>Premium (viejo)</option>
-                <option value="Cliente de iguala avanzada" {{ request('categoria_iguala') == 'Cliente de iguala avanzada' ? 'selected' : '' }}>Avanzada (viejo)</option>
-                <option value="Cliente de iguala Basico" {{ request('categoria_iguala') == 'Cliente de iguala Basico' ? 'selected' : '' }}>Basico (viejo)</option>
-                <option value="Cliente sin iguala" {{ request('categoria_iguala') == 'Cliente sin iguala' ? 'selected' : '' }}>Sin iguala (viejo)</option>
               </select>
             </div>
             @if($esAdmin || $esEncargado)
               <div class="col-12">
-                <label class="form-label small fw-bold">Facturación</label>
+                <label class="form-label">Estado de Facturación</label>
                 <select name="facturado" class="form-select">
-                  <option value="">Todos</option>
+                  <option value="">Todos los registros</option>
                   <option value="1" {{ request('facturado') === '1' ? 'selected' : '' }}>Facturados</option>
-                  <option value="0" {{ request('facturado') === '0' ? 'selected' : '' }}>No facturados</option>
+                  <option value="0" {{ request('facturado') === '0' ? 'selected' : '' }}>Sin facturar</option>
                 </select>
               </div>
             @endif
@@ -404,9 +293,9 @@
           <input type="hidden" name="cliente_id" value="{{ request('cliente_id') }}">
           <input type="hidden" name="asignado_id" value="{{ request('asignado_id', 'todos') }}">
         </div>
-        <div class="modal-footer border-0 p-4">
-          <a href="{{ route('dashboard') }}" class="btn btn-light rounded-pill px-4">Limpiar</a>
-          <button type="submit" class="btn btn-primary rounded-pill px-4">Aplicar Filtros</button>
+        <div class="modal-footer">
+          <a href="{{ route('dashboard') }}" class="btn btn-secondary px-4 rounded-pill">Limpiar</a>
+          <button type="submit" class="btn btn-spgi">Aplicar Filtros</button>
         </div>
       </form>
     </div>

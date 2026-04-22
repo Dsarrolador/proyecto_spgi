@@ -12,20 +12,62 @@
 <link rel="stylesheet"
 href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
+<style id="theme-reset">
+  :root { --topbar-bg: #ffffff; }
+  [data-bs-theme="dark"] { --topbar-bg: #0f172a; }
+</style>
+
+<script>
+  (function() {
+    const savedTheme = localStorage.getItem('spgi-theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-bs-theme', savedTheme);
+  })();
+</script>
+
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
   :root {
-    --spgi-dark: #0f172a;
-    --spgi-dark-2: #1e293b;
-    --spgi-sidebar-width: 260px;
+    /* Global Brand */
     --spgi-primary: #3b82f6;
-    --spgi-bg: #f1f5f9;
-    --spgi-border: rgba(0,0,0,0.06);
+    --spgi-primary-glow: rgba(59, 130, 246, 0.4);
+    --spgi-sidebar-width: 260px;
+    --spgi-radius: 18px;
+    --spgi-font: 'Inter', system-ui, -apple-system, sans-serif;
+    
+    /* Light Theme - Clean and Professional */
+    --bg-master: #f1f5f9;
+    --bg-surface: #ffffff;
+    --bg-surface-glass: rgba(255, 255, 255, 0.9);
+    --border-main: rgba(0, 0, 0, 0.08);
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --topbar-bg: rgba(255, 255, 255, 0.85);
+    --sidebar-bg: #0f172a;
+    --sidebar-text: rgba(255, 255, 255, 0.75);
+    --shadow-main: 0 20px 50px rgba(0, 0, 0, 0.05);
+  }
+
+  [data-bs-theme="dark"] {
+    /* Dark Theme - Deep & Modern */
+    --bg-master: #050a17;
+    --bg-surface: #0f172a;
+    --bg-surface-glass: rgba(15, 23, 42, 0.85);
+    --border-main: rgba(255, 255, 255, 0.08);
+    --text-main: #f1f5f9;
+    --text-muted: #94a3b8;
+    --topbar-bg: rgba(15, 23, 42, 0.85);
+    --sidebar-bg: #030712;
+    --sidebar-text: rgba(255, 255, 255, 0.8);
+    --shadow-main: 0 20px 50px rgba(0, 0, 0, 0.4);
   }
 
   body {
-    background-color: var(--spgi-bg);
-    color: #1e293b;
+    background-color: var(--bg-master);
+    color: var(--text-main);
+    font-family: var(--spgi-font);
+    transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    -webkit-font-smoothing: antialiased;
   }
 
   /* SIDEBAR STRUCTURE */
@@ -35,7 +77,7 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.m
     position: fixed;
     top: 0;
     right: -260px; /* Oculto por defecto */
-    background: var(--spgi-dark);
+    background: var(--spgi-sidebar-bg);
     color: #fff;
     z-index: 1050; /* Mayor que el overlay */
     transition: all 0.3s ease;
@@ -83,8 +125,10 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.m
   /* TOP BAR */
   .spgi-topbar {
     height: 70px;
-    background: #fff;
-    border-bottom: 1px solid var(--spgi-border);
+    background: var(--topbar-bg);
+    border-bottom: 1px solid var(--border-main);
+    backdrop-filter: blur(16px);
+    transition: all 0.4s ease;
     display: flex;
     align-items: center;
     padding: 0 2rem;
@@ -149,53 +193,81 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.m
     }
   }
 
-  /* GLOBAL TABLE HEADER STYLE - Restore black design */
-  .table thead, 
+  .spgi-card, .card {
+    background: var(--bg-surface-glass);
+    border: 1px solid var(--border-main);
+    border-radius: var(--spgi-radius);
+    box-shadow: var(--shadow-main);
+    backdrop-filter: blur(12px);
+    transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.4s ease;
+  }
+
+  .table {
+    --bs-table-bg: transparent;
+    --bs-table-color: var(--text-main);
+    --bs-table-border-color: var(--border-main);
+  }
+
+  /* Specific fix for table headers */
   .table thead th {
-    background-color: #0b1220 !important;
+    background-color: #0b1220 !important; /* Keep consistent dark header */
     color: #ffffff !important;
-    border-color: rgba(255,255,255,0.12) !important;
-    vertical-align: middle !important;
-    text-align: center;
+    border-color: rgba(255,255,255,0.1) !important;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
   }
 
-  /* Ensure text in spans or badges inside headers also remains visible or follows theme */
-  .table thead th * {
-    color: inherit !important;
+  [data-bs-theme="dark"] .table tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.03) !important;
   }
 
-  /* Animación de desvanecimiento para notificaciones */
-  .fade-out {
-    animation: fadeOut 0.4s forwards;
+  .form-control, .form-select {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-main);
+    color: var(--text-main);
+    border-radius: 12px;
+    padding: 0.6rem 1rem;
+    transition: all 0.2s ease;
   }
 
-  @keyframes fadeOut {
-    from { opacity: 1; transform: translateX(0); }
-    to { opacity: 0; transform: translateX(20px); }
+  .form-control:focus, .form-select:focus {
+    background-color: var(--bg-surface);
+    color: var(--text-main);
+    border-color: var(--spgi-primary);
+    box-shadow: 0 0 0 4px var(--spgi-primary-glow);
   }
 
-  /* Truncado y expansión */
-  .notif-msg {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    cursor: pointer;
-    transition: all 0.3s ease;
-  }
-  .notif-msg.expanded {
-    -webkit-line-clamp: unset;
-    display: block;
+  .theme-switch-wrap {
+    background: rgba(0,0,0,0.05);
+    border: 1px solid var(--border-main) !important;
   }
 
-  .notification-item.is-read {
-    background-color: #f8fafc;
-    opacity: 0.8;
-  }
-  .notification-item.is-read .bi-check-all {
-    color: #94a3b8 !important;
+  .theme-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
+  .theme-btn:hover {
+    color: var(--text-main);
+    background: rgba(0,0,0,0.05);
+  }
+
+  .theme-btn.active {
+    background: var(--bg-surface) !important;
+    color: var(--spgi-primary) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+
+  [data-bs-theme="dark"] .theme-switch-wrap {
+    background: rgba(255,255,255,0.05);
+  }
 </style>
 </head>
 
@@ -249,7 +321,7 @@ request()->routeIs('mantenimiento.categorias.*');
         <i class="bi bi-book"></i> Wiki
       </a>
 
-      @if(Auth::user()->esAdmin || Auth::user()->esEncargado)
+      @if(Auth::user()->es_admin)
       <div class="nav-section-title">Control de Gestión</div>
       <a class="nav-link {{ request()->routeIs('dashboard.iguala-control') ? 'active' : '' }}" href="{{ route('dashboard.iguala-control') }}">
         <i class="bi bi-shield-check"></i> Control de Igualas
@@ -263,6 +335,7 @@ request()->routeIs('mantenimiento.categorias.*');
       <a class="nav-link {{ request()->routeIs('usuarios.*') ? 'active' : '' }}" href="{{ route('usuarios.index') }}">
         <i class="bi bi-people"></i> Usuarios
       </a>
+
 
       <div class="dropdown">
         <a class="nav-link dropdown-toggle {{ $mantenimientoActive ? 'active' : '' }}" href="#" data-bs-toggle="dropdown">
@@ -298,16 +371,16 @@ request()->routeIs('mantenimiento.categorias.*');
         <div class="d-flex align-items-center gap-3">
           <!-- Notificaciones -->
           <div class="dropdown me-2">
-            <button class="btn btn-link text-dark p-0 position-relative" type="button" data-bs-toggle="dropdown">
+            <button class="btn btn-link p-0 position-relative" type="button" data-bs-toggle="dropdown" style="color: var(--text-main);">
               <i class="bi bi-bell fs-4"></i>
               <span id="notif-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none">
                 0
               </span>
             </button>
-            <ul class="dropdown-menu dropdown-menu-end shadow border-0 p-0" style="width: 380px;" id="notif-list-container">
-              <li class="p-2 border-bottom d-flex justify-content-between align-items-center bg-light rounded-top">
+            <ul class="dropdown-menu dropdown-menu-end shadow border-0 p-0" style="width: 380px; background: var(--bg-surface); border: 1px solid var(--border-main) !important;" id="notif-list-container">
+              <li class="p-2 border-bottom d-flex justify-content-between align-items-center rounded-top" style="background: rgba(var(--text-main), 0.03);">
                 <div class="d-flex align-items-center gap-2">
-                  <span class="small fw-bold px-2">Notificaciones</span>
+                    <span class="small fw-bold px-2" style="color: var(--text-main);">Notificaciones</span>
                   <a href="{{ route('notificaciones.index') }}" class="btn btn-link btn-sm p-0 text-muted ms-1" style="text-decoration: none; font-size: 0.75rem;" title="Ver todo el historial">
                     <i class="bi bi-eye"></i> Ver historial
                   </a>
@@ -322,11 +395,21 @@ request()->routeIs('mantenimiento.categorias.*');
             </ul>
           </div>
 
+          <!-- Theme Toggle -->
+          <div class="theme-switch-wrap p-1 rounded-pill border d-flex align-items-center me-3" style="background: rgba(var(--text-main), 0.03);">
+            <button class="btn btn-sm rounded-circle p-1 theme-btn theme-light-btn active" onclick="setTheme('light')" title="Modo Claro">
+               <i class="bi bi-sun"></i>
+            </button>
+            <button class="btn btn-sm rounded-circle p-1 theme-btn theme-dark-btn" onclick="setTheme('dark')" title="Modo Oscuro">
+               <i class="bi bi-moon-stars"></i>
+            </button>
+          </div>
+
           <span class="text-muted d-none d-sm-inline">{{ Auth::user()->name }}</span>
           <div class="avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width:38px; height:38px;">
             {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
           </div>
-          <button class="btn btn-outline-dark btn-sm rounded-3" onclick="toggleSidebar()">
+          <button class="btn btn-outline-secondary btn-sm rounded-3 border-0" onclick="toggleSidebar()">
             <i class="bi bi-layout-sidebar-reverse"></i>
           </button>
         </div>
@@ -409,7 +492,7 @@ request()->routeIs('mantenimiento.categorias.*');
                       <strong class="small" style="font-size: 0.8rem;">${n.titulo ? n.titulo : (n.sender ? n.sender.name : 'Sistema')}</strong>
                       <span class="text-muted" style="font-size: 0.65rem;">${new Date(n.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
                     </div>
-                    <p class="mb-0 text-dark notif-msg" style="font-size: 0.85rem; line-height: 1.3;">${n.mensaje}</p>
+                    <p class="mb-0 notif-msg" style="font-size: 0.85rem; line-height: 1.3; color: var(--text-muted);">${n.mensaje}</p>
                   </div>
                   <div class="d-flex align-items-center gap-2 pt-1 border-start ps-2">
                     <button onclick="markAsRead(${n.id}, this, event)" class="btn btn-link p-0 ${isRead ? 'text-muted' : 'text-primary'}" title="Marcar como leída">
@@ -426,7 +509,7 @@ request()->routeIs('mantenimiento.categorias.*');
           } else {
             const countBadge = document.getElementById('notif-count');
             countBadge.classList.add('d-none');
-            list.innerHTML = '<li class="p-4 text-center text-muted small">No hay notificaciones</li>';
+            list.innerHTML = '<li class="p-4 text-center small" style="color: var(--text-muted);">No hay notificaciones</li>';
           }
         });
     }
@@ -526,5 +609,122 @@ request()->routeIs('mantenimiento.categorias.*');
     </div>
   </div>
 
+  <!-- GLOBAL FTP UPLOAD LOADER -->
+  <style>
+    #ftp-upload-loader {
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.85);
+        backdrop-filter: blur(10px);
+        z-index: 99999;
+        display: none; /* Oculto por defecto */
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        text-align: center;
+    }
+    #ftp-upload-loader .loader-content {
+        background: rgba(255,255,255,0.05);
+        padding: 2.5rem;
+        border-radius: 20px;
+        border: 1px solid rgba(255,255,255,0.1);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    #ftp-upload-loader .spinner-spgi {
+        width: 3.5rem; height: 3.5rem;
+        border: 4px solid rgba(255, 255, 255, 0.1);
+        border-top-color: #3b82f6;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 1.5rem auto;
+    }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+    .loader-title { font-size: 1.25rem; font-weight: bold; margin-bottom: 0.5rem; }
+    .loader-msg { color: #cbd5e1; font-size: 0.85rem; max-width: 320px; margin: 0 auto; line-height: 1.5; }
+  </style>
+  <div id="ftp-upload-loader">
+    <div class="loader-content">
+      <div class="spinner-spgi"></div>
+      <div class="loader-title">🚀 Subiendo al servidor FTP</div>
+      <p class="loader-msg">Estamos procesando tus archivos de forma segura. Por favor, no cierres esta ventana.</p>
+      <div class="progress mt-3" style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px;">
+        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Interceptar envíos de formularios con archivos
+    document.addEventListener('submit', function(e) {
+      const form = e.target;
+      if (form.getAttribute('enctype') === 'multipart/form-data') {
+        // Solo mostrar si hay al menos un input de tipo file con archivos seleccionados
+        const fileInputs = form.querySelectorAll('input[type="file"]');
+        let hasFiles = false;
+        fileInputs.forEach(input => {
+          if (input.files && input.files.length > 0) hasFiles = true;
+        });
+
+        // Si no hay archivos, dejamos que el formulario se envíe normalmente sin loader
+        if (!hasFiles) return;
+
+        // Mostrar el loader
+        const loader = document.getElementById('ftp-upload-loader');
+        if (loader) {
+          loader.style.display = 'flex';
+        }
+        
+        // Deshabilitar botones de envío
+        const submitBtns = form.querySelectorAll('button[type="submit"], input[type="submit"]');
+        submitBtns.forEach(btn => {
+          btn.disabled = true;
+          if (btn.tagName === 'BUTTON') {
+             const originalHtml = btn.innerHTML;
+             btn.setAttribute('data-original-html', originalHtml);
+             btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Subiendo...';
+          }
+        });
+      }
+    });
+
+    // Manejar errores o cancelaciones (si el navegador se queda en la misma página)
+    window.addEventListener('pageshow', function(event) {
+        if (event.persisted) {
+            const loader = document.getElementById('ftp-upload-loader');
+            if (loader) loader.style.display = 'none';
+            
+            document.querySelectorAll('button[data-original-html]').forEach(btn => {
+                btn.disabled = false;
+                btn.innerHTML = btn.getAttribute('data-original-html');
+            });
+        }
+    });
+
+    // --- DARK MODE LOGIC ---
+    function setTheme(theme) {
+        document.documentElement.setAttribute('data-bs-theme', theme);
+        localStorage.setItem('spgi-theme', theme);
+        
+        // Update toggle UI
+        const btns = document.querySelectorAll('.theme-btn');
+        btns.forEach(btn => btn.classList.remove('active'));
+        
+        if (theme === 'dark') {
+            document.querySelector('.theme-dark-btn').classList.add('active');
+        } else {
+            document.querySelector('.theme-light-btn').classList.add('active');
+        }
+    }
+
+    // Aplicar tema inicial lo antes posible
+    (function() {
+        const savedTheme = localStorage.getItem('spgi-theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-bs-theme', savedTheme);
+        document.addEventListener('DOMContentLoaded', () => {
+            setTheme(savedTheme);
+        });
+    })();
+  </script>
 </body>
 </html>

@@ -5,139 +5,43 @@
 @section('content')
 
 <style>
-  :root{
-    --spgi-primary:#0d6efd;
-    --spgi-primary-2:#2b7bff;
-    --spgi-ink:#0f172a;
-    --spgi-muted:#64748b;
-    --spgi-border: rgba(15, 23, 42, .10);
-  }
-
-  body{
-    background:
-      radial-gradient(900px 400px at 20% 10%, rgba(13,110,253,.14), transparent 60%),
-      radial-gradient(900px 450px at 85% 20%, rgba(168,85,247,.12), transparent 55%),
-      radial-gradient(900px 450px at 70% 90%, rgba(34,197,94,.10), transparent 55%),
-      linear-gradient(135deg, rgba(13,110,253,.10), rgba(168,85,247,.08) 45%, rgba(34,197,94,.08));
-    background-attachment: fixed;
-  }
-
-  .spgi-bg{
-    background: transparent !important;
-    padding: 12px 0 24px 0;
-  }
+  .spgi-bg{ background: transparent !important; padding: 12px 0 24px 0; }
 
   .spgi-toolbar{
-    background: rgba(255,255,255,.92);
-    border: 1px solid var(--spgi-border);
-    border-radius: 18px;
-    box-shadow: 0 18px 45px rgba(2, 6, 23, .10);
-    backdrop-filter: blur(6px);
-    padding: 16px;
+    background: var(--bg-surface-glass); border: 1px solid var(--border-main);
+    border-radius: 20px; box-shadow: var(--shadow-main); backdrop-filter: blur(16px); padding: 20px;
   }
 
-  .spgi-toolbar .toolbar-top{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:16px;
-    flex-wrap:wrap;
-  }
-
-  .spgi-title{
-    font-weight: 800;
-    color: var(--spgi-ink);
-    letter-spacing: -.3px;
-    margin: 0;
-    font-size: 1.5rem;
-  }
-
-  .spgi-actions-top{
-    display:flex;
-    align-items:center;
-    gap:12px;
-    flex-wrap:wrap;
-    width: 100%;
-    justify-content:flex-end;
-  }
-
-  .spgi-search-form{
-    display:flex;
-    gap:10px;
-    align-items:center;
-    flex-wrap:wrap;
-  }
+  .spgi-title{ font-weight: 800; color: var(--text-main); letter-spacing: -.5px; margin: 0; font-size: 1.6rem; }
 
   .spgi-input{
-    height: 44px;
-    border-radius: 12px;
-    border: 1px solid var(--spgi-border);
-    box-shadow: 0 8px 20px rgba(2,6,23,.05);
-    min-width: 260px;
+    height: 46px; border-radius: 12px; border: 1px solid var(--border-main);
+    background-color: var(--bg-surface); color: var(--text-main); min-width: 260px;
   }
 
   .btn-spgi{
-    background: linear-gradient(135deg, var(--spgi-primary), var(--spgi-primary-2));
-    border: 0;
-    color: #fff !important;
-    height:44px;
-    border-radius:12px;
-    padding:0 14px;
-    white-space:nowrap;
-    box-shadow: 0 10px 24px rgba(2,6,23,.07);
+    background: linear-gradient(135deg, var(--spgi-primary), #2563eb);
+    border: 0; color: #fff !important; height:46px; border-radius:14px; padding:0 24px;
+    box-shadow: 0 10px 25px var(--spgi-primary-glow); font-weight: 700;
   }
-
-  .btn-spgi:hover{
-    filter: brightness(.98);
-    transform: translateY(-1px);
-  }
+  .btn-spgi:hover{ filter: brightness(1.1); transform: translateY(-1px); }
 
   .btn-outline-spgi{
-    height:44px;
-    border-radius:12px;
-    padding:0 14px;
-    white-space:nowrap;
-    border: 1px solid rgba(13,110,253,.35);
-    box-shadow: 0 10px 24px rgba(2,6,23,.07);
-    background: #fff;
-  }
-
-  .spgi-table-wrap{
-    padding: 0;
+    height:46px; border-radius:12px; padding:0 20px;
+    border: 1px solid var(--border-main); background: var(--bg-surface); color: var(--text-main);
   }
 
   .spgi-table-box{
-    background: rgba(255,255,255,.92);
-    border: 1px solid var(--spgi-border);
-    border-radius: 18px;
-    box-shadow: 0 18px 45px rgba(2, 6, 23, .10);
-    overflow: hidden;
-    backdrop-filter: blur(6px);
+    background: var(--bg-surface-glass); border: 1px solid var(--border-main);
+    border-radius: 20px; box-shadow: var(--shadow-main); overflow: hidden; backdrop-filter: blur(16px);
   }
 
-  .spgi-table{
-    margin-bottom: 0;
-    background: #fff;
-  }
-
-  .spgi-table thead{
-    background: #0b1220;
-  }
-
+  .spgi-table{ margin-bottom: 0; background: transparent; }
   .spgi-table thead th{
-    color: #fff;
-    border-color: rgba(255,255,255,.12) !important;
-    font-weight: 700;
-    letter-spacing: .2px;
-    white-space: nowrap;
-    text-align: center;
+    background: #0b1220; color: #fff; border-color: rgba(255,255,255,0.08) !important;
+    font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;
   }
-
-  .spgi-table tbody td{
-    border-color: rgba(15,23,42,.08) !important;
-    font-weight: 400;
-    vertical-align: middle;
-  }
+  .spgi-table tbody td{ border-color: var(--border-main) !important; color: var(--text-main); }
 
   .acciones .btn{
     width: 38px;
@@ -391,34 +295,38 @@
   }
 
   @media (min-width: 768px){
-    .spgi-table-desktop{
-      display: block;
-    }
+    .spgi-mobile-list{ display: none !important; }
+    .spgi-table-desktop{ display: block; }
   }
 </style>
 
 <div class="spgi-bg">
   <div class="container">
 
-    <div class="spgi-toolbar mb-3">
-      <div class="toolbar-top">
-        <h3 class="spgi-title">Clientes</h3>
+    <div class="spgi-toolbar mb-4">
+      <div class="spgi-card p-4">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+            <div>
+                <h3 class="spgi-title mb-1">Directorio de Clientes</h3>
+                <p class="text-muted small mb-0">Gestión centralizada de socios comerciales y entidades.</p>
+            </div>
 
-        <div class="spgi-actions-top">
-          <form class="spgi-search-form" action="{{ route('clientes.index') }}" method="GET">
-            <input class="form-control spgi-input"
-                   type="search"
-                   name="q"
-                   value="{{ request('q') }}"
-                   placeholder="Buscar cliente...">
-            <button class="btn btn-outline-spgi" type="submit">
-              <i class="bi bi-search me-1"></i> Buscar
-            </button>
-          </form>
+            <div class="d-flex align-items-center gap-3 flex-wrap">
+              <form class="spgi-search-form d-flex gap-2" action="{{ route('clientes.index') }}" method="GET">
+                <input class="form-control spgi-input"
+                       type="search"
+                       name="q"
+                       value="{{ request('q') }}"
+                       placeholder="Buscar por nombre o RNC...">
+                <button class="btn btn-outline-spgi px-3" type="submit">
+                  <i class="bi bi-search"></i>
+                </button>
+              </form>
 
-          <a href="{{ route('clientes.create') }}" class="btn btn-spgi d-flex align-items-center justify-content-center">
-            <i class="bi bi-person-plus me-1"></i> Agregar Cliente
-          </a>
+              <a href="{{ route('clientes.create') }}" class="btn btn-spgi">
+                <i class="bi bi-person-plus me-2"></i> Nuevo Cliente
+              </a>
+            </div>
         </div>
       </div>
     </div>
@@ -426,17 +334,17 @@
     <div class="spgi-table-wrap">
 
       {{-- TABLA DESKTOP / TABLET --}}
-      <div class="spgi-table-desktop spgi-table-box">
+      <div class="spgi-table-desktop spgi-card">
         <div class="table-responsive">
-          <table class="table table-bordered align-middle spgi-table">
+          <table class="table table-spgi align-middle">
             <thead>
               <tr>
-                <th>Nombre</th>
+                <th class="ps-4">Nombre Comercial</th>
                 <th>RNC</th>
                 <th>Teléfono</th>
-                <th>Clasificación</th>
+                <th class="text-center">Clasif.</th>
                 <th>Categoría</th>
-                <th class="text-center col-acciones">Acciones</th>
+                <th class="text-center col-acciones pe-4">Acciones</th>
               </tr>
             </thead>
 

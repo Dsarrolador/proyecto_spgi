@@ -264,9 +264,9 @@ class RequerimientoClienteController extends Controller
             'contacto_id'      => 'nullable|exists:libreta_contacto,id',
             'tipo_soporte_id'  => 'required|exists:tipo_soporte,id',
             'texto_imagen'     => 'required|string|max:2000',
-            'foto'             => 'nullable|image|max:30720',
+            'foto'             => 'nullable|image|max:5242880',
             'imagenes'         => 'nullable|array',
-            'imagenes.*'       => 'nullable|image|max:30720',
+            'imagenes.*'       => 'nullable|image|max:5242880',
             'asignado_user_id' => 'nullable|exists:users,id',
             'es_recurrente'    => 'nullable|boolean',
             'frecuencia'       => 'nullable|string',
@@ -279,7 +279,7 @@ class RequerimientoClienteController extends Controller
         $rutaFoto = null;
 
         if ($request->hasFile('foto')) {
-            $rutaFoto = $request->file('foto')->store('Requerimientos', 'ftp');
+            $rutaFoto = $request->file('foto')->store('requerimientos', 'public');
         }
 
         $creadoPor  = Auth::id();
@@ -323,7 +323,7 @@ class RequerimientoClienteController extends Controller
 
         if ($request->hasFile('imagenes')) {
             foreach ($request->file('imagenes') as $imagen) {
-                $ruta = $imagen->store('requerimientos', 'ftp');
+                $ruta = $imagen->store('requerimientos', 'public');
 
                 RequerimientoImagen::create([
                     'requerimiento_id' => $requerimiento->id,
@@ -412,9 +412,9 @@ class RequerimientoClienteController extends Controller
             'tipo_soporte_id'  => 'nullable|exists:tipo_soporte,id',
             'texto_imagen'     => 'nullable|string|max:2000',
             'estado_id'        => 'nullable|exists:estado_requerimientos,id',
-            'foto'             => 'nullable|image|max:30720',
+            'foto'             => 'nullable|image|max:5242880',
             'imagenes'         => 'nullable|array',
-            'imagenes.*'       => 'nullable|image|max:30720',
+            'imagenes.*'       => 'nullable|image|max:5242880',
             'created_at'       => 'nullable|date',
             'asignado_user_id' => 'nullable|exists:users,id',
             'es_recurrente'    => 'nullable|boolean',
@@ -488,12 +488,12 @@ class RequerimientoClienteController extends Controller
         }
 
         if ($request->hasFile('foto')) {
-            $req->foto = $request->file('foto')->store('requerimientos', 'ftp');
+            $req->foto = $request->file('foto')->store('requerimientos', 'public');
         }
 
         if ($request->hasFile('imagenes')) {
             foreach ($request->file('imagenes') as $imagen) {
-                $ruta = $imagen->store('requerimientos', 'ftp');
+                $ruta = $imagen->store('requerimientos', 'public');
 
                 RequerimientoImagen::create([
                     'requerimiento_id' => $req->id,

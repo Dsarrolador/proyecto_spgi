@@ -5,353 +5,96 @@
 @section('content')
 
 <style>
-  :root{
-    --spgi-primary:#0d6efd;
-    --spgi-primary-2:#2b7bff;
-    --spgi-ink:#0f172a;
-    --spgi-muted:#64748b;
-    --spgi-border: rgba(15, 23, 42, .10);
-  }
-
-  body{
-    background:
-      radial-gradient(900px 400px at 20% 10%, rgba(13,110,253,.14), transparent 60%),
-      radial-gradient(900px 450px at 85% 20%, rgba(168,85,247,.12), transparent 55%),
-      radial-gradient(900px 450px at 70% 90%, rgba(34,197,94,.10), transparent 55%),
-      linear-gradient(135deg, rgba(13,110,253,.10), rgba(168,85,247,.08) 45%, rgba(34,197,94,.08));
-    background-attachment: fixed;
-  }
-
-  .spgi-bg{
-    background: transparent !important;
-    padding: 12px 0 24px 0;
-  }
+  .spgi-bg{ padding: 12px 0 24px 0; }
 
   .btn-spgi{
-    background: linear-gradient(135deg, var(--spgi-primary), var(--spgi-primary-2));
-    border: 0;
-    color: #fff !important;
+    background: linear-gradient(135deg, var(--spgi-primary), #2563eb);
+    border: 0; color: #fff !important; min-height:46px; border-radius:14px; padding:0 24px;
+    box-shadow: 0 10px 25px var(--spgi-primary-glow); font-weight:700;
   }
-
-  .btn-spgi:hover{
-    filter: brightness(.98);
-    transform: translateY(-1px);
-  }
+  .btn-spgi:hover{ filter: brightness(1.1); transform: translateY(-1px); }
 
   .btn-outline-spgi{
-    border: 1px solid rgba(13,110,253,.35);
-    background: #fff;
+    border: 1px solid var(--border-main); background: var(--bg-surface);
+    color: var(--text-main); border-radius: 12px; height: 46px; font-weight: 700;
   }
+  .btn-outline-spgi:hover{ background: rgba(var(--spgi-primary), 0.05); }
 
   .spgi-toolbar{
-    background: rgba(255,255,255,.92);
-    border: 1px solid var(--spgi-border);
-    border-radius: 18px;
-    box-shadow: 0 18px 45px rgba(2, 6, 23, .10);
-    backdrop-filter: blur(6px);
-    padding: 16px;
+    background: var(--bg-surface-glass); border: 1px solid var(--border-main);
+    border-radius: 20px; box-shadow: var(--shadow-main); backdrop-filter: blur(16px);
+    padding: 24px; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap;
   }
 
-  .spgi-toolbar .toolbar-actions{
-    display:flex;
-    justify-content:flex-end;
-    gap:10px;
-    flex-wrap:wrap;
-    margin-bottom: 12px;
-  }
-
-  .spgi-toolbar .toolbar-actions .btn{
-    min-height:44px;
-    border-radius:12px;
-    padding:0 14px;
-    white-space:nowrap;
-    box-shadow: 0 10px 24px rgba(2,6,23,.07);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .toolbar-selects{
-    display:flex;
-    gap:12px;
-    align-items:center;
-    flex-wrap:wrap;
-    margin:0;
-  }
-
+  .toolbar-selects{ display: flex; gap: 12px; flex-wrap: wrap; }
   .toolbar-selects .form-select{
-    height:44px;
-    border-radius:12px;
-    border:1px solid var(--spgi-border);
-    box-shadow: 0 8px 20px rgba(2,6,23,.05);
-    min-width:240px;
-    font-weight:400;
-  }
-
-  .spgi-table-wrap{
-    padding: 0;
+    height:46px; border-radius:12px; border:1px solid var(--border-main);
+    background-color: var(--bg-surface); color: var(--text-main); min-width:200px;
+    box-shadow: none !important;
   }
 
   .spgi-table-box{
-    background: rgba(255,255,255,.92);
-    border: 1px solid var(--spgi-border);
-    border-radius: 18px;
-    box-shadow: 0 18px 45px rgba(2, 6, 23, .10);
-    overflow: hidden;
-    backdrop-filter: blur(6px);
+    background: var(--bg-surface-glass); border: 1px solid var(--border-main);
+    border-radius: 20px; box-shadow: var(--shadow-main); overflow: hidden; backdrop-filter: blur(16px);
   }
 
-  .spgi-table{
-    margin-bottom: 0;
-    background: #fff;
-  }
-
-  .spgi-table thead{
-    background: #0b1220;
-  }
-
+  .spgi-table{ margin-bottom: 0; }
   .spgi-table thead th{
-    color:#fff;
-    border-color: rgba(255,255,255,.12) !important;
-    font-weight: 700;
-    letter-spacing: .2px;
-    vertical-align: middle;
-    white-space: nowrap;
-    text-align: center;
+    background: #0b1220; color:#fff; border-color: rgba(255,255,255,.08) !important;
+    font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; padding: 16px;
   }
+  .spgi-table tbody td{ border-color: var(--border-main) !important; color: var(--text-main); padding: 16px; }
+  .spgi-table tbody tr:hover{ background: rgba(var(--spgi-primary), 0.05); }
 
-  .spgi-table tbody td{
-    border-color: rgba(15,23,42,.08) !important;
-    font-weight: 400;
-    vertical-align: middle;
-  }
+  .badge-status{ padding: 8px 12px; border-radius: 10px; font-weight: 800; font-size: 0.75rem; text-transform: uppercase; }
 
-  .col-fecha { width: 120px; }
-  .col-estado{ width: 140px; }
-  .col-acciones{ width: 180px; }
-
-  .td-ellipsis{
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .td-ellipsis .text-muted{
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .acciones .btn{
-    width: 38px;
-    height: 38px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-    border-radius: 10px;
-  }
-
-  .acciones{
-    white-space: nowrap;
-  }
-
-  .spgi-mobile-list{
-    display:none;
-  }
-
+  /* MÓVIL STYLES */
   .spgi-project-card{
-    background: rgba(255,255,255,.95);
-    border: 1px solid var(--spgi-border);
-    border-radius: 18px;
-    box-shadow: 0 12px 30px rgba(2,6,23,.08);
-    padding: 14px;
+    background: var(--bg-surface-glass); border: 1px solid var(--border-main);
+    border-radius: 20px; box-shadow: var(--shadow-main); padding: 16px; backdrop-filter: blur(16px);
+    margin-bottom: 14px;
   }
-
-  .spgi-project-card + .spgi-project-card{
-    margin-top: 14px;
-  }
-
   .spgi-project-head{
-    display:flex;
-    align-items:flex-start;
-    justify-content:space-between;
-    gap:12px;
-    margin-bottom: 12px;
+    display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom: 12px;
   }
-
   .spgi-project-title{
-    margin:0;
-    font-size:1rem;
-    font-weight:800;
-    color:var(--spgi-ink);
-    line-height:1.25;
+    margin:0; font-size:1.05rem; font-weight:800; color:var(--text-main); line-height:1.25;
   }
-
   .spgi-project-subtitle{
-    color:var(--spgi-muted);
-    font-size:.88rem;
-    margin-top:4px;
-    line-height:1.25;
+    color: var(--text-muted); font-size: 0.8rem; margin-top: 2px;
   }
-
   .spgi-badge-status{
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    min-height:34px;
-    padding:0 12px;
-    border-radius:999px;
-    font-size:.82rem;
-    font-weight:700;
-    white-space:nowrap;
-    background:#e2e8f0;
-    color:#0f172a;
+    padding: 6px 12px; border-radius: 8px; font-weight: 800; font-size: 0.7rem; text-transform: uppercase;
+    background: rgba(var(--text-main), 0.1); color: var(--text-main); display: inline-block; text-align: center;
   }
-
   .spgi-info-grid{
-    display:grid;
-    grid-template-columns:1fr;
-    gap:10px;
-    margin-bottom:12px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;
+    background: rgba(var(--text-main), 0.02); border: 1px solid var(--border-main);
+    border-radius: 14px; padding: 12px;
   }
-
-  .spgi-field{
-    background:#fff;
-    border:1px solid rgba(15,23,42,.07);
-    border-radius:12px;
-    padding:10px 12px;
-  }
-
   .spgi-field-label{
-    font-size:.78rem;
-    font-weight:700;
-    color:var(--spgi-muted);
-    text-transform:uppercase;
-    letter-spacing:.4px;
-    display:block;
-    margin-bottom:2px;
+    display: block; font-size: .65rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-bottom: 2px; letter-spacing: 0.5px;
   }
-
   .spgi-field-value{
-    color:var(--spgi-ink);
-    font-weight:600;
-    word-break:break-word;
+    font-size: .85rem; font-weight: 600; color: var(--text-main);
   }
-
   .spgi-card-actions{
-    display:grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap:8px;
+    display: flex; gap: 8px;
   }
-
   .spgi-card-actions .btn{
-    width:100%;
-    min-height:42px;
-    border-radius:12px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-  }
-
-  .spgi-empty{
-    text-align:center;
-    color:var(--spgi-muted);
-    padding:30px 15px;
-    background:rgba(255,255,255,.9);
-    border-radius:16px;
-    border:1px solid var(--spgi-border);
-  }
-
-  .modal-content{
-    border:0;
-    border-radius:18px;
-    overflow:hidden;
-  }
-
-  @media (max-width: 991.98px){
-    .toolbar-selects .form-select{
-      min-width:0;
-      flex: 1 1 260px;
-    }
+    flex: 1; padding: 8px; font-size: 0.8rem; border-radius: 10px; font-weight: 700;
   }
 
   @media (max-width: 767.98px){
-    .spgi-bg .container{
-      padding-left:0;
-      padding-right:0;
-    }
-
-    .spgi-toolbar{
-      padding:14px;
-      border-radius:16px;
-    }
-
-    .spgi-toolbar .toolbar-actions{
-      justify-content:stretch;
-    }
-
-    .spgi-toolbar .toolbar-actions .btn{
-      flex:1 1 100%;
-      width:100%;
-    }
-
-    .toolbar-selects{
-      flex-direction:column;
-      align-items:stretch;
-      gap:10px;
-    }
-
-    .toolbar-selects .form-select{
-      width:100%;
-      min-width:0;
-      flex: 0 0 auto !important;
-      height:42px !important;
-      min-height:42px !important;
-      padding:6px 12px;
-      font-size:14px;
-      border-radius:10px;
-    }
-
-    .spgi-table-desktop{
-      display:none;
-    }
-
-    .spgi-mobile-list{
-      display:block;
-      margin-top:14px;
-    }
-
-    .spgi-card-actions{
-      grid-template-columns:1fr;
-    }
-
-    .modal-dialog{
-      margin:.75rem;
-    }
-
-    .modal-dialog.modal-lg{
-      max-width: calc(100% - 1.5rem);
-    }
-  }
-
-  @media (max-width: 576px){
-    .spgi-toolbar{
-      padding:12px;
-    }
-
-    .toolbar-selects .form-select{
-      height:38px !important;
-      min-height:38px !important;
-      padding:5px 10px;
-      font-size:13px;
-    }
+    .spgi-toolbar{ flex-direction: column; align-items: stretch; }
+    .toolbar-actions .btn, .toolbar-selects .form-select{ width: 100%; }
+    .spgi-table-desktop{ display: none; }
+    .spgi-mobile-list{ display: block; padding: 0 10px; }
   }
 
   @media (min-width: 768px){
-    .spgi-table-desktop{
-      display:block;
-    }
+    .spgi-mobile-list{ display: none !important; }
+    .spgi-table-desktop{ display: block; }
   }
 </style>
 

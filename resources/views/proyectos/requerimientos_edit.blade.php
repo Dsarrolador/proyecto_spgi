@@ -5,58 +5,49 @@
 @section('content')
 
 <style>
-  :root{
-    --spgi-primary:#0d6efd;
-    --spgi-primary-2:#2b7bff;
-    --spgi-ink:#0f172a;
-    --spgi-muted:#64748b;
-    --spgi-border: rgba(15, 23, 42, .10);
-    --shadow: 0 18px 45px rgba(2, 6, 23, .10);
-  }
-
   .spgi-bg{ background: transparent !important; padding: 24px 0; }
 
   .spgi-card{
-    background: rgba(255,255,255,.92); border: 1px solid var(--spgi-border);
-    border-radius: 20px; box-shadow: var(--shadow); backdrop-filter: blur(8px);
+    background: var(--bg-surface-glass); border: 1px solid var(--border-main);
+    border-radius: 24px; box-shadow: var(--shadow-main); backdrop-filter: blur(16px);
     overflow: hidden;
   }
 
   .card-head{
-    padding: 20px 24px; border-bottom: 1px solid var(--spgi-border);
-    background: linear-gradient(to right, rgba(13,110,253,.05), transparent);
+    padding: 24px; border-bottom: 1px solid var(--border-main);
+    background: linear-gradient(to right, rgba(var(--spgi-primary), 0.05), transparent);
   }
 
-  .card-body-spgi{ padding: 28px; }
+  .card-body-spgi{ padding: 32px; }
 
-  .form-label{ font-weight: 700; color: var(--spgi-ink); margin-bottom: 8px; font-size: .92rem; }
+  .form-label{ font-weight: 800; color: var(--text-main); margin-bottom: 10px; font-size: .85rem; text-transform: uppercase; letter-spacing: 1px; }
   .form-control, .form-select{
-    border-radius: 12px; border: 1px solid rgba(15,23,42,.12);
-    padding: 10px 14px; transition: all .2s;
+    background: var(--bg-surface) !important; color: var(--text-main) !important;
+    border-radius:12px !important; border:1px solid var(--border-main) !important;
+    padding:.75rem 1rem !important; box-shadow: none !important;
   }
-  .form-control:focus, .form-select:focus{
-    border-color: var(--spgi-primary); box-shadow: 0 0 0 4px rgba(13,110,253,.08);
-  }
+  .form-control:focus, .form-select:focus{ border-color: var(--spgi-primary) !important; }
 
   .btn-spgi{
-    background: linear-gradient(135deg, var(--spgi-primary), var(--spgi-primary-2));
-    border: 0; color: #fff !important; min-height:48px; border-radius:12px; padding:0 24px;
+    background: linear-gradient(135deg, var(--spgi-primary), #2563eb);
+    border: 0; color: #fff !important; min-height:50px; border-radius:14px; padding:0 32px;
     font-weight:700; display:inline-flex; align-items:center; gap:8px;
-    box-shadow: 0 10px 20px rgba(13,110,253,.15);
+    box-shadow: 0 10px 25px var(--spgi-primary-glow);
   }
-  .btn-spgi:hover{ filter: brightness(.98); transform: translateY(-1px); }
+  .btn-spgi:hover{ filter: brightness(1.1); transform: translateY(-1px); }
 
   .btn-soft{
-    background: #f1f5f9; color: #475569; border: 1px solid rgba(0,0,0,.04);
-    min-height:48px; border-radius:12px; padding:0 24px; font-weight:700;
+    background: var(--bg-surface); color: var(--text-main); border: 1px solid var(--border-main);
+    min-height:50px; border-radius:14px; padding:0 24px; font-weight:700;
   }
-  .btn-soft:hover{ background:#e2e8f0; }
+  .btn-soft:hover{ background: rgba(var(--spgi-primary), 0.05); }
 
   .current-photo{
-    padding: 10px; border: 1px solid var(--spgi-border); border-radius: 12px; background: #fff;
-    display: inline-block; margin-top: 10px;
+    padding: 12px; border: 1px solid var(--border-main); border-radius: 16px; background: var(--bg-surface);
+    display: inline-block; margin-top: 10px; box-shadow: var(--shadow-main);
   }
-  .current-photo img{ max-width: 150px; border-radius: 8px; }
+  .current-photo img{ max-width: 180px; border-radius: 12px; transition: transform 0.3s ease; }
+  .current-photo img:hover{ transform: scale(1.05); }
 </style>
 
 <div class="spgi-bg">

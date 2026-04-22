@@ -5,114 +5,48 @@
 @section('content')
 
 <style>
-  :root{
-    --spgi-primary:#0d6efd;
-    --spgi-primary-2:#2b7bff;
-    --spgi-ink:#0f172a;
-    --spgi-muted:#64748b;
-    --spgi-border: rgba(15, 23, 42, .10);
-    --shadow: 0 18px 45px rgba(2, 6, 23, .10);
-    --shadowSoft: 0 10px 24px rgba(2, 6, 23, .07);
-  }
-
-  body{
-    background:
-      radial-gradient(900px 400px at 20% 10%, rgba(13,110,253,.14), transparent 60%),
-      radial-gradient(900px 450px at 85% 20%, rgba(168,85,247,.12), transparent 55%),
-      radial-gradient(900px 450px at 70% 90%, rgba(34,197,94,.10), transparent 55%),
-      linear-gradient(135deg, rgba(13,110,253,.10), rgba(168,85,247,.08) 45%, rgba(34,197,94,.08));
-    background-attachment: fixed;
-  }
-
   .spgi-bg{ background: transparent !important; padding: 24px 0; }
 
   .spgi-toolbar{
-    background: rgba(255,255,255,.92);
-    border: 1px solid var(--spgi-border);
-    border-radius: 18px;
-    box-shadow: var(--shadow);
-    backdrop-filter: blur(6px);
-    padding: 16px;
+    background: var(--bg-surface-glass); border: 1px solid var(--border-main);
+    border-radius: 20px; box-shadow: var(--shadow-main); backdrop-filter: blur(16px); padding: 20px;
   }
 
-  .spgi-title{
-    font-weight: 800;
-    font-size: 1.15rem;
-    color: var(--spgi-ink);
-    margin:0;
-  }
-  .spgi-subtitle{
-    color: var(--spgi-muted);
-    font-size: .9rem;
-    margin-top: 4px;
-  }
+  .spgi-title{ font-weight: 800; font-size: 1.4rem; color: var(--text-main); letter-spacing: -.5px; margin:0; }
+  .spgi-subtitle{ color: var(--text-muted); font-size: .95rem; margin-top: 4px; }
 
   .btn-spgi{
-    background: linear-gradient(135deg, var(--spgi-primary), var(--spgi-primary-2));
-    border: 0;
-    color: #fff !important;
+    background: linear-gradient(135deg, var(--spgi-primary), #2563eb);
+    border: 0; color: #fff !important; min-height:46px; border-radius:14px; padding:0 24px;
+    box-shadow: 0 10px 25px var(--spgi-primary-glow); font-weight:700;
   }
-  .btn-spgi:hover{ filter: brightness(.98); transform: translateY(-1px); }
+  .btn-spgi:hover{ filter: brightness(1.1); transform: translateY(-1px); }
 
   .btn-soft{
-    background: #eef2ff;
-    color: #1e40af;
-    border: 1px solid rgba(30,64,175,.12);
+    background: var(--bg-surface); color: var(--text-main);
+    border: 1px solid var(--border-main); border-radius: 12px;
   }
-  .btn-soft:hover{ background:#e0e7ff; transform: translateY(-1px); }
-
-  .toolbar-actions{
-    display:flex;
-    justify-content:flex-end;
-    gap:10px;
-    flex-wrap:wrap;
-  }
-
-  .toolbar-actions .btn{
-    height:44px;
-    border-radius:12px;
-    padding:0 14px;
-    white-space:nowrap;
-    box-shadow: var(--shadowSoft);
-    display:inline-flex;
-    align-items:center;
-    gap:.5rem;
-    font-weight:700;
-  }
+  .btn-soft:hover{ background: rgba(var(--spgi-primary), 0.05); transform: translateY(-1px); }
 
   .spgi-card{
-    margin-top: 14px;
-    background: rgba(255,255,255,.92);
-    border: 1px solid var(--spgi-border);
-    border-radius: 18px;
-    box-shadow: var(--shadow);
-    backdrop-filter: blur(6px);
-    overflow: hidden;
+    background: var(--bg-surface-glass); border: 1px solid var(--border-main);
+    border-radius: 20px; box-shadow: var(--shadow-main); backdrop-filter: blur(16px); overflow: hidden;
   }
-
   .spgi-card-header{
-    padding: 14px 16px;
-    border-bottom: 1px solid var(--spgi-border);
+    padding: 20px; border-bottom: 1px solid var(--border-main);
+    display:flex; justify-content:space-between; align-items:center; gap:12px;
   }
-  .spgi-card-body{ padding: 16px; }
+  .spgi-card-body{ padding: 24px; }
 
-  .spgi-label{
-    font-weight:700;
-    font-size:.9rem;
-    color:var(--spgi-ink);
-    margin-bottom:.35rem;
-  }
+  .spgi-label{ font-size: .75rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
 
   .spgi-control{
-    border-radius:14px !important;
-    border:1px solid var(--spgi-border) !important;
-    padding:.7rem .9rem !important;
-    box-shadow:0 8px 18px rgba(2,6,23,.04);
+    background: var(--bg-surface) !important; color: var(--text-main) !important;
+    border-radius:12px !important; border:1px solid var(--border-main) !important;
+    padding:.75rem 1rem !important; box-shadow: none !important;
   }
-  .spgi-control:focus{
-    border-color:rgba(37,99,235,.35) !important;
-    box-shadow:0 0 0 .22rem rgba(37,99,235,.12) !important;
-  }
+  .spgi-control:focus{ border-color: var(--spgi-primary) !important; }
+</style>
 </style>
 
 <div class="spgi-bg">
