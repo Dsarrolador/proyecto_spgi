@@ -373,7 +373,7 @@ request()->routeIs('mantenimiento.categorias.*');
     </div>
 
     <nav class="nav-sidebar">
-      @if(request()->is('comerciales/*') || request()->is('lead-requirements*') || request()->routeIs('leads.*') || request()->routeIs('lead-requirements.*'))
+      @if((request()->is('comerciales/*') || request()->is('lead-requirements*') || request()->routeIs('leads.*') || request()->routeIs('lead-requirements.*')) && (Auth::user()->es_admin || Auth::user()->es_encargado))
         <!-- SIDEBAR COMERCIAL -->
         <div class="nav-section-title">Comerciales</div>
         <a class="nav-link {{ request()->routeIs('leads.bienvenido') ? 'active' : '' }}" href="{{ route('leads.bienvenido') }}">
@@ -386,7 +386,12 @@ request()->routeIs('mantenimiento.categorias.*');
           <i class="bi bi-journal-text"></i> Requerimientos Comerciales
         </a>
         <a class="nav-link {{ request()->routeIs('leads.reportes') ? 'active' : '' }}" href="{{ route('leads.reportes') }}">
-          <i class="bi bi-bar-chart-line"></i> Reportes de Ventas
+          <i class="bi bi-bar-chart"></i> Reportes
+        </a>
+
+        <div class="nav-section-title mt-4">Industriales</div>
+        <a class="nav-link" href="{{ route('requerimientos.index') }}">
+          <i class="bi bi-clipboard-check"></i> Requerimientos Industriales
         </a>
 
         <div class="nav-section-title mt-4">Navegación</div>
@@ -419,6 +424,13 @@ request()->routeIs('mantenimiento.categorias.*');
           <i class="bi bi-book"></i> Wiki
         </a>
 
+        @if(Auth::user()->es_admin || Auth::user()->es_encargado)
+        <div class="nav-section-title">Ventas</div>
+        <a class="nav-link {{ request()->is('comerciales/*') || request()->is('lead-requirements*') ? 'active' : '' }}" href="{{ route('leads.bienvenido') }}">
+          <i class="bi bi-briefcase"></i> Comerciales
+        </a>
+        @endif
+
         @if(Auth::user()->es_admin)
         <div class="nav-section-title">Control de Gestión</div>
         <a class="nav-link {{ request()->routeIs('dashboard.iguala-control') ? 'active' : '' }}" href="{{ route('dashboard.iguala-control') }}">
@@ -429,10 +441,12 @@ request()->routeIs('mantenimiento.categorias.*');
         </a>
         @endif
 
+        @if(Auth::user()->es_admin)
         <div class="nav-section-title">Configuración</div>
         <a class="nav-link {{ request()->routeIs('usuarios.*') ? 'active' : '' }}" href="{{ route('usuarios.index') }}">
           <i class="bi bi-people"></i> Usuarios
         </a>
+        @endif
 
         <div class="dropdown">
           <a class="nav-link dropdown-toggle {{ $mantenimientoActive ? 'active' : '' }}" href="#" data-bs-toggle="dropdown">

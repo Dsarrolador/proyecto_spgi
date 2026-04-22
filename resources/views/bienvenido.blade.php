@@ -106,6 +106,7 @@
 
     <div class="quick-grid">
       
+      @if(auth()->user()->es_admin || auth()->user()->es_encargado)
       <a class="quick-card glass-card-premium" href="{{ route('leads.bienvenido') }}">
         <div class="quick-ico icon-float"><i class="bi bi-briefcase"></i></div>
         <div class="quick-meta text-start">
@@ -113,6 +114,7 @@
           <p class="d">Área de prospectos y ventas</p>
         </div>
       </a>
+      @endif
 
       @if(auth()->user()->es_admin || auth()->user()->es_encargado)
       <a class="quick-card glass-card-premium" href="{{ route('usuarios.index') }}">

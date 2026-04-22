@@ -125,6 +125,7 @@
 <div class="selection-container">
     <div class="selection-grid">
         
+        @if(auth()->user()->es_admin || auth()->user()->es_encargado)
         <a href="{{ route('leads.index') }}" class="selection-card">
             <span class="selection-badge">Ventas</span>
             <div class="selection-icon">
@@ -133,6 +134,7 @@
             <h2 class="selection-title">Comerciales</h2>
             <p class="selection-desc">Gestión de Leads, cotizaciones y seguimiento de clientes potenciales.</p>
         </a>
+        @endif
 
         <a href="{{ route('bienvenido') }}" class="selection-card">
             <span class="selection-badge">Operaciones</span>
