@@ -38,16 +38,30 @@
 
   .spgi-table-box{
     background: var(--bg-surface-glass); border: 1px solid var(--border-main);
-    border-radius: 22px; box-shadow: var(--shadow-main); overflow: hidden; backdrop-filter: blur(16px);
+    border-radius: 22px; box-shadow: var(--shadow-main); overflow-x: auto; backdrop-filter: blur(16px);
   }
 
-  .spgi-table{ margin-bottom: 0; }
+  .spgi-table{ margin-bottom: 0; min-width: 1000px; width: 100%; table-layout: fixed; }
   .spgi-table thead th{
     background: #0b1220; color: #fff; text-align:center;
     border-color: rgba(255,255,255,0.08) !important;
     font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; padding: 16px;
   }
-  .spgi-table tbody td{ border-color: var(--border-main) !important; color: var(--text-main); padding: 16px; }
+
+  /* Column widths */
+  .col-cliente { width: 180px; }
+  .col-req { width: auto; }
+  .col-asignado { width: 180px; }
+  .col-estado { width: 140px; }
+  .col-acciones { width: 160px; }
+
+  .spgi-table tbody td{ 
+    border-color: var(--border-main) !important; 
+    color: var(--text-main); 
+    padding: 16px; 
+    word-break: break-word; 
+    vertical-align: middle;
+  }
   .spgi-table tbody tr:hover{ background: rgba(var(--spgi-primary), 0.05); }
 
   .acciones .btn{ width: 38px; height: 38px; display: inline-flex; align-items: center; justify-content: center; padding: 0; border-radius: 10px; }
@@ -312,6 +326,10 @@
 
 <div class="spgi-bg">
   <div class="container">
+    <div class="mb-4">
+      <h3 class="fw-bold text-gradient">Requerimientos Industriales</h3>
+      <p class="text-muted small mb-0">Gestión de requerimientos y soporte operativo.</p>
+    </div>
 
     <div class="spgi-toolbar mb-3">
 
@@ -363,17 +381,16 @@
     <div class="spgi-table-wrap">
 
       <div class="spgi-table-desktop spgi-table-box">
-        <div class="table-responsive spgi-table">
-          <table class="table table-bordered align-middle mb-0">
+          <table class="spgi-table table table-bordered align-middle">
             <thead>
               <tr>
-                <th>Cliente</th>
-                <th>Requerimiento</th>
-                <th>Asignado a</th>
-                <th class="col-fecha">Fecha</th>
+                <th class="col-cliente">Cliente</th>
+                <th class="col-req">Requerimiento</th>
+                <th class="col-asignado">Asignado a</th>
+                <th style="width: 120px;">Fecha</th>
                 <th class="col-estado">Estado</th>
                 @if($esAdmin || $esEncargado)
-                  <th class="col-facturacion">Facturación</th>
+                  <th style="width: 140px;">Facturación</th>
                 @endif
                 <th class="col-acciones">Acciones</th>
               </tr>
@@ -455,8 +472,7 @@
 
                       <button type="button"
                               class="btn btn-outline-info btn-sm"
-                              data-bs-toggle="modal"
-                              data-bs-target="#modalNovedades{{ $req->id }}"
+                              onclick="openNovedadesModal({{ $req->id }}, '{{ addslashes($req->clienteRelation->nombre ?? 'Cliente no asignado') }}', {{ $req->cliente_id ?? 'null' }})"
                               title="Novedades">
                         <i class="bi bi-journal-text"></i>
                       </button>
@@ -561,8 +577,7 @@
 
               <button type="button"
                       class="btn btn-outline-info btn-sm"
-                      data-bs-toggle="modal"
-                      data-bs-target="#modalNovedades{{ $req->id }}">
+                      onclick="openNovedadesModal({{ $req->id }}, '{{ addslashes($req->clienteRelation->nombre ?? 'Cliente no asignado') }}', {{ $req->cliente_id ?? 'null' }})">
                 <i class="bi bi-journal-text me-1"></i> Novedades
               </button>
 
@@ -732,274 +747,257 @@
 </div>
 @endforeach
 
-@foreach ($requerimientos as $req)
-<div class="modal fade" id="modalNovedades{{ $req->id }}" tabindex="-1" aria-hidden="true">
+<!-- MODAL DE NOVEDADES DINÁMICO (CATEGORIZADO) -->
+<div class="modal fade" id="modalNovedadesDinamico" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-xl modal-dialog-centered">
-    <div class="modal-content">
-
-      <div class="modal-header text-white" style="background: linear-gradient(135deg, var(--spgi-primary), #2563eb);">
-        <h5 class="modal-title">
-          Novedades de: {{ $req->clienteRelation->nombre ?? 'Cliente no asignado' }}
-        </h5>
+    <div class="modal-content glass-card-premium border-0 overflow-hidden">
+      
+      <!-- Cabecera Dinámica -->
+      <div class="modal-header border-0 p-4 d-flex justify-content-between align-items-center" id="modal-header-novedades" style="background: linear-gradient(135deg, var(--spgi-primary), #2563eb); transition: all 0.3s ease;">
+        <div class="d-flex align-items-center gap-3">
+            <button type="button" id="btn-back-dashboard-modal" class="btn btn-link text-white p-0 d-none" onclick="regresarAlDashboardModal()">
+                <i class="bi bi-arrow-left fs-4"></i>
+            </button>
+            <div>
+                <h5 class="modal-title text-white fw-bold mb-0" id="modal-dinamico-title">Novedades</h5>
+                <small class="text-white text-opacity-75" id="modal-dinamico-client">Cliente</small>
+            </div>
+        </div>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
 
-      <div class="modal-body">
-        <div class="row g-0">
-
-          <div class="col-12 col-md-7 border-end spgi-historial-box p-4" style="background: rgba(var(--text-main), 0.02);">
-            <h5 class="fw-bold mb-3">Historial</h5>
-
-            <div id="historial-container-{{ $req->id }}">
-              @forelse ($req->novedades->sortBy('created_at') as $item)
-                <div class="mb-3 d-flex flex-column" id="novedad-wrapper-{{ $item->id }}">
-                  <div class="d-flex justify-content-between align-items-center mb-1 gap-2">
-                    <span class="fw-bold small" style="color: var(--spgi-primary);">
-                      @if($item->adjunto)
-                        <i class="bi bi-paperclip me-1 text-success"></i>
-                      @endif
-                      {{ $item->user->name ?? 'Usuario' }}
-                    </span>
-                    <div class="dropdown">
-                      <button class="btn btn-link btn-sm text-muted p-0" type="button" data-bs-toggle="dropdown">
-                        <i class="bi bi-three-dots"></i>
-                      </button>
-                      <ul class="dropdown-menu dropdown-menu-end">
-                        <li>
-                          <button class="dropdown-item small"
-                                  type="button"
-                                  onclick="habilitarEdicion({{ $item->id }})">
-                            <i class="bi bi-pencil me-1"></i> Editar
-                          </button>
-                        </li>
-                        <li>
-                          <button class="dropdown-item text-danger small"
-                                  type="button"
-                                  onclick="eliminarNovedad({{ $item->id }}, {{ $req->id }})">
-                            <i class="bi bi-trash me-1"></i> Eliminar
-                          </button>
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
-
-                  <div class="p-3 rounded-3 shadow-sm border" style="background: var(--bg-surface); border-color: var(--border-main) !important;">
-                    <p class="mb-1 small" id="novedad-texto-{{ $item->id }}" style="white-space: pre-wrap; color: var(--text-main);">{{ $item->novedad }}</p>
-
-                    <div id="novedad-edit-{{ $item->id }}" class="d-none">
-                      <textarea class="form-control form-control-sm mb-2" id="novedad-area-{{ $item->id }}"></textarea>
-                      <div class="d-flex gap-2 flex-wrap">
-                        <button type="button" class="btn btn-primary btn-sm py-0 px-2" onclick="guardarEdicion({{ $item->id }})" style="font-size: 0.7rem;">Guardar</button>
-                        <button type="button" class="btn btn-light btn-sm py-0 px-2" onclick="cancelarEdicion({{ $item->id }})" style="font-size: 0.7rem;">Cancelar</button>
-                      </div>
-                    </div>
-
-                    <div class="d-flex justify-content-between align-items-center mt-2 gap-2 flex-wrap">
-                      <span class="text-muted" style="font-size: 0.7rem;">
-                        {{ $item->created_at->format('d/m/Y H:i') }}
-                      </span>
-                      @if($item->adjunto)
-                        <a href="{{ route('novedades.download', $item->id) }}"
-                           class="btn btn-sm btn-outline-primary py-0 px-2"
-                           style="font-size: 0.7rem;">
-                          <i class="bi bi-download"></i> Descargar
-                        </a>
-                      @endif
-                    </div>
-                  </div>
-                </div>
-              @empty
-                <p class="text-muted text-center py-4 no-novedades">Aún no hay novedades registradas.</p>
-              @endforelse
+      <div class="modal-body p-0">
+        
+        <!-- DASHBOARD DE SELECCIÓN (DENTRO DEL MODAL) -->
+        <div id="modal-dashboard-novedades" class="p-5 animate__animated animate__fadeIn">
+            <div class="text-center mb-4">
+                <h4 class="fw-bold text-gradient">¿Qué desea consultar?</h4>
+                <p class="text-muted">Seleccione el tipo de seguimiento para continuar</p>
             </div>
-          </div>
-
-          <div class="col-12 col-md-5 p-4">
-            <h5 class="fw-bold mb-3">Nueva Novedad</h5>
-
-            <form id="form-novedad-{{ $req->id }}" onsubmit="enviarNovedad(event, {{ $req->id }})" enctype="multipart/form-data">
-              @csrf
-              <input type="hidden" name="requerimiento_id" value="{{ $req->id }}">
-              <input type="hidden" name="cliente_id" value="{{ $req->cliente_id }}">
-
-              <div class="mb-3">
-                <textarea name="novedad" class="form-control" rows="5" placeholder="Escribe aquí..." required style="background: var(--bg-surface); color: var(--text-main); border-radius: 12px;"></textarea>
-              </div>
-
-              <div class="mb-3">
-                <label class="form-label small text-muted">Adjuntar archivo (opcional)</label>
-                <input type="file" name="adjunto" class="form-control form-control-sm">
-                <small class="text-muted">Máximo 30MB.</small>
-              </div>
-
-              <button type="submit" class="btn btn-primary w-100" id="btn-save-{{ $req->id }}">
-                <i class="bi bi-send-fill me-1"></i> Guardar Novedad
-              </button>
-            </form>
-          </div>
-
+            <div class="row g-4 justify-content-center">
+                <div class="col-md-5">
+                    <div class="glass-card-premium p-4 text-center h-100 cursor-pointer hover-scale border-top border-4 border-success" onclick="modalSwitchCategory('cliente')">
+                        <div class="rounded-circle bg-success bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" style="width: 70px; height: 70px;">
+                            <i class="bi bi-people-fill fs-1 text-success"></i>
+                        </div>
+                        <h5 class="fw-bold mb-2 text-success">Novedades Clientes</h5>
+                        <p class="small text-muted mb-0">Avances oficiales compartidos con el cliente.</p>
+                    </div>
+                </div>
+                <div class="col-md-5">
+                    <div class="glass-card-premium p-4 text-center h-100 cursor-pointer hover-scale border-top border-4 border-primary" onclick="modalSwitchCategory('interno')">
+                        <div class="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" style="width: 70px; height: 70px;">
+                            <i class="bi bi-shield-lock-fill fs-1 text-primary"></i>
+                        </div>
+                        <h5 class="fw-bold mb-2">Notas Internas</h5>
+                        <p class="small text-muted mb-0">Detalles técnicos y notas privadas para el equipo.</p>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
 
+        <!-- CONTENIDO DE NOVEDADES (LISTA + FORM) -->
+        <div id="modal-content-novedades" class="d-none animate__animated animate__fadeIn">
+            <div class="row g-0">
+                <!-- Historial -->
+                <div class="col-12 col-md-7 border-end p-4 bg-light bg-opacity-50 overflow-auto" style="height: 500px;" id="modal-historial-list">
+                    <!-- Los items se cargan aquí -->
+                </div>
+
+                <!-- Formulario -->
+                <div class="col-12 col-md-5 p-4 d-flex flex-column" style="background: var(--bg-surface);">
+                    <h6 class="fw-bold mb-3 small text-uppercase text-muted" id="modal-form-title">Agregar Seguimiento</h6>
+                    <form id="modal-form-novedad-dinamico" enctype="multipart/form-data">
+                        @csrf
+                        <input type="hidden" name="requerimiento_id" id="modal-req-id">
+                        <input type="hidden" name="cliente_id" id="modal-cliente-id">
+                        <input type="hidden" name="tipo" id="modal-tipo-input">
+
+                        <div class="mb-3">
+                            <textarea name="novedad" class="form-control border-0 shadow-sm" rows="6" placeholder="Escribe aquí..." required style="border-radius: 14px; resize: none; background: var(--bg-surface);"></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small text-muted">Adjuntar archivo (opcional)</label>
+                            <input type="file" name="adjunto" id="modal-adjunto-input" class="form-control form-control-sm rounded-pill">
+                        </div>
+
+                        <div id="modal-progress-container" class="mb-3 d-none">
+                            <div class="progress" style="height: 6px;">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 rounded-pill fw-bold py-2 mt-auto" id="modal-btn-save">
+                            <i class="bi bi-send-fill me-1"></i> Publicar Seguimiento
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+      </div>
     </div>
   </div>
 </div>
-@endforeach
 
 @push('scripts')
 <script>
-function enviarNovedad(event, reqId) {
-    event.preventDefault();
-    const form = event.target;
-    const formData = new FormData(form);
-    const btn = document.getElementById('btn-save-' + reqId);
+    // --- LÓGICA DEL MODAL DINÁMICO DE NOVEDADES ---
+    let currentNovedadesData = [];
+    const modalDinamico = new bootstrap.Modal(document.getElementById('modalNovedadesDinamico'));
+    const modalHistorialList = document.getElementById('modal-historial-list');
+    const modalBtnSave = document.getElementById('modal-btn-save');
+    const modalForm = document.getElementById('modal-form-novedad-dinamico');
+    
+    window.openNovedadesModal = function(id, title, clientId) {
+        // Reset modal state
+        document.getElementById('modal-dinamico-title').innerText = "Novedades de:";
+        document.getElementById('modal-dinamico-client').innerText = title;
+        document.getElementById('modal-req-id').value = id;
+        document.getElementById('modal-cliente-id').value = clientId;
+        
+        regresarAlDashboardModal();
+        modalHistorialList.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Cargando historial...</p></div>';
+        
+        modalDinamico.show();
 
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Guardando...';
+        // Cargar datos vía AJAX
+        fetch(`/novedades/${id}`, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(res => res.json())
+        .then(data => {
+            currentNovedadesData = data;
+            // No renderizamos aún, esperamos a que elija categoría
+        })
+        .catch(err => {
+            modalHistorialList.innerHTML = '<p class="text-danger p-4">Error al cargar el historial.</p>';
+        });
+    }
 
-    fetch('{{ route("novedades.store") }}', {
-        method: 'POST',
-        body: formData,
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+    window.modalSwitchCategory = function(tipo) {
+        document.getElementById('modal-dashboard-novedades').classList.add('d-none');
+        document.getElementById('modal-content-novedades').classList.remove('d-none');
+        document.getElementById('btn-back-dashboard-modal').classList.remove('d-none');
+        
+        const header = document.getElementById('modal-header-novedades');
+        const formTitle = document.getElementById('modal-form-title');
+        const tipoInput = document.getElementById('modal-tipo-input');
+        
+        tipoInput.value = tipo;
+        
+        if (tipo === 'interno') {
+            header.style.background = 'linear-gradient(135deg, #3b82f6, #2563eb)';
+            formTitle.innerText = "Agregar Nota Interna";
+            formTitle.className = "fw-bold mb-3 small text-uppercase text-primary";
+            modalBtnSave.className = "btn btn-primary w-100 rounded-pill fw-bold py-2 mt-auto";
+        } else {
+            header.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+            formTitle.innerText = "Agregar Seguimiento Cliente";
+            formTitle.className = "fw-bold mb-3 small text-uppercase text-success";
+            modalBtnSave.className = "btn btn-success w-100 rounded-pill fw-bold py-2 mt-auto";
         }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            const container = document.getElementById('historial-container-' + reqId);
-            const noNovedades = container.querySelector('.no-novedades');
-            if (noNovedades) noNovedades.remove();
 
-            const html = `
-                <div class="mb-3 d-flex flex-column" id="novedad-wrapper-${data.novedad.id}">
-                    <div class="d-flex justify-content-between align-items-center mb-1 gap-2">
-                        <span class="fw-bold small" style="color: var(--spgi-primary);">${data.user_name}</span>
-                        <div class="dropdown">
-                            <button class="btn btn-link btn-sm text-muted p-0" type="button" data-bs-toggle="dropdown">
-                                <i class="bi bi-three-dots"></i>
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                                <li>
-                                    <button class="dropdown-item small" type="button" onclick="habilitarEdicion(${data.novedad.id})">
-                                        <i class="bi bi-pencil me-1"></i> Editar
-                                    </button>
-                                </li>
-                                <li>
-                                    <button class="dropdown-item text-danger small" type="button" onclick="eliminarNovedad(${data.novedad.id}, ${reqId})">
-                                        <i class="bi bi-trash me-1"></i> Eliminar
-                                    </button>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="p-3 rounded-3 shadow-sm border" style="background: var(--bg-surface); border-color: var(--border-main) !important;">
-                        <p class="mb-1 small" id="novedad-texto-${data.novedad.id}" style="white-space: pre-wrap; color: var(--text-main);">${data.novedad.novedad}</p>
-                        <div id="novedad-edit-${data.novedad.id}" class="d-none">
-                            <textarea class="form-control form-control-sm mb-2" id="novedad-area-${data.novedad.id}"></textarea>
-                            <div class="d-flex gap-2 flex-wrap">
-                                <button type="button" class="btn btn-primary btn-sm py-0 px-2" onclick="guardarEdicion(${data.novedad.id})" style="font-size: 0.7rem;">Guardar</button>
-                                <button type="button" class="btn btn-light btn-sm py-0 px-2" onclick="cancelarEdicion(${data.novedad.id})" style="font-size: 0.7rem;">Cancelar</button>
-                            </div>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center mt-2 gap-2 flex-wrap">
-                            <span class="text-muted" style="font-size: 0.7rem;">${data.created_at}</span>
-                            ${data.file_url ? `
-                                <a href="${data.file_url}" target="_blank" download="${data.file_name}" class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size: 0.7rem;">
-                                    <i class="bi bi-download"></i> Descargar
-                                </a>
-                            ` : ''}
-                        </div>
-                    </div>
+        renderFilteredNovedades(tipo);
+    }
+
+    window.regresarAlDashboardModal = function() {
+        document.getElementById('modal-dashboard-novedades').classList.remove('d-none');
+        document.getElementById('modal-content-novedades').classList.add('d-none');
+        document.getElementById('btn-back-dashboard-modal').classList.add('d-none');
+        document.getElementById('modal-header-novedades').style.background = 'linear-gradient(135deg, #1e293b, #0f172a)';
+    }
+
+    function renderFilteredNovedades(tipo) {
+        const filtered = currentNovedadesData.filter(n => n.tipo === tipo);
+        
+        if (filtered.length === 0) {
+            modalHistorialList.innerHTML = `
+                <div class="text-center py-5 opacity-50">
+                    <i class="bi bi-chat-left-dots fs-1 d-block mb-2"></i>
+                    <p>No hay registros en esta categoría.</p>
                 </div>`;
-
-            container.insertAdjacentHTML('beforeend', html);
-            form.reset();
-            container.scrollTop = container.scrollHeight;
+            return;
         }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Ocurrió un error al guardar la novedad.');
-    })
-    .finally(() => {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="bi bi-send-fill me-1"></i> Guardar Novedad';
-    });
-}
 
-function habilitarEdicion(id) {
-    document.getElementById('novedad-texto-' + id).classList.add('d-none');
-    const area = document.getElementById('novedad-area-' + id);
-    area.value = document.getElementById('novedad-texto-' + id).innerText;
-    document.getElementById('novedad-edit-' + id).classList.remove('d-none');
-}
+        modalHistorialList.innerHTML = filtered.reverse().map(n => `
+            <div class="glass-card-premium p-3 mb-3 border-0 animate__animated animate__fadeIn">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="fw-bold small ${tipo === 'interno' ? 'text-primary' : 'text-success'}">
+                        <i class="bi ${tipo === 'interno' ? 'bi-shield-lock' : 'bi-person'} me-1"></i>
+                        ${n.user_name}
+                    </span>
+                    <small class="text-muted">${n.created_at}</small>
+                </div>
+                <p class="mb-2 small" style="white-space: pre-wrap; color: var(--text-main);">${n.novedad}</p>
+                ${n.file_url ? `
+                    <a href="${n.file_url}" class="btn btn-sm btn-outline-secondary py-1 px-3 rounded-pill" style="font-size: 0.7rem;">
+                        <i class="bi bi-download me-1"></i> Descargar
+                    </a>
+                ` : ''}
+            </div>
+        `).join('');
+    }
 
-function cancelarEdicion(id) {
-    document.getElementById('novedad-texto-' + id).classList.remove('d-none');
-    document.getElementById('novedad-edit-' + id).classList.add('d-none');
-}
+    if (modalForm) {
+        modalForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const xhr = new XMLHttpRequest();
+            const tipo = document.getElementById('modal-tipo-input').value;
 
-function guardarEdicion(id) {
-    const nuevaNovedad = document.getElementById('novedad-area-' + id).value;
+            modalBtnSave.disabled = true;
+            modalBtnSave.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Publicando...';
 
-    fetch(`/novedades/${id}`, {
-        method: 'PATCH',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-            'X-Requested-With': 'XMLHttpRequest'
-        },
-        body: JSON.stringify({ novedad: nuevaNovedad })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            document.getElementById('novedad-texto-' + id).innerText = nuevaNovedad;
-            cancelarEdicion(id);
-        }
-    })
-    .catch(error => alert('Error al actualizar'));
-}
+            xhr.open('POST', '{{ route("novedades.store") }}', true);
+            xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
 
-function eliminarNovedad(id, reqId) {
-    if (!confirm('¿Eliminar esta novedad?')) return;
+            xhr.upload.onprogress = function(e) {
+                if (e.lengthComputable) {
+                    const pct = Math.round((e.loaded / e.total) * 100);
+                    const container = document.getElementById('modal-progress-container');
+                    container.classList.remove('d-none');
+                    container.querySelector('.progress-bar').style.width = pct + '%';
+                }
+            };
 
-    fetch(`/novedades/${id}`, {
-        method: 'DELETE',
-        headers: {
-            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-            'X-Requested-With': 'XMLHttpRequest'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            document.getElementById('novedad-wrapper-' + id).remove();
-            const container = document.getElementById('historial-container-' + reqId);
-            if (container.children.length === 0) {
-                container.innerHTML = '<p class="text-muted text-center py-4 no-novedades">Aún no hay novedades registradas.</p>';
-            }
-        }
-    })
-    .catch(error => alert('Error al eliminar'));
-}
+            xhr.onload = function() {
+                modalBtnSave.disabled = false;
+                modalBtnSave.innerHTML = '<i class="bi bi-send-fill me-1"></i> Publicar Seguimiento';
+                document.getElementById('modal-progress-container').classList.add('d-none');
 
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.preview-box').forEach(box => {
-        box.addEventListener('click', function() {
-            this.classList.toggle('expanded');
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    const res = JSON.parse(xhr.responseText);
+                    if (res.success) {
+                        modalForm.reset();
+                        // Actualizar data local y re-renderizar
+                        currentNovedadesData.push({
+                            id: res.novedad.id,
+                            novedad: res.novedad.novedad,
+                            user_name: res.user_name,
+                            created_at: res.created_at,
+                            file_url: res.file_url,
+                            file_name: res.file_name,
+                            tipo: res.tipo
+                        });
+                        renderFilteredNovedades(tipo);
+                    }
+                }
+            };
+            xhr.send(formData);
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Tooltips y otros
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        tooltipTriggerList.map(function (el) { return new bootstrap.Tooltip(el) });
+        
+        document.querySelectorAll('.preview-box').forEach(box => {
+            box.addEventListener('click', function() { this.classList.toggle('expanded'); });
         });
     });
-});
-  // Inicializar tooltips de Bootstrap
-  document.addEventListener('DOMContentLoaded', function () {
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-      return new bootstrap.Tooltip(tooltipTriggerEl)
-    })
-  });
 </script>
 @endpush
 

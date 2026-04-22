@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UsuarioController;
 use App\Http\Controllers\ClienteMaestroController;
@@ -19,6 +18,8 @@ use App\Http\Controllers\WikiController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\RoleUserController;
 use App\Http\Controllers\NotificacionController;
+use App\Http\Controllers\LeadController;
+use App\Http\Controllers\LeadRequirementController;
 use App\Http\Controllers\CatEquipoController;
 use App\Http\Controllers\CatTipoEquipoController;
 use App\Http\Controllers\ClienteEntornoController;
@@ -44,9 +45,18 @@ Route::get('/logout', [AuthController::class, 'logout'])->name('logout');
 */
 Route::middleware('auth')->group(function () {
 
+    Route::get('/seleccion', function () {
+        return redirect()->route('bienvenido');
+    })->name('seleccion');
+
     Route::get('/bienvenido', function () {
         return view('bienvenido');
     })->name('bienvenido');
+
+    Route::get('/comerciales/bienvenido', [LeadController::class, 'bienvenido'])->name('leads.bienvenido');
+    Route::get('/comerciales/reportes', [LeadController::class, 'reportes'])->name('leads.reportes');
+    Route::resource('lead-requirements', LeadRequirementController::class);
+    Route::resource('leads', LeadController::class);
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard/iguala-control', [DashboardController::class, 'igualaControl'])->name('dashboard.iguala-control')->middleware(\App\Http\Middleware\CheckAdmin::class);

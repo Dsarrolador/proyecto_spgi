@@ -4,7 +4,9 @@
 
 @section('content')
 <style>
-  .welcome-bg{ min-height: calc(100vh - 110px); display: grid; place-items: center; padding: 24px 0; }
+  .welcome-bg{ 
+    min-height: calc(100vh - 110px); display: grid; place-items: center; padding: 24px 0; 
+  }
 
   .welcome-card{
     width: 100%; max-width: 900px; border-radius: 24px;
@@ -92,7 +94,7 @@
       Acceso concedido
     </div>
 
-    <h1 class="welcome-title">¡Bienvenido, {{ auth()->user()->name }}!</h1>
+    <h1 class="welcome-title text-gradient">¡Bienvenido, {{ auth()->user()->name }}!</h1>
 
     <p class="welcome-subtitle">
       Has iniciado sesión correctamente en el sistema <b>SPGI</b>.
@@ -100,85 +102,78 @@
 
     <div class="divider"></div>
 
-    <div class="quick-title">Accesos rápidos</div>
+    <div class="quick-title">Accesos Rápidos</div>
 
     <div class="quick-grid">
+      
+      <a class="quick-card glass-card-premium" href="{{ route('leads.bienvenido') }}">
+        <div class="quick-ico icon-float"><i class="bi bi-briefcase"></i></div>
+        <div class="quick-meta text-start">
+          <p class="t">Comerciales</p>
+          <p class="d">Área de prospectos y ventas</p>
+        </div>
+      </a>
 
-      <a class="quick-card" href="{{ route('usuarios.index') }}">
-        <div class="quick-ico"><i class="bi bi-people"></i></div>
+      @if(auth()->user()->es_admin || auth()->user()->es_encargado)
+      <a class="quick-card glass-card-premium" href="{{ route('usuarios.index') }}">
+        <div class="quick-ico icon-float"><i class="bi bi-people"></i></div>
         <div class="quick-meta text-start">
           <p class="t">Usuarios</p>
           <p class="d">Gestionar usuarios y roles</p>
         </div>
       </a>
+      @endif
 
-      <a class="quick-card" href="{{ route('clientes.index') }}">
-        <div class="quick-ico"><i class="bi bi-building"></i></div>
+      <a class="quick-card glass-card-premium" href="{{ route('clientes.index') }}">
+        <div class="quick-ico icon-float"><i class="bi bi-person-vcard"></i></div>
         <div class="quick-meta text-start">
           <p class="t">Clientes</p>
           <p class="d">Listado y contactos</p>
         </div>
       </a>
 
-      <a class="quick-card" href="{{ route('requerimientos.index') }}">
-        <div class="quick-ico"><i class="bi bi-clipboard-check"></i></div>
+      <a class="quick-card glass-card-premium" href="{{ route('requerimientos.index') }}">
+        <div class="quick-ico icon-float"><i class="bi bi-clipboard-check"></i></div>
         <div class="quick-meta text-start">
           <p class="t">Requerimientos</p>
           <p class="d">Seguimiento de solicitudes</p>
         </div>
       </a>
 
-      <a class="quick-card {{ $proyectosRoute ? '' : 'disabled' }}"
-         href="{{ $proyectosRoute ? route($proyectosRoute) : '#' }}"
-         title="{{ $proyectosRoute ? '' : 'No existe la ruta de Proyectos (proyectos.index)' }}">
-        <div class="quick-ico"><i class="bi bi-kanban"></i></div>
+      <a class="quick-card glass-card-premium" href="{{ route($proyectosRoute ?? 'bienvenido') }}">
+        <div class="quick-ico icon-float"><i class="bi bi-kanban"></i></div>
         <div class="quick-meta text-start">
           <p class="t">Proyectos</p>
           <p class="d">Gestión y seguimiento</p>
         </div>
       </a>
 
-      <a class="quick-card" href="{{ route('wiki.index') }}">
-        <div class="quick-ico"><i class="bi bi-journal-bookmark"></i></div>
+      <a class="quick-card glass-card-premium" href="{{ route('wiki.index') }}">
+        <div class="quick-ico icon-float"><i class="bi bi-book"></i></div>
         <div class="quick-meta text-start">
           <p class="t">Wiki</p>
           <p class="d">Documentos y Etiquetas</p>
         </div>
       </a>
 
-      <div class="quick-card flex-column align-items-start">
-        <div class="d-flex align-items-center gap-2 w-100">
-          <div class="quick-ico"><i class="bi bi-tools"></i></div>
+      @if(auth()->user()->es_admin)
+      <div class="quick-card glass-card-premium flex-column align-items-stretch" style="grid-column: span 2; min-height: auto;">
+        <div class="d-flex align-items-center gap-3">
+          <div class="quick-ico icon-float"><i class="bi bi-gear-fill"></i></div>
           <div class="quick-meta text-start">
             <p class="t">Mantenimiento</p>
             <p class="d">Configuraciones del sistema</p>
           </div>
         </div>
-
-        <div class="submenu">
-          @if($rolesRouteExists)
-            <a href="{{ route('mantenimiento.roles.index') }}">
-              <i class="bi bi-person-badge"></i> Roles
-            </a>
-          @endif
-
-          <a href="{{ route('mantenimiento.tipo-soporte.index') }}">
-            <i class="bi bi-headset"></i> Tipo de soporte
-          </a>
-
-          <a href="{{ route('mantenimiento.iguala.index') }}">
-            <i class="bi bi-award"></i> Iguala
-          </a>
-
-          <a href="{{ route('mantenimiento.categorias.index') }}">
-            <i class="bi bi-tags"></i> Categorías
-          </a>
-
-          <a href="{{ route('mantenimiento.estados-requerimiento.index') }}">
-            <i class="bi bi-flag"></i> Estados de Req.
-          </a>
+        <div class="submenu mt-3">
+          <a class="hover-scale" href="{{ route('mantenimiento.roles.index') }}"><i class="bi bi-person-lock"></i> Roles</a>
+          <a class="hover-scale" href="{{ route('mantenimiento.tipo-soporte.index') }}"><i class="bi bi-headphones"></i> Tipo de soporte</a>
+          <a class="hover-scale" href="{{ route('mantenimiento.iguala.index') }}"><i class="bi bi-lightbulb"></i> Iguala</a>
+          <a class="hover-scale" href="{{ route('mantenimiento.categorias.index') }}"><i class="bi bi-tag"></i> Categorías</a>
+          <a class="hover-scale" href="{{ route('mantenimiento.estados-requerimiento.index') }}"><i class="bi bi-flag"></i> Estados de Req.</a>
         </div>
       </div>
+      @endif
 
     </div>
 

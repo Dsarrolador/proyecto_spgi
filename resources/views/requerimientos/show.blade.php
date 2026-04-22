@@ -64,6 +64,25 @@
   }
   .spgi-thumb:hover{ transform: scale(1.05); border-color: var(--spgi-primary); box-shadow: 0 10px 20px var(--spgi-primary-glow); }
 
+  .btn-evidence{
+    min-height: 54px; border-radius: 16px; width: 100%;
+    display: flex; align-items: center; justify-content: flex-start; gap: 14px;
+    padding: 0 24px; border: 1px solid var(--border-main);
+    background: var(--bg-surface-glass); color: var(--text-main);
+    font-weight: 700; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: var(--shadow-main);
+  }
+  .btn-evidence:hover{
+    border-color: var(--spgi-primary); transform: translateY(-3px);
+    background: rgba(var(--spgi-primary), 0.05); color: var(--spgi-primary);
+  }
+  .btn-evidence i{ font-size: 1.4rem; opacity: 0.8; }
+
+  .no-evidence{
+    padding: 24px; border: 2px dashed var(--border-main); border-radius: 20px;
+    text-align: center; color: var(--text-muted); font-weight: 600;
+  }
+
   .spgi-btn-save{
     min-height: 52px; border-radius: 16px; padding: 0 32px;
     background: var(--spgi-primary); color: #fff; border: 0; font-weight: 800;
@@ -243,59 +262,39 @@
               <div class="spgi-section">
                 <div class="spgi-label">Evidencias</div>
 
-                @if(!empty($requerimiento->foto))
-                  <div class="spgi-image-wrap">
-                    <div class="small text-muted mb-2">Imagen principal</div>
+                <div class="row g-3">
+                    @php
+                        $hasPrincipal = !empty($requerimiento->foto);
+                        $hasAdicionales = isset($requerimiento->imagenes) && $requerimiento->imagenes->count() > 0;
+                    @endphp
 
-                    <img
-                      src="{{ $fotoPrincipalUrl }}"
-                      class="spgi-image"
-                      alt="Foto principal del requerimiento"
-                      onclick="abrirModalImagen('{{ $fotoPrincipalUrl }}')"
-                      onerror="this.style.display='none'; document.getElementById('error-foto-principal').classList.remove('d-none');"
-                    >
+                    @if($hasPrincipal)
+                        <div class="col-12 col-md-6">
+                            <button type="button" class="btn-evidence glass-card-premium" onclick="abrirModalPrincipal('{{ $fotoPrincipalUrl }}')">
+                                <i class="bi bi-image-fill icon-float"></i>
+                                <span>Ver imagen principal</span>
+                            </button>
+                        </div>
+                    @endif
 
-                    <div id="error-foto-principal" class="alert alert-warning mt-2 mb-0 d-none">
-                      No se pudo cargar la imagen principal desde el servidor externo.
-                    </div>
-                  </div>
-                @endif
+                    @if($hasAdicionales)
+                        <div class="col-12 col-md-6">
+                            <button type="button" class="btn-evidence glass-card-premium" onclick="abrirModalAdicionales()">
+                                <i class="bi bi-images icon-float"></i>
+                                <span>Ver imágenes adicionales</span>
+                            </button>
+                        </div>
+                    @endif
 
-                @if(isset($requerimiento->imagenes) && $requerimiento->imagenes->count())
-                  <div class="{{ !empty($requerimiento->foto) ? 'mt-4' : 'mt-2' }}">
-                    <div class="small text-muted mb-2">Imágenes adicionales</div>
-
-                    <div class="spgi-gallery">
-                      @foreach($requerimiento->imagenes as $index => $img)
-                        @php
-                          $fotoAdicionalUrl = !empty($img->imagen)
-                              ? route('storage.proxy', ['path' => $img->imagen])
-                              : null;
-                        @endphp
-
-                        @if(!empty($img->imagen))
-                          <div>
-                            <img
-                              src="{{ $fotoAdicionalUrl }}"
-                              class="spgi-thumb"
-                              alt="Imagen adicional"
-                              onclick="abrirModalImagen('{{ $fotoAdicionalUrl }}')"
-                              onerror="this.style.display='none'; document.getElementById('error-foto-adicional-{{ $index }}').classList.remove('d-none');"
-                            >
-
-                            <div id="error-foto-adicional-{{ $index }}" class="alert alert-warning mt-2 mb-0 d-none py-2">
-                              No se pudo cargar una imagen adicional.
+                    @if(!$hasPrincipal && !$hasAdicionales)
+                        <div class="col-12">
+                            <div class="no-evidence">
+                                <i class="bi bi-cloud-slash fs-3 d-block mb-2 opacity-50"></i>
+                                Sin evidencias adjuntas
                             </div>
-                          </div>
-                        @endif
-                      @endforeach
-                    </div>
-                  </div>
-                @endif
-
-                @if(empty($requerimiento->foto) && (!isset($requerimiento->imagenes) || !$requerimiento->imagenes->count()))
-                  <div class="text-muted mt-2">No hay imágenes adjuntas.</div>
-                @endif
+                        </div>
+                    @endif
+                </div>
               </div>
             </div>
 
@@ -348,64 +347,113 @@
       <div class="spgi-card">
         <div class="spgi-card-body p-4">
           <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
-            <h5 class="fw-bold mb-0" style="color: var(--text-main);">
+            <h5 class="fw-bold mb-0" id="novedades-header-title" style="color: var(--text-main);">
               <i class="bi bi-journal-text me-2"></i> Seguimientos y Novedades
             </h5>
-            <span class="badge bg-primary rounded-pill">{{ $requerimiento->novedades->count() }} Notas</span>
+            <div id="header-badges">
+                <span class="badge bg-primary rounded-pill">{{ $requerimiento->novedades->where('tipo', 'cliente')->count() }} Clientes</span>
+                <span class="badge bg-success rounded-pill">{{ $requerimiento->novedades->where('tipo', 'interno')->count() }} Internas</span>
+            </div>
+            
+            <button type="button" id="btn-back-to-dashboard" class="btn btn-sm btn-outline-secondary d-none rounded-pill px-3" onclick="showNovedadesDashboard()">
+                <i class="bi bi-arrow-left me-1"></i> Volver al menú
+            </button>
           </div>
 
-          <!-- Listado de Novedades -->
-          <div class="novedades-timeline mb-4">
-            @forelse($requerimiento->novedades as $nov)
-              <div class="novedad-item mb-4 pb-3 border-bottom position-relative">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                  <div class="d-flex align-items-center gap-2">
-                    <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 32px; height: 32px; font-size: 0.75rem; background: rgba(59, 130, 246, 0.15); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.2);">
-                      {{ strtoupper(substr($nov->user->name ?? 'U', 0, 1)) }}
+          <!-- DASHBOARD DE SELECCIÓN DE NOVEDADES -->
+          <div id="novedades-dashboard" class="row g-4 mb-4 animate__animated animate__fadeIn">
+            <div class="col-md-6">
+                <div class="glass-card-premium p-4 text-center h-100 cursor-pointer hover-scale" onclick="switchNovedadesCategory('cliente')" style="border-left: 5px solid #10b981;">
+                    <div class="rounded-circle bg-success bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                        <i class="bi bi-people-fill fs-2 text-success"></i>
                     </div>
-                    <div>
-                      <span class="fw-bold small d-block">{{ $nov->user->name ?? 'Usuario' }}</span>
-                      <small class="text-muted" style="font-size: 0.7rem;">{{ $nov->created_at->format('d/m/Y h:i A') }}</small>
+                    <h5 class="fw-bold text-success mb-2">Seguimientos Clientes</h5>
+                    <p class="small text-muted mb-0">Comunicación oficial y avances compartidos con el cliente.</p>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="glass-card-premium p-4 text-center h-100 cursor-pointer hover-scale" onclick="switchNovedadesCategory('interno')" style="border-left: 5px solid #3b82f6;">
+                    <div class="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                        <i class="bi bi-shield-lock-fill fs-2 text-primary"></i>
+                    </div>
+                    <h5 class="fw-bold text-gradient mb-2">Notas Internas</h5>
+                    <p class="small text-muted mb-0">Detalles técnicos, procesos y notas privadas para el equipo.</p>
+                </div>
+            </div>
+          </div>
+
+          <!-- CONTENEDOR DE LISTADO Y FORMULARIO (OCULTO POR DEFECTO HASTA ELEGIR) -->
+          <div id="novedades-content-area" class="d-none">
+            
+            <!-- Listado de Novedades (Filtrado vía JS) -->
+            <div class="novedades-timeline mb-4" id="novedades-list">
+              <!-- Se llena dinámicamente o se filtra la carga inicial -->
+              @foreach($requerimiento->novedades->sortByDesc('created_at') as $nov)
+                <div class="novedad-item mb-4 pb-3 border-bottom position-relative novelty-card" data-tipo="{{ $nov->tipo }}">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="d-flex align-items-center gap-2">
+                      <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold" 
+                           style="width: 32px; height: 32px; font-size: 0.75rem; 
+                                  background: {{ $nov->tipo === 'interno' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(16, 185, 129, 0.15)' }}; 
+                                  color: {{ $nov->tipo === 'interno' ? '#3b82f6' : '#10b981' }}; 
+                                  border: 1px solid {{ $nov->tipo === 'interno' ? 'rgba(59, 130, 246, 0.2)' : 'rgba(16, 185, 129, 0.2)' }};">
+                        {{ strtoupper(substr($nov->user->name ?? 'U', 0, 1)) }}
+                      </div>
+                      <div>
+                        <span class="fw-bold small d-block">{{ $nov->user->name ?? 'Usuario' }}</span>
+                        <small class="text-muted" style="font-size: 0.7rem;">{{ $nov->created_at->format('d/m/Y h:i A') }}</small>
+                      </div>
                     </div>
                   </div>
+                  <div class="ps-1">
+                    <p class="mb-2" style="white-space: pre-wrap; font-size: 0.95rem; color: var(--text-main);">{{ $nov->novedad }}</p>
+                    @if($nov->adjunto)
+                      <a href="{{ route('novedades.download', $nov->id) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3 mt-1" style="font-size: 0.8rem;">
+                        <i class="bi bi-download me-1"></i> {{ $nov->nombre_original ?? 'Descargar Adjunto' }}
+                      </a>
+                    @endif
+                  </div>
                 </div>
-                <div class="ps-1">
-                  <p class="mb-2" style="white-space: pre-wrap; font-size: 0.95rem; color: var(--text-main);">{{ $nov->novedad }}</p>
-                  @if($nov->adjunto)
-                    <a href="{{ route('novedades.download', $nov->id) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3 mt-1" style="font-size: 0.8rem;">
-                      <i class="bi bi-download me-1"></i> {{ $nov->nombre_original ?? 'Descargar Adjunto' }}
-                    </a>
-                  @endif
-                </div>
-              </div>
-            @empty
-              <div class="text-center py-5 text-muted">
-                <i class="bi bi-chat-left-dots fs-1 d-block mb-3 opacity-25"></i>
-                <p>Aún no hay seguimientos registrados para este requerimiento.</p>
-              </div>
-            @endforelse
-          </div>
-
-          <!-- Formulario para agregar Novedad -->
-          <div class="p-4 rounded-4 border" style="background: rgba(var(--text-main), 0.04); border-color: var(--border-main) !important;">
-            <h6 class="fw-bold mb-3 small text-uppercase text-muted letter-spacing-1">Agregar Seguimiento</h6>
-            <form action="{{ route('novedades.store') }}" method="POST" enctype="multipart/form-data">
-              @csrf
-              <input type="hidden" name="requerimiento_id" value="{{ $requerimiento->id }}">
-              <input type="hidden" name="cliente_id" value="{{ $requerimiento->cliente_id }}">
+              @endforeach
               
-              <div class="mb-3">
-                <textarea name="novedad" class="form-control border-0" rows="4" placeholder="Escribe aquí el detalle del seguimiento..." style="border-radius: 12px; resize: none; background: var(--bg-surface); color: var(--text-main);" required></textarea>
+              <div id="no-novedades-msg" class="text-center py-5 text-muted d-none">
+                <i class="bi bi-chat-left-dots fs-1 d-block mb-3 opacity-25"></i>
+                <p>Aún no hay seguimientos en esta categoría.</p>
               </div>
+            </div>
+
+            <!-- Formulario para agregar Novedad (Adaptable) -->
+            <div id="novedad-form-wrapper" class="p-4 rounded-4 border animate__animated animate__fadeInUp" style="background: rgba(var(--text-main), 0.04); border-color: var(--border-main) !important;">
+              <h6 class="fw-bold mb-3 small text-uppercase text-muted letter-spacing-1" id="form-novedad-title">Agregar Seguimiento</h6>
+              <form action="{{ route('novedades.store') }}" method="POST" enctype="multipart/form-data" id="form-novedad">
+                @csrf
+                <input type="hidden" name="requerimiento_id" value="{{ $requerimiento->id }}">
+                <input type="hidden" name="cliente_id" value="{{ $requerimiento->cliente_id }}">
+                <input type="hidden" name="tipo" id="input-novedad-tipo" value="cliente">
+                
+                <div class="mb-3">
+                  <textarea name="novedad" id="textarea-novedad" class="form-control border-0" rows="4" placeholder="Escribe aquí el detalle..." style="border-radius: 12px; resize: none; background: var(--bg-surface); color: var(--text-main);" required></textarea>
+                </div>
               
               <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
                 <div class="col-md-6">
-                  <input type="file" name="adjunto" class="form-control form-control-sm rounded-pill px-3">
+                  <input type="file" name="adjunto" id="adjunto-novedad" class="form-control form-control-sm rounded-pill px-3">
                   <div class="form-text mt-1 ms-2" style="font-size: 0.7rem;">Imagen o documento (máx 30MB)</div>
                 </div>
-                <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold spgi-btn-save">
+                <button type="submit" id="btn-submit-novedad" class="btn btn-primary rounded-pill px-4 fw-bold spgi-btn-save">
                   <i class="bi bi-send-fill me-1"></i> Publicar Seguimiento
                 </button>
+              </div>
+
+              <!-- Barra de progreso AJAX -->
+              <div id="progress-container-novedad" class="mt-3 d-none">
+                <div class="d-flex justify-content-between mb-1">
+                    <span class="small text-muted" id="progress-text">Subiendo archivos...</span>
+                    <span class="small fw-bold text-primary" id="progress-percent">0%</span>
+                </div>
+                <div class="progress" style="height: 10px; border-radius: 10px; background: rgba(var(--text-main), 0.1);">
+                  <div id="progress-bar-novedad" class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar" style="width: 0%"></div>
+                </div>
               </div>
             </form>
           </div>
@@ -458,27 +506,232 @@
 </div>
 
 <div class="modal fade" id="modalImagenGeneral" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-xl">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Vista de imagen</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+  <div class="modal-dialog modal-fullscreen">
+    <div class="modal-content border-0" style="background: rgba(0,0,0,0.95);">
+      <div class="modal-header border-0 p-4">
+        <h5 class="modal-title text-white fw-bold" id="modalTitle">Vista de Evidencia</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
       </div>
-      <div class="modal-body text-center">
-        <img id="imagenModalPreview" src="" alt="Vista previa" class="img-fluid rounded">
+      <div class="modal-body p-0 d-flex align-items-center justify-content-center">
+        <div id="modalContentContainer" class="w-100 h-100 p-3 overflow-auto d-flex flex-column align-items-center justify-content-start gap-4">
+            <!-- Content will be injected here -->
+        </div>
       </div>
     </div>
   </div>
 </div>
 
 <script>
-  function abrirModalImagen(src) {
-    const img = document.getElementById('imagenModalPreview');
-    img.src = src;
+  document.addEventListener('DOMContentLoaded', function() {
+    const modalElement = document.getElementById('modalImagenGeneral');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalContent = document.getElementById('modalContentContainer');
+    let bsModal = null;
 
-    const modal = new bootstrap.Modal(document.getElementById('modalImagenGeneral'));
-    modal.show();
-  }
+    function getModal() {
+        if (!bsModal) {
+            bsModal = new bootstrap.Modal(modalElement);
+        }
+        return bsModal;
+    }
+
+    window.abrirModalPrincipal = function(src) {
+        modalTitle.innerText = "Imagen Principal";
+        modalContent.innerHTML = `<img src="${src}" class="img-fluid rounded shadow-lg" style="max-height: 90vh; object-fit: contain;">`;
+        getModal().show();
+    }
+
+    window.abrirModalAdicionales = function() {
+        modalTitle.innerText = "Imágenes Adicionales";
+        let html = '';
+        @if(isset($requerimiento->imagenes))
+            @foreach($requerimiento->imagenes as $img)
+                @php $url = route('storage.proxy', ['path' => $img->imagen]); @endphp
+                html += `<img src="{{ $url }}" class="img-fluid rounded shadow-lg mb-4" style="max-height: 85vh; object-fit: contain;">`;
+            @endforeach
+        @endif
+        modalContent.innerHTML = html;
+        getModal().show();
+    }
+
+    // --- MANEJO DE NOVEDADES VÍA AJAX ---
+    const formNovedad = document.getElementById('form-novedad');
+    const novedadesList = document.getElementById('novedades-list');
+    const btnSubmit = document.getElementById('btn-submit-novedad');
+    const progressContainer = document.getElementById('progress-container-novedad');
+    const progressBar = document.getElementById('progress-bar-novedad');
+    const progressPercent = document.getElementById('progress-percent');
+    const novedadesDashboard = document.getElementById('novedades-dashboard');
+    const contentArea = document.getElementById('novedades-content-area');
+    const btnBack = document.getElementById('btn-back-to-dashboard');
+    const formTitle = document.getElementById('form-novedad-title');
+    const inputTipo = document.getElementById('input-novedad-tipo');
+    const headerBadges = document.getElementById('header-badges');
+    const headerTitle = document.getElementById('novedades-header-title');
+
+    window.switchNovedadesCategory = function(tipo) {
+        // UI Ajustes
+        novedadesDashboard.classList.add('d-none');
+        contentArea.classList.remove('d-none');
+        btnBack.classList.remove('d-none');
+        headerBadges.classList.add('d-none');
+        
+        inputTipo.value = tipo;
+        
+        if (tipo === 'interno') {
+            headerTitle.innerHTML = '<i class="bi bi-shield-lock-fill me-2 text-primary"></i> Notas Internas';
+            formTitle.innerText = "Agregar Nota Interna";
+            formTitle.classList.replace('text-muted', 'text-primary');
+            btnSubmit.classList.replace('btn-success', 'btn-primary');
+        } else {
+            headerTitle.innerHTML = '<i class="bi bi-people-fill me-2 text-success"></i> Seguimientos Clientes';
+            formTitle.innerText = "Agregar Seguimiento Cliente";
+            formTitle.classList.replace('text-primary', 'text-muted');
+            btnSubmit.classList.replace('btn-primary', 'btn-success');
+        }
+
+        // Filtrar cards
+        filterNovedadesList(tipo);
+    }
+
+    window.showNovedadesDashboard = function() {
+        novedadesDashboard.classList.remove('d-none');
+        contentArea.classList.add('d-none');
+        btnBack.classList.add('d-none');
+        headerBadges.classList.remove('d-none');
+        headerTitle.innerHTML = '<i class="bi bi-journal-text me-2"></i> Seguimientos y Novedades';
+    }
+
+    function filterNovedadesList(tipo) {
+        let visibleCount = 0;
+        document.querySelectorAll('.novelty-card').forEach(card => {
+            if (card.getAttribute('data-tipo') === tipo) {
+                card.classList.remove('d-none');
+                visibleCount++;
+            } else {
+                card.classList.add('d-none');
+            }
+        });
+
+        const noMsg = document.getElementById('no-novedades-msg');
+        if (visibleCount === 0) {
+            noMsg.classList.remove('d-none');
+        } else {
+            noMsg.classList.add('d-none');
+        }
+    }
+
+    if (formNovedad) {
+        formNovedad.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+            const xhr = new XMLHttpRequest();
+            const currentTipo = inputTipo.value;
+
+            // Deshabilitar botón y mostrar progreso
+            btnSubmit.disabled = true;
+            const originalBtnHtml = btnSubmit.innerHTML;
+            btnSubmit.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Publicando...';
+            
+            if (document.getElementById('adjunto-novedad').files.length > 0) {
+                progressContainer.classList.remove('d-none');
+            }
+
+            xhr.open('POST', this.action, true);
+            xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+
+            // Seguimiento del progreso
+            xhr.upload.onprogress = function(e) {
+                if (e.lengthComputable) {
+                    const percent = Math.round((e.loaded / e.total) * 100);
+                    progressBar.style.width = percent + '%';
+                    progressPercent.innerText = percent + '%';
+                }
+            };
+
+            xhr.onload = function() {
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = originalBtnHtml;
+                progressContainer.classList.add('d-none');
+                progressBar.style.width = '0%';
+
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    const res = JSON.parse(xhr.responseText);
+                    
+                    if (res.success) {
+                        formNovedad.reset();
+                        inputTipo.value = currentTipo; // Restaurar tipo
+
+                        // Crear el nuevo item HTML
+                        const newItem = document.createElement('div');
+                        newItem.className = 'novedad-item mb-4 pb-3 border-bottom position-relative novelty-card animate__animated animate__fadeIn';
+                        newItem.setAttribute('data-tipo', res.tipo);
+                        
+                        const accentColor = res.tipo === 'interno' ? '#3b82f6' : '#10b981';
+                        const accentBg = res.tipo === 'interno' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(16, 185, 129, 0.15)';
+                        const accentBorder = res.tipo === 'interno' ? 'rgba(59, 130, 246, 0.2)' : 'rgba(16, 185, 129, 0.2)';
+
+                        let adjuntoHtml = '';
+                        if (res.file_url) {
+                            adjuntoHtml = `
+                                <a href="${res.file_url}" class="btn btn-sm btn-outline-primary rounded-pill px-3 mt-1" style="font-size: 0.8rem;">
+                                    <i class="bi bi-download me-1"></i> ${res.file_name}
+                                </a>
+                            `;
+                        }
+
+                        newItem.innerHTML = `
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-uppercase" 
+                                         style="width: 32px; height: 32px; font-size: 0.75rem; background: ${accentBg}; color: ${accentColor}; border: 1px solid ${accentBorder};">
+                                        ${res.user_name.charAt(0)}
+                                    </div>
+                                    <div>
+                                        <span class="fw-bold small d-block">${res.user_name}</span>
+                                        <small class="text-muted" style="font-size: 0.7rem;">${res.created_at}</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="ps-1">
+                                <p class="mb-2" style="white-space: pre-wrap; font-size: 0.95rem; color: var(--text-main);">${res.novedad.novedad}</p>
+                                ${adjuntoHtml}
+                            </div>
+                        `;
+
+                        document.getElementById('no-novedades-msg').classList.add('d-none');
+
+                        // Agregar al inicio de la lista
+                        if (novedadesList.firstChild) {
+                            novedadesList.insertBefore(newItem, novedadesList.firstChild);
+                        } else {
+                            novedadesList.appendChild(newItem);
+                        }
+
+                        newItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    } else {
+                        alert('Error: ' + (res.message || 'No se pudo publicar.'));
+                    }
+                } else {
+                    alert('Error en el servidor.');
+                }
+            };
+            xhr.send(formData);
+        });
+    }
+
+            xhr.onerror = function() {
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = '<i class="bi bi-send-fill me-1"></i> Publicar Seguimiento';
+                progressContainer.classList.add('d-none');
+                alert('Error de conexión. Inténtalo de nuevo.');
+            };
+
+            xhr.send(formData);
+        });
+    }
+  });
 </script>
 
 @endsection

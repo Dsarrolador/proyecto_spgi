@@ -489,6 +489,24 @@ class RequerimientoClienteController extends Controller
 
         if ($request->hasFile('foto')) {
             $req->foto = $request->file('foto')->store('requerimientos', 'public');
+        } elseif ($request->input('eliminar_foto') == '1') {
+            if ($req->foto) {
+                Storage::disk('public')->delete($req->foto);
+            }
+            $req->foto = null;
+        }
+
+        // Eliminar imágenes adicionales marcadas
+        if ($request->filled('eliminar_imagenes_ids')) {
+            foreach ($request->input('eliminar_imagenes_ids') as $imgId) {
+                $imgRec = RequerimientoImagen::find($imgId);
+                if ($imgRec) {
+                    if ($imgRec->imagen) {
+                        Storage::disk('public')->delete($imgRec->imagen);
+                    }
+                    $imgRec->delete();
+                }
+            }
         }
 
         if ($request->hasFile('imagenes')) {

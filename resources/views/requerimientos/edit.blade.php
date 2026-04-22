@@ -39,6 +39,77 @@
       : null;
 @endphp
 
+<style>
+  .img-edit-container {
+    position: relative;
+    display: inline-block;
+    border-radius: 20px;
+    overflow: hidden;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: var(--shadow-main);
+  }
+
+  .btn-delete-img {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: rgba(239, 68, 68, 0.25);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #f87171;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 20;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  }
+
+  .btn-delete-img:hover {
+    background: #ef4444;
+    color: white;
+    transform: scale(1.15) rotate(15deg);
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.6);
+    border-color: rgba(255, 255, 255, 0.4);
+  }
+
+  .btn-delete-img i {
+    font-size: 1.2rem;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+  }
+
+  .img-marked-delete {
+    opacity: 0.15;
+    filter: grayscale(1) blur(4px);
+    pointer-events: none;
+    transform: scale(0.92);
+  }
+
+  .delete-overlay {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(239, 68, 68, 0.05);
+    color: #ef4444;
+    font-weight: 900;
+    pointer-events: none;
+    z-index: 15;
+    animation: premiumFadeIn 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+
+  @keyframes premiumFadeIn {
+    from { opacity: 0; transform: scale(1.2); filter: blur(10px); }
+    to { opacity: 1; transform: scale(1); filter: blur(0); }
+  }
+</style>
+
 <div class="container py-4">
 
   <div class="d-flex justify-content-between align-items-center mb-3">
@@ -75,6 +146,9 @@
       <form method="POST" action="{{ route('requerimientos.update', $requerimiento->id) }}" enctype="multipart/form-data">
         @csrf
         @method('PUT')
+
+        <!-- Hidden inputs for deletions -->
+        <div id="deletion_inputs"></div>
 
         <div class="row g-4">
 
@@ -231,14 +305,19 @@
 
             @if(!empty($requerimiento->foto))
               <div class="mt-2">
-                <img
-                  src="{{ $fotoPrincipalUrl }}"
-                  class="img-fluid rounded border"
-                  style="max-height:420px; cursor:pointer;"
-                  alt="Foto principal del requerimiento"
-                  onclick="abrirModalImagen('{{ $fotoPrincipalUrl }}')"
-                  onerror="this.style.display='none'; document.getElementById('error-foto-principal').classList.remove('d-none');"
-                >
+                <div class="img-edit-container" id="container_foto_principal">
+                    <button type="button" class="btn-delete-img" onclick="markMainPhotoForDeletion()" title="Eliminar foto">
+                        <i class="bi bi-trash-fill"></i>
+                    </button>
+                    <img
+                      src="{{ $fotoPrincipalUrl }}"
+                      class="img-fluid rounded border"
+                      style="max-height:420px; cursor:pointer;"
+                      alt="Foto principal del requerimiento"
+                      onclick="abrirModalImagen('{{ $fotoPrincipalUrl }}')"
+                      onerror="this.style.display='none'; document.getElementById('error-foto-principal').classList.remove('d-none');"
+                    >
+                </div>
                 <div id="error-foto-principal" class="alert alert-warning mt-2 mb-0 d-none">
                   No se pudo cargar la foto principal.
                 </div>
@@ -261,21 +340,26 @@
                 @foreach($requerimiento->imagenes as $index => $img)
                   @php
                     $fotoAdicionalUrl = !empty($img->imagen)
-                        ? url('storage/' . ltrim($img->imagen, '/'))
+                        ? route('storage.proxy', ['path' => $img->imagen])
                         : null;
                   @endphp
 
-                  <div class="border rounded p-2" style="width: 170px; background: var(--bg-surface); border-color: var(--border-main) !important;">
-                    <img
-                      src="{{ $fotoAdicionalUrl }}"
-                      class="img-fluid rounded"
-                      style="width: 100%; height: 140px; object-fit: cover; cursor:pointer;"
-                      alt="Imagen adicional"
-                      onclick="abrirModalImagen('{{ $fotoAdicionalUrl }}')"
-                      onerror="this.style.display='none'; document.getElementById('error-foto-adicional-{{ $index }}').classList.remove('d-none');"
-                    >
-                    <div id="error-foto-adicional-{{ $index }}" class="alert alert-warning mt-2 mb-0 d-none py-2">
-                      No se pudo cargar esta imagen adicional.
+                  <div class="img-edit-container" style="width: 170px;" id="container_img_{{ $img->id }}">
+                    <button type="button" class="btn-delete-img" onclick="markImageForDeletion({{ $img->id }})" title="Eliminar imagen">
+                        <i class="bi bi-trash-fill"></i>
+                    </button>
+                    <div class="border rounded p-2" style="width: 100%; background: var(--bg-surface); border-color: var(--border-main) !important;">
+                        <img
+                          src="{{ $fotoAdicionalUrl }}"
+                          class="img-fluid rounded"
+                          style="width: 100%; height: 140px; object-fit: cover; cursor:pointer;"
+                          alt="Imagen adicional"
+                          onclick="abrirModalImagen('{{ $fotoAdicionalUrl }}')"
+                          onerror="this.style.display='none'; document.getElementById('error-foto-adicional-{{ $index }}').classList.remove('d-none');"
+                        >
+                        <div id="error-foto-adicional-{{ $index }}" class="alert alert-warning mt-2 mb-0 d-none py-2">
+                          No se pudo cargar esta imagen adicional.
+                        </div>
                     </div>
                   </div>
                 @endforeach
@@ -451,6 +535,37 @@
       const modal = new bootstrap.Modal(document.getElementById('modalImagenGeneral'));
       modal.show();
     }
+
+    function markMainPhotoForDeletion() {
+        const container = document.getElementById('container_foto_principal');
+        if (!container) return;
+
+        container.classList.add('img-marked-delete');
+        const overlay = document.createElement('div');
+        overlay.className = 'delete-overlay';
+        overlay.innerHTML = '<i class="bi bi-trash-fill fs-2"></i>';
+        container.appendChild(overlay);
+
+        const inputs = document.getElementById('deletion_inputs');
+        inputs.innerHTML += '<input type="hidden" name="eliminar_foto" value="1">';
+    }
+
+    function markImageForDeletion(id) {
+        const container = document.getElementById('container_img_' + id);
+        if (!container) return;
+
+        container.classList.add('img-marked-delete');
+        const overlay = document.createElement('div');
+        overlay.className = 'delete-overlay';
+        overlay.innerHTML = '<i class="bi bi-trash-fill fs-4"></i>';
+        container.appendChild(overlay);
+
+        const inputs = document.getElementById('deletion_inputs');
+        inputs.innerHTML += `<input type="hidden" name="eliminar_imagenes_ids[]" value="${id}">`;
+    }
+
+    window.markMainPhotoForDeletion = markMainPhotoForDeletion;
+    window.markImageForDeletion = markImageForDeletion;
 
     function previewImagenesMultiples(input) {
       const container = document.getElementById('previewMultiplesContainer');

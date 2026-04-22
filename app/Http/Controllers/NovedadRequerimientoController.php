@@ -23,7 +23,8 @@ class NovedadRequerimientoController extends Controller
                     'novedad' => $nov->novedad,
                     'created_at' => $nov->created_at->format('d/m/Y H:i'),
                     'file_url' => $nov->adjunto ? route('novedades.download', $nov->id) : null,
-                    'file_name' => $nov->nombre_original ?? basename($nov->adjunto)
+                    'file_name' => $nov->nombre_original ?? basename($nov->adjunto),
+                    'tipo' => $nov->tipo ?? 'cliente'
                 ];
             });
 
@@ -36,10 +37,11 @@ class NovedadRequerimientoController extends Controller
             'requerimiento_id' => 'required',
             'cliente_id'       => 'required',
             'novedad'          => 'required',
-            'adjunto'          => 'nullable|file|max:5242880',
+            'adjunto'          => 'nullable|file|max:30720',
+            'tipo'             => 'required|in:cliente,interno',
         ]);
 
-        $data = $request->only(['requerimiento_id', 'cliente_id', 'novedad']);
+        $data = $request->only(['requerimiento_id', 'cliente_id', 'novedad', 'tipo']);
         $data['user_id'] = auth()->id();
         $ftpWarning = null;
 
@@ -93,6 +95,7 @@ class NovedadRequerimientoController extends Controller
                     'created_at'=> $novedad->created_at->format('d/m/Y H:i'),
                     'file_url'  => $novedad->adjunto ? route('novedades.download', $novedad->id) : null,
                     'file_name' => $novedad->nombre_original ?? ($novedad->adjunto ? basename($novedad->adjunto) : null),
+                    'tipo'      => $novedad->tipo
                 ]);
             }
 

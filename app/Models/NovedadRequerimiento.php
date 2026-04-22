@@ -17,6 +17,7 @@ class NovedadRequerimiento extends Model
         'cliente_id',
         'user_id',
         'novedad',
+        'tipo',
         'adjunto',
         'nombre_original'
     ];

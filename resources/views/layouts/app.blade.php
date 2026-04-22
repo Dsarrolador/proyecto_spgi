@@ -68,6 +68,76 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.m
     font-family: var(--spgi-font);
     transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     -webkit-font-smoothing: antialiased;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* GLOBAL DYNAMIC BACKGROUND */
+  .spgi-bg-glow {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    z-index: -1; pointer-events: none; overflow: hidden; background: var(--bg-master);
+  }
+
+  .glow-blob {
+    position: absolute; width: 600px; height: 600px;
+    background: radial-gradient(circle, var(--spgi-primary-glow) 0%, transparent 70%);
+    filter: blur(100px); opacity: 0.25;
+    animation: float-complex 20s infinite ease-in-out alternate;
+  }
+
+  .blob-1 { top: -10%; left: -10%; animation-duration: 25s; }
+  .blob-2 { bottom: -10%; right: -10%; animation-duration: 30s; animation-delay: -5s; }
+  .blob-3 { top: 40%; left: 60%; width: 400px; height: 400px; animation-duration: 22s; animation-delay: -10s; }
+  .blob-4 { bottom: 30%; right: 50%; width: 500px; height: 500px; animation-duration: 28s; animation-delay: -15s; }
+
+  @keyframes float-complex {
+    0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+    33% { transform: translate(100px, 150px) rotate(120deg) scale(1.2); }
+    66% { transform: translate(-100px, 50px) rotate(240deg) scale(0.8); }
+    100% { transform: translate(50px, -100px) rotate(360deg) scale(1.1); }
+  }
+
+  /* PREMIUM UI UTILITIES */
+  .text-gradient {
+    background: linear-gradient(135deg, var(--spgi-primary), #60a5fa, #2dd4bf);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-size: 200% auto;
+    animation: shine 5s linear infinite;
+    display: inline-block;
+  }
+
+  @keyframes shine {
+    to { background-position: 200% center; }
+  }
+
+  .glass-card-premium {
+    background: var(--bg-surface-glass);
+    border: 1px solid var(--border-main);
+    backdrop-filter: blur(20px);
+    border-radius: 24px;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Interactive Border Glow (Tracing) */
+  .glass-card-premium::before {
+    content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+                var(--spgi-primary-glow) 0%, transparent 60%);
+    opacity: 0; transition: opacity 0.3s; pointer-events: none;
+  }
+  .glass-card-premium:hover::before { opacity: 1; }
+  .glass-card-premium:hover { transform: translateY(-10px) scale(1.02); border-color: var(--spgi-primary); }
+
+  .hover-scale { transition: transform 0.3s ease; }
+  .hover-scale:hover { transform: scale(1.05); }
+
+  .icon-float { animation: iconFloat 3s infinite ease-in-out; }
+  @keyframes iconFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
   }
 
   /* SIDEBAR STRUCTURE */
@@ -271,7 +341,13 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.m
 </style>
 </head>
 
-<body>
+<body class="{{ request()->is('/') || request()->is('login') ? 'auth-page' : '' }}">
+  <div class="spgi-bg-glow">
+    <div class="glow-blob blob-1"></div>
+    <div class="glow-blob blob-2"></div>
+    <div class="glow-blob blob-3"></div>
+    <div class="glow-blob blob-4"></div>
+  </div>
 
 @php
 
@@ -297,59 +373,81 @@ request()->routeIs('mantenimiento.categorias.*');
     </div>
 
     <nav class="nav-sidebar">
-      <div class="nav-section-title">Principal</div>
-      <a class="nav-link {{ request()->routeIs('bienvenido') ? 'active' : '' }}" href="{{ route('bienvenido') }}">
-        <i class="bi bi-house-door"></i> Inicio
-      </a>
-      @if(Route::has('dashboard') && (Auth::user()->es_admin || Auth::user()->es_encargado))
-      <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
-        <i class="bi bi-speedometer2"></i> Dashboard
-      </a>
-      @endif
-
-      <div class="nav-section-title">Operaciones</div>
-      <a class="nav-link {{ request()->routeIs('requerimientos.*') ? 'active' : '' }}" href="{{ route('requerimientos.index') }}">
-        <i class="bi bi-journal-text"></i> Requerimientos
-      </a>
-      <a class="nav-link {{ request()->routeIs('proyectos.*') ? 'active' : '' }}" href="{{ route('proyectos.index') }}">
-        <i class="bi bi-kanban"></i> Proyectos
-      </a>
-      <a class="nav-link {{ request()->routeIs('clientes.*') ? 'active' : '' }}" href="{{ route('clientes.index') }}">
-        <i class="bi bi-person-vcard"></i> Clientes
-      </a>
-      <a class="nav-link {{ request()->routeIs('wiki.*') ? 'active' : '' }}" href="{{ route('wiki.index') }}">
-        <i class="bi bi-book"></i> Wiki
-      </a>
-
-      @if(Auth::user()->es_admin)
-      <div class="nav-section-title">Control de Gestión</div>
-      <a class="nav-link {{ request()->routeIs('dashboard.iguala-control') ? 'active' : '' }}" href="{{ route('dashboard.iguala-control') }}">
-        <i class="bi bi-shield-check"></i> Control de Igualas
-      </a>
-      <a class="nav-link {{ request()->routeIs('notificaciones.admin') ? 'active' : '' }}" href="{{ route('notificaciones.admin') }}">
-        <i class="bi bi-megaphone"></i> Control de Avisos
-      </a>
-      @endif
-
-      <div class="nav-section-title">Configuración</div>
-      <a class="nav-link {{ request()->routeIs('usuarios.*') ? 'active' : '' }}" href="{{ route('usuarios.index') }}">
-        <i class="bi bi-people"></i> Usuarios
-      </a>
-
-
-      <div class="dropdown">
-        <a class="nav-link dropdown-toggle {{ $mantenimientoActive ? 'active' : '' }}" href="#" data-bs-toggle="dropdown">
-          <i class="bi bi-gear"></i> Mantenimiento
+      @if(request()->is('comerciales/*') || request()->is('lead-requirements*') || request()->routeIs('leads.*') || request()->routeIs('lead-requirements.*'))
+        <!-- SIDEBAR COMERCIAL -->
+        <div class="nav-section-title">Comerciales</div>
+        <a class="nav-link {{ request()->routeIs('leads.bienvenido') ? 'active' : '' }}" href="{{ route('leads.bienvenido') }}">
+          <i class="bi bi-house-door"></i> Inicio Comercial
         </a>
-        <ul class="dropdown-menu dropdown-menu-dark w-100">
-          <li><a class="dropdown-item" href="{{ route('mantenimiento.tipo-soporte.index') }}">Tipo de Soporte</a></li>
-          <li><a class="dropdown-item" href="{{ route('mantenimiento.iguala.index') }}">Igualas</a></li>
-          <li><a class="dropdown-item" href="{{ route('mantenimiento.tipos-equipo.index') }}">Tipos de Equipo</a></li>
-          <li><a class="dropdown-item" href="{{ route('mantenimiento.equipos.index') }}">Equipos (Catálogo)</a></li>
-          <li><a class="dropdown-item" href="{{ route('mantenimiento.categorias.index') }}">Categorías</a></li>
-          <li><a class="dropdown-item" href="{{ route('mantenimiento.estados-requerimiento.index') }}">Estados de Req.</a></li>
-        </ul>
-      </div>
+        <a class="nav-link {{ request()->routeIs('leads.index') || request()->routeIs('leads.create') || request()->routeIs('leads.edit') || request()->routeIs('leads.show') ? 'active' : '' }}" href="{{ route('leads.index') }}">
+          <i class="bi bi-people"></i> Leads de clientes
+        </a>
+        <a class="nav-link {{ request()->routeIs('lead-requirements.*') ? 'active' : '' }}" href="{{ route('lead-requirements.index') }}">
+          <i class="bi bi-journal-text"></i> Requerimientos Comerciales
+        </a>
+        <a class="nav-link {{ request()->routeIs('leads.reportes') ? 'active' : '' }}" href="{{ route('leads.reportes') }}">
+          <i class="bi bi-bar-chart-line"></i> Reportes de Ventas
+        </a>
+
+        <div class="nav-section-title mt-4">Navegación</div>
+        <a class="nav-link" href="{{ route('bienvenido') }}" style="color: var(--spgi-primary);">
+          <i class="bi bi-grid-fill"></i> Menú Principal
+        </a>
+      @else
+        <!-- SIDEBAR ESTÁNDAR -->
+        <div class="nav-section-title">Principal</div>
+        <a class="nav-link {{ request()->routeIs('bienvenido') ? 'active' : '' }}" href="{{ route('bienvenido') }}">
+          <i class="bi bi-house-door"></i> Inicio
+        </a>
+        @if(Route::has('dashboard') && (Auth::user()->es_admin || Auth::user()->es_encargado))
+        <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
+          <i class="bi bi-speedometer2"></i> Dashboard
+        </a>
+        @endif
+
+        <div class="nav-section-title">Industriales</div>
+        <a class="nav-link {{ request()->routeIs('requerimientos.*') ? 'active' : '' }}" href="{{ route('requerimientos.index') }}">
+          <i class="bi bi-clipboard-check"></i> Requerimientos Industriales
+        </a>
+        <a class="nav-link {{ request()->routeIs('proyectos.*') ? 'active' : '' }}" href="{{ route('proyectos.index') }}">
+          <i class="bi bi-kanban"></i> Proyectos
+        </a>
+        <a class="nav-link {{ request()->routeIs('clientes.*') ? 'active' : '' }}" href="{{ route('clientes.index') }}">
+          <i class="bi bi-person-vcard"></i> Clientes
+        </a>
+        <a class="nav-link {{ request()->routeIs('wiki.*') ? 'active' : '' }}" href="{{ route('wiki.index') }}">
+          <i class="bi bi-book"></i> Wiki
+        </a>
+
+        @if(Auth::user()->es_admin)
+        <div class="nav-section-title">Control de Gestión</div>
+        <a class="nav-link {{ request()->routeIs('dashboard.iguala-control') ? 'active' : '' }}" href="{{ route('dashboard.iguala-control') }}">
+          <i class="bi bi-shield-check"></i> Control de Igualas
+        </a>
+        <a class="nav-link {{ request()->routeIs('notificaciones.admin') ? 'active' : '' }}" href="{{ route('notificaciones.admin') }}">
+          <i class="bi bi-megaphone"></i> Control de Avisos
+        </a>
+        @endif
+
+        <div class="nav-section-title">Configuración</div>
+        <a class="nav-link {{ request()->routeIs('usuarios.*') ? 'active' : '' }}" href="{{ route('usuarios.index') }}">
+          <i class="bi bi-people"></i> Usuarios
+        </a>
+
+        <div class="dropdown">
+          <a class="nav-link dropdown-toggle {{ $mantenimientoActive ? 'active' : '' }}" href="#" data-bs-toggle="dropdown">
+            <i class="bi bi-gear"></i> Mantenimiento
+          </a>
+          <ul class="dropdown-menu dropdown-menu-dark w-100">
+            <li><a class="dropdown-item" href="{{ route('mantenimiento.tipo-soporte.index') }}">Tipo de Soporte</a></li>
+            <li><a class="dropdown-item" href="{{ route('mantenimiento.iguala.index') }}">Igualas</a></li>
+            <li><a class="dropdown-item" href="{{ route('mantenimiento.tipos-equipo.index') }}">Tipos de Equipo</a></li>
+            <li><a class="dropdown-item" href="{{ route('mantenimiento.equipos.index') }}">Equipos (Catálogo)</a></li>
+            <li><a class="dropdown-item" href="{{ route('mantenimiento.categorias.index') }}">Categorías</a></li>
+            <li><a class="dropdown-item" href="{{ route('mantenimiento.estados-requerimiento.index') }}">Estados de Req.</a></li>
+          </ul>
+        </div>
+      @endif
 
       <hr class="my-4 border-secondary opacity-25">
       <a class="nav-link text-danger" href="{{ route('logout') }}">
@@ -426,6 +524,17 @@ request()->routeIs('mantenimiento.categorias.*');
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   
   <script>
+    document.addEventListener('mousemove', (e) => {
+      const cards = document.querySelectorAll('.glass-card-premium');
+      cards.forEach(card => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        card.style.setProperty('--mouse-x', `${x}px`);
+        card.style.setProperty('--mouse-y', `${y}px`);
+      });
+    });
+
     function toggleSidebar() {
       const sidebar = document.getElementById('sidebar');
       const overlay = document.getElementById('sidebarOverlay');
@@ -646,8 +755,8 @@ request()->routeIs('mantenimiento.categorias.*');
   <div id="ftp-upload-loader">
     <div class="loader-content">
       <div class="spinner-spgi"></div>
-      <div class="loader-title">🚀 Subiendo al servidor FTP</div>
-      <p class="loader-msg">Estamos procesando tus archivos de forma segura. Por favor, no cierres esta ventana.</p>
+      <div class="loader-title">🚀 Subiendo archivos de forma segura</div>
+      <p class="loader-msg">Este proceso puede tardar unos segundos dependiendo del tamaño de los archivos.</p>
       <div class="progress mt-3" style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px;">
         <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%"></div>
       </div>
