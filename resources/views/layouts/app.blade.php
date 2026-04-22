@@ -395,6 +395,21 @@ request()->routeIs('mantenimiento.categorias.*');
         <a class="nav-link" href="{{ route('bienvenido') }}" style="background: rgba(var(--spgi-primary), 0.05); margin-top: 10px;">
           <i class="bi bi-clipboard-check"></i> Requerimientos
         </a>
+      @elseif(request()->is('administracion/*') || request()->routeIs('administracion.*') || request()->routeIs('requerimientos.facturacion'))
+        <!-- SIDEBAR ADMINISTRACIÓN -->
+        <div class="nav-section-title">Administración</div>
+        <a class="nav-link {{ request()->routeIs('seleccion') ? 'active' : '' }}" href="{{ route('seleccion') }}">
+          <i class="bi bi-grid-fill"></i> Inicio
+        </a>
+        <a class="nav-link {{ request()->routeIs('administracion.bienvenido') ? 'active' : '' }}" href="{{ route('administracion.bienvenido') }}">
+          <i class="bi bi-house-door"></i> Dashboard Admin
+        </a>
+        <a class="nav-link {{ request()->routeIs('requerimientos.facturacion') ? 'active' : '' }}" href="{{ route('requerimientos.facturacion') }}">
+          <i class="bi bi-receipt-cutoff"></i> Facturación
+        </a>
+        <a class="nav-link" href="{{ route('leads.bienvenido') }}" style="background: rgba(16, 185, 129, 0.05); margin-top: 10px; color: #10b981;">
+          <i class="bi bi-briefcase"></i> Comerciales
+        </a>
       @else
         <!-- SIDEBAR ESTÁNDAR -->
         <div class="nav-section-title">Principal</div>

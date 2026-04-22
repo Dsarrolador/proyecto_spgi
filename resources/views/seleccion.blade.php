@@ -15,10 +15,10 @@
 
     .selection-grid {
         display: grid;
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(3, 1fr);
         gap: 30px;
         width: 100%;
-        max-width: 900px;
+        max-width: 1100px;
     }
 
     .selection-card {
@@ -156,6 +156,15 @@
                 </div>
                 <h2 class="selection-title">Requerimientos</h2>
                 <p class="selection-desc">Sistema de solicitudes, soporte técnico y mantenimiento de cuentas.</p>
+            </a>
+
+            <a href="{{ route('administracion.bienvenido') }}" class="selection-card glass-card-premium" style="--spgi-primary: 99, 102, 241; --spgi-primary-glow: rgba(99, 102, 241, 0.5);">
+                <span class="selection-badge" style="background: rgba(99, 102, 241, 0.1); color: rgb(99, 102, 241);">Control</span>
+                <div class="selection-icon icon-float" style="background: rgba(99, 102, 241, 0.1); color: rgb(99, 102, 241);">
+                    <i class="bi bi-person-badge-fill"></i>
+                </div>
+                <h2 class="selection-title">Administración</h2>
+                <p class="selection-desc">Gestión financiera, facturación y control administrativo del ecosistema.</p>
             </a>
         </div>
 

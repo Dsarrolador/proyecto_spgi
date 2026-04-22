@@ -609,4 +609,51 @@ class RequerimientoClienteController extends Controller
         return redirect()->route('requerimientos.index')
             ->with('success', 'Requerimiento eliminado correctamente.');
     }
+
+    public function facturacion(Request $request)
+    {
+        $filtro = $request->get('filtro', 'no_facturados');
+        $query = RequerimientoCliente::with(['clienteRelation', 'asignado', 'estadoRequerimiento']);
+
+        if ($filtro === 'facturados') {
+            $query->where('facturado', 1);
+        } else {
+            $query->where('facturado', 0);
+        }
+
+        $requerimientos = $query->orderByDesc('id')->paginate(20)->withQueryString();
+
+        return view('requerimientos.facturacion', compact('requerimientos', 'filtro'));
+    }
+
+    public function subirFactura(Request $request, $id)
+    {
+        $request->validate([
+            'archivo_factura' => 'required|mimes:pdf|max:10240',
+        ]);
+
+        $req = RequerimientoCliente::findOrFail($id);
+
+        if ($request->hasFile('archivo_factura')) {
+            // Eliminar anterior si existe
+            if ($req->archivo_factura) {
+                Storage::disk('public')->delete($req->archivo_factura);
+            }
+            $ruta = $request->file('archivo_factura')->store('facturas', 'public');
+            $req->update([
+                'archivo_factura' => $ruta,
+                'facturado' => 1
+            ]);
+        }
+
+        return back()->with('success', 'Factura subida correctamente.');
+    }
+
+    public function toggleFacturado($id)
+    {
+        $req = RequerimientoCliente::findOrFail($id);
+        $req->update(['facturado' => !$req->facturado]);
+
+        return back()->with('success', 'Estado de facturación actualizado.');
+    }
 }

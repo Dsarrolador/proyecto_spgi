@@ -24,6 +24,7 @@ class RequerimientoCliente extends Model
         'fecha_finalizado',
         'tiempo_invertido',
         'facturado',
+        'archivo_factura',
         'es_recurrente',
         'frecuencia',
         'proxima_fecha_ejecucion',
