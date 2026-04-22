@@ -58,11 +58,19 @@ Route::middleware('auth')->group(function () {
         Route::get('/comerciales/reportes', [LeadController::class, 'reportes'])->name('leads.reportes');
         Route::resource('lead-requirements', LeadRequirementController::class);
         Route::resource('leads', LeadController::class);
-    });
 
-    Route::get('/administracion/bienvenido', function () {
-        return view('administracion.bienvenido');
-    })->name('administracion.bienvenido');
+        // Administración Dashboard y Facturación
+        Route::get('/administracion/bienvenido', function () {
+            return view('administracion.bienvenido');
+        })->name('administracion.bienvenido');
+
+        Route::get('/requerimientos/facturacion', [RequerimientoClienteController::class, 'facturacion'])
+            ->name('requerimientos.facturacion');
+        Route::post('/requerimientos/{id}/subir-factura', [RequerimientoClienteController::class, 'subirFactura'])
+            ->name('requerimientos.subir-factura');
+        Route::post('/requerimientos/{id}/toggle-facturado', [RequerimientoClienteController::class, 'toggleFacturado'])
+            ->name('requerimientos.toggle-facturado');
+    });
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard/iguala-control', [DashboardController::class, 'igualaControl'])->name('dashboard.iguala-control')->middleware('comercial');

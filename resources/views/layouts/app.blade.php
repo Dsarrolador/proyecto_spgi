@@ -400,7 +400,7 @@ request()->routeIs('mantenimiento.categorias.*');
         <a class="nav-link" href="{{ route('bienvenido') }}" style="background: rgba(var(--spgi-primary), 0.05); margin-top: 10px;">
           <i class="bi bi-clipboard-check"></i> Requerimientos
         </a>
-      @elseif(request()->is('administracion/*') || request()->routeIs('administracion.*') || request()->routeIs('requerimientos.facturacion'))
+      @elseif((request()->is('administracion/*') || request()->routeIs('administracion.*') || request()->routeIs('requerimientos.facturacion')) && (auth()->user()->es_admin || auth()->user()->es_encargado))
         <!-- SIDEBAR ADMINISTRACIÓN -->
         <div class="nav-section-title">Administración</div>
         <a class="nav-link {{ request()->routeIs('seleccion') ? 'active' : '' }}" href="{{ route('seleccion') }}">

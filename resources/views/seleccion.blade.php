@@ -160,6 +160,7 @@
                 <p class="selection-desc">Sistema de solicitudes, soporte técnico y mantenimiento de cuentas.</p>
             </a>
 
+            @if(auth()->user()->es_admin || auth()->user()->es_encargado)
             <a href="{{ route('administracion.bienvenido') }}" class="selection-card glass-card-premium" style="--spgi-primary: 99, 102, 241; --spgi-primary-glow: rgba(99, 102, 241, 0.5);">
                 <span class="selection-badge" style="background: rgba(99, 102, 241, 0.1); color: rgb(99, 102, 241);">Control</span>
                 <div class="selection-icon icon-float" style="background: rgba(99, 102, 241, 0.1); color: rgb(99, 102, 241);">
@@ -168,6 +169,7 @@
                 <h2 class="selection-title">Administración</h2>
                 <p class="selection-desc">Gestión financiera, facturación y control administrativo del ecosistema.</p>
             </a>
+            @endif
         </div>
 
         <!-- Logout Action -->
