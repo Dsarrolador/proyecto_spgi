@@ -19,6 +19,7 @@ class NovedadRequerimientoController extends Controller
             ->map(function($nov) {
                 return [
                     'id' => $nov->id,
+                    'user_id' => $nov->user_id,
                     'user_name' => $nov->user->name ?? 'Usuario',
                     'novedad' => $nov->novedad,
                     'created_at' => $nov->created_at->format('d/m/Y H:i'),

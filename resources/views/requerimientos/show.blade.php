@@ -354,8 +354,8 @@
               <i class="bi bi-journal-text me-2"></i> Seguimientos y Novedades
             </h5>
             <div id="header-badges">
-                <span class="badge bg-primary rounded-pill">{{ $requerimiento->novedades->where('tipo', 'cliente')->count() }} Clientes</span>
-                <span class="badge bg-success rounded-pill">{{ $requerimiento->novedades->where('tipo', 'interno')->count() }} Internas</span>
+                <span class="badge bg-success rounded-pill">{{ $requerimiento->novedades->where('tipo', 'interno')->count() }} Clientes</span>
+                <span class="badge bg-primary rounded-pill">{{ $requerimiento->novedades->where('tipo', 'cliente')->count() }} Internas</span>
             </div>
             
             <button type="button" id="btn-back-to-dashboard" class="btn btn-sm btn-outline-secondary d-none rounded-pill px-3" onclick="showNovedadesDashboard()">
@@ -366,21 +366,21 @@
           <!-- DASHBOARD DE SELECCIÓN DE NOVEDADES -->
           <div id="novedades-dashboard" class="row g-4 mb-4 animate__animated animate__fadeIn">
             <div class="col-md-6">
-                <div class="glass-card-premium p-4 text-center h-100 cursor-pointer hover-scale" onclick="switchNovedadesCategory('cliente')" style="border-left: 5px solid #10b981;">
-                    <div class="rounded-circle bg-success bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
-                        <i class="bi bi-people-fill fs-2 text-success"></i>
-                    </div>
-                    <h5 class="fw-bold text-success mb-2">Seguimientos Clientes</h5>
-                    <p class="small text-muted mb-0">Comunicación oficial y avances compartidos con el cliente.</p>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="glass-card-premium p-4 text-center h-100 cursor-pointer hover-scale" onclick="switchNovedadesCategory('interno')" style="border-left: 5px solid #3b82f6;">
+                <div class="glass-card-premium p-4 text-center h-100 cursor-pointer hover-scale" onclick="switchNovedadesCategory('cliente')" style="border-left: 5px solid #3b82f6;">
                     <div class="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
                         <i class="bi bi-shield-lock-fill fs-2 text-primary"></i>
                     </div>
                     <h5 class="fw-bold text-gradient mb-2">Notas Internas</h5>
                     <p class="small text-muted mb-0">Detalles técnicos, procesos y notas privadas para el equipo.</p>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="glass-card-premium p-4 text-center h-100 cursor-pointer hover-scale" onclick="switchNovedadesCategory('interno')" style="border-left: 5px solid #10b981;">
+                    <div class="rounded-circle bg-success bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                        <i class="bi bi-people-fill fs-2 text-success"></i>
+                    </div>
+                    <h5 class="fw-bold text-success mb-2">Seguimientos Clientes</h5>
+                    <p class="small text-muted mb-0">Comunicación oficial y avances compartidos con el cliente.</p>
                 </div>
             </div>
           </div>
@@ -393,13 +393,13 @@
               <!-- Se llena dinámicamente o se filtra la carga inicial -->
               @foreach($requerimiento->novedades->sortByDesc('created_at') as $nov)
                 <div class="novedad-item mb-4 pb-3 border-bottom position-relative novelty-card" data-tipo="{{ $nov->tipo }}">
-                  <div class="d-flex justify-content-between align-items-center mb-2">
+                  <div class="d-flex justify-content-between align-items-start mb-2">
                     <div class="d-flex align-items-center gap-2">
                       <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold" 
                            style="width: 32px; height: 32px; font-size: 0.75rem; 
-                                  background: {{ $nov->tipo === 'interno' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(16, 185, 129, 0.15)' }}; 
-                                  color: {{ $nov->tipo === 'interno' ? '#3b82f6' : '#10b981' }}; 
-                                  border: 1px solid {{ $nov->tipo === 'interno' ? 'rgba(59, 130, 246, 0.2)' : 'rgba(16, 185, 129, 0.2)' }};">
+                                  background: {{ $nov->tipo === 'cliente' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(16, 185, 129, 0.15)' }}; 
+                                  color: {{ $nov->tipo === 'cliente' ? '#3b82f6' : '#10b981' }}; 
+                                  border: 1px solid {{ $nov->tipo === 'cliente' ? 'rgba(59, 130, 246, 0.2)' : 'rgba(16, 185, 129, 0.2)' }};">
                         {{ strtoupper(substr($nov->user->name ?? 'U', 0, 1)) }}
                       </div>
                       <div>
@@ -407,9 +407,20 @@
                         <small class="text-muted" style="font-size: 0.7rem;">{{ $nov->created_at->format('d/m/Y h:i A') }}</small>
                       </div>
                     </div>
+                    
+                    <div class="dropdown">
+                      <button class="btn btn-sm btn-light rounded-circle shadow-sm p-0 border-0" type="button" data-bs-toggle="dropdown" style="width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; background: var(--bg-surface);">
+                        <i class="bi bi-three-dots-vertical fs-5 text-muted"></i>
+                      </button>
+                      <ul class="dropdown-menu dropdown-menu-end shadow border-0 p-1 animate__animated animate__fadeIn" style="min-width: 140px; border-radius: 12px; z-index: 1070;">
+                        <li><a class="dropdown-item rounded-2 py-2" href="javascript:void(0)" onclick="editNovedadStatic({{ $nov->id }}, \`{{ addslashes($nov->novedad) }}\`)"><i class="bi bi-pencil me-2 text-warning"></i> Editar</a></li>
+                        <li><hr class="dropdown-divider my-1"></li>
+                        <li><a class="dropdown-item rounded-2 py-2 text-danger" href="javascript:void(0)" onclick="deleteNovedadStatic({{ $nov->id }}, this)"><i class="bi bi-trash me-2"></i> Eliminar</a></li>
+                      </ul>
+                    </div>
                   </div>
                   <div class="ps-1">
-                    <p class="mb-2" style="white-space: pre-wrap; font-size: 0.95rem; color: var(--text-main);">{{ $nov->novedad }}</p>
+                    <p class="mb-2" style="white-space: pre-wrap; font-size: 0.95rem; color: var(--text-main);" id="novedad-static-text-{{ $nov->id }}">{{ $nov->novedad }}</p>
                     @if($nov->adjunto)
                       <a href="{{ route('novedades.download', $nov->id) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3 mt-1" style="font-size: 0.8rem;">
                         <i class="bi bi-download me-1"></i> {{ $nov->nombre_original ?? 'Descargar Adjunto' }}
@@ -525,6 +536,47 @@
 </div>
 
 <script>
+    window.deleteNovedadStatic = function(id, btn) {
+        if (!confirm('¿Seguro que desea eliminar este seguimiento?')) return;
+        
+        fetch(`/novedades/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                const item = btn.closest('.novedad-item');
+                item.classList.add('animate__animated', 'animate__fadeOutRight');
+                setTimeout(() => item.remove(), 500);
+            }
+        });
+    }
+
+    window.editNovedadStatic = function(id, currentText) {
+        const newText = prompt('Editar seguimiento:', currentText);
+        if (newText === null || newText.trim() === '' || newText === currentText) return;
+
+        fetch(`/novedades/${id}`, {
+            method: 'PUT',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({ novedad: newText })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById(`novedad-static-text-${id}`).innerText = newText;
+            }
+        });
+    }
+
   document.addEventListener('DOMContentLoaded', function() {
     const modalElement = document.getElementById('modalImagenGeneral');
     const modalTitle = document.getElementById('modalTitle');
@@ -572,25 +624,16 @@
     const headerBadges = document.getElementById('header-badges');
     const headerTitle = document.getElementById('novedades-header-title');
 
-    window.switchNovedadesCategory = function(tipo) {
-        // UI Ajustes
-        novedadesDashboard.classList.add('d-none');
-        contentArea.classList.remove('d-none');
-        btnBack.classList.remove('d-none');
-        headerBadges.classList.add('d-none');
-        
-        inputTipo.value = tipo;
-        
-        if (tipo === 'interno') {
+        if (tipo === 'cliente') {
             headerTitle.innerHTML = '<i class="bi bi-shield-lock-fill me-2 text-primary"></i> Notas Internas';
             formTitle.innerText = "Agregar Nota Interna";
-            formTitle.classList.replace('text-muted', 'text-primary');
-            btnSubmit.classList.replace('btn-success', 'btn-primary');
+            formTitle.className = "fw-bold mb-3 small text-uppercase text-primary";
+            btnSubmit.className = "btn btn-primary rounded-pill px-4 fw-bold spgi-btn-save";
         } else {
             headerTitle.innerHTML = '<i class="bi bi-people-fill me-2 text-success"></i> Seguimientos Clientes';
             formTitle.innerText = "Agregar Seguimiento Cliente";
-            formTitle.classList.replace('text-primary', 'text-muted');
-            btnSubmit.classList.replace('btn-primary', 'btn-success');
+            formTitle.className = "fw-bold mb-3 small text-uppercase text-success";
+            btnSubmit.className = "btn btn-success rounded-pill px-4 fw-bold spgi-btn-save";
         }
 
         // Filtrar cards

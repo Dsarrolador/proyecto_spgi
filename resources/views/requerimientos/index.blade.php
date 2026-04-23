@@ -776,21 +776,21 @@
             </div>
             <div class="row g-4 justify-content-center">
                 <div class="col-md-5">
-                    <div class="glass-card-premium p-4 text-center h-100 cursor-pointer hover-scale border-top border-4 border-success" onclick="modalSwitchCategory('cliente')">
-                        <div class="rounded-circle bg-success bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" style="width: 70px; height: 70px;">
-                            <i class="bi bi-people-fill fs-1 text-success"></i>
-                        </div>
-                        <h5 class="fw-bold mb-2 text-success">Novedades Clientes</h5>
-                        <p class="small text-muted mb-0">Avances oficiales compartidos con el cliente.</p>
-                    </div>
-                </div>
-                <div class="col-md-5">
-                    <div class="glass-card-premium p-4 text-center h-100 cursor-pointer hover-scale border-top border-4 border-primary" onclick="modalSwitchCategory('interno')">
+                    <div class="glass-card-premium p-4 text-center h-100 cursor-pointer hover-scale border-top border-4 border-primary" onclick="modalSwitchCategory('cliente')">
                         <div class="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" style="width: 70px; height: 70px;">
                             <i class="bi bi-shield-lock-fill fs-1 text-primary"></i>
                         </div>
                         <h5 class="fw-bold mb-2">Notas Internas</h5>
                         <p class="small text-muted mb-0">Detalles técnicos y notas privadas para el equipo.</p>
+                    </div>
+                </div>
+                <div class="col-md-5">
+                    <div class="glass-card-premium p-4 text-center h-100 cursor-pointer hover-scale border-top border-4 border-success" onclick="modalSwitchCategory('interno')">
+                        <div class="rounded-circle bg-success bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" style="width: 70px; height: 70px;">
+                            <i class="bi bi-people-fill fs-1 text-success"></i>
+                        </div>
+                        <h5 class="fw-bold mb-2 text-success">Novedades Clientes</h5>
+                        <p class="small text-muted mb-0">Avances oficiales compartidos con el cliente.</p>
                     </div>
                 </div>
             </div>
@@ -849,6 +849,7 @@
     const modalHistorialList = document.getElementById('modal-historial-list');
     const modalBtnSave = document.getElementById('modal-btn-save');
     const modalForm = document.getElementById('modal-form-novedad-dinamico');
+    const canManageNovedades = {{ (auth()->user()->es_admin || auth()->user()->es_encargado) ? 'true' : 'false' }};
     
     window.openNovedadesModal = function(id, title, clientId) {
         // Reset modal state
@@ -887,7 +888,7 @@
         
         tipoInput.value = tipo;
         
-        if (tipo === 'interno') {
+        if (tipo === 'cliente') {
             header.style.background = 'linear-gradient(135deg, #3b82f6, #2563eb)';
             formTitle.innerText = "Agregar Nota Interna";
             formTitle.className = "fw-bold mb-3 small text-uppercase text-primary";
@@ -922,15 +923,28 @@
         }
 
         modalHistorialList.innerHTML = filtered.reverse().map(n => `
-            <div class="glass-card-premium p-3 mb-3 border-0 animate__animated animate__fadeIn">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="fw-bold small ${tipo === 'interno' ? 'text-primary' : 'text-success'}">
-                        <i class="bi ${tipo === 'interno' ? 'bi-shield-lock' : 'bi-person'} me-1"></i>
-                        ${n.user_name}
-                    </span>
-                    <small class="text-muted">${n.created_at}</small>
+            <div class="glass-card-premium p-3 mb-3 border-0 animate__animated animate__fadeIn position-relative novelty-item-container" style="border-left: 4px solid ${tipo === 'cliente' ? '#3b82f6' : '#10b981'} !important;">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                        <span class="fw-bold small d-block ${tipo === 'cliente' ? 'text-primary' : 'text-success'}">
+                            <i class="bi ${tipo === 'cliente' ? 'bi-shield-lock' : 'bi-person'} me-1"></i>
+                            ${n.user_name}
+                        </span>
+                        <small class="text-muted" style="font-size: 0.65rem;">${n.created_at}</small>
+                    </div>
+                    
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-light rounded-circle shadow-sm p-0 border-0" type="button" data-bs-toggle="dropdown" style="width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; background: var(--bg-surface);">
+                            <i class="bi bi-three-dots-vertical fs-5 text-muted"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow border-0 p-1 animate__animated animate__fadeIn" style="min-width: 140px; border-radius: 12px; z-index: 1070;">
+                            <li><a class="dropdown-item rounded-2 py-2" href="javascript:void(0)" onclick="editNovedadModal(${n.id}, \`${n.novedad.replace(/`/g, '\\`').replace(/\$\{/g, '\\${')}\`)"><i class="bi bi-pencil me-2 text-warning"></i> Editar</a></li>
+                            <li><hr class="dropdown-divider my-1"></li>
+                            <li><a class="dropdown-item rounded-2 py-2 text-danger" href="javascript:void(0)" onclick="deleteNovedadModal(${n.id}, this)"><i class="bi bi-trash me-2"></i> Eliminar</a></li>
+                        </ul>
+                    </div>
                 </div>
-                <p class="mb-2 small" style="white-space: pre-wrap; color: var(--text-main);">${n.novedad}</p>
+                <p class="mb-2 small pe-3" style="white-space: pre-wrap; color: var(--text-main); line-height: 1.5;" id="novedad-text-${n.id}">${n.novedad}</p>
                 ${n.file_url ? `
                     <a href="${n.file_url}" class="btn btn-sm btn-outline-secondary py-1 px-3 rounded-pill" style="font-size: 0.7rem;">
                         <i class="bi bi-download me-1"></i> Descargar
@@ -986,6 +1000,54 @@
                 }
             };
             xhr.send(formData);
+        });
+    }
+
+    window.deleteNovedadModal = function(id, btn) {
+        if (!confirm('¿Seguro que desea eliminar este seguimiento?')) return;
+        
+        fetch(`/novedades/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                const item = btn.closest('.novelty-item-container');
+                item.classList.add('animate__animated', 'animate__fadeOutRight');
+                setTimeout(() => {
+                    item.remove();
+                    // Actualizar data local
+                    currentNovedadesData = currentNovedadesData.filter(n => n.id != id);
+                }, 500);
+            }
+        });
+    }
+
+    window.editNovedadModal = function(id, currentText) {
+        const newText = prompt('Editar seguimiento:', currentText);
+        if (newText === null || newText.trim() === '' || newText === currentText) return;
+
+        fetch(`/novedades/${id}`, {
+            method: 'PUT',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({ novedad: newText })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById(`novedad-text-${id}`).innerText = newText;
+                // Actualizar data local
+                const idx = currentNovedadesData.findIndex(n => n.id == id);
+                if (idx !== -1) currentNovedadesData[idx].novedad = newText;
+            }
         });
     }
 
