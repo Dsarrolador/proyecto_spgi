@@ -804,6 +804,10 @@ request()->routeIs('mantenimiento.categorias.*');
     // Interceptar envíos de formularios con archivos
     document.addEventListener('submit', function(e) {
       const form = e.target;
+      
+      // Si el formulario ya está marcado para no mostrar loader (AJAX), ignorar
+      if (form.dataset.noLoader === 'true') return;
+
       if (form.getAttribute('enctype') === 'multipart/form-data') {
         // Solo mostrar si hay al menos un input de tipo file con archivos seleccionados
         const fileInputs = form.querySelectorAll('input[type="file"]');

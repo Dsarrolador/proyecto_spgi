@@ -439,7 +439,7 @@
             <!-- Formulario para agregar Novedad (Adaptable) -->
             <div id="novedad-form-wrapper" class="p-4 rounded-4 border animate__animated animate__fadeInUp" style="background: var(--bg-surface); border-color: var(--border-main) !important; box-shadow: var(--shadow-main);">
               <h6 class="fw-bold mb-3 small text-uppercase text-muted letter-spacing-1" id="form-novedad-title">Agregar Seguimiento</h6>
-              <form action="{{ route('novedades.store') }}" method="POST" enctype="multipart/form-data" id="form-novedad">
+              <form id="form-novedad" action="{{ route('novedades.store') }}" method="POST" enctype="multipart/form-data" data-no-loader="true">
                 @csrf
                 <input type="hidden" name="requerimiento_id" value="{{ $requerimiento->id }}">
                 <input type="hidden" name="cliente_id" value="{{ $requerimiento->cliente_id }}">

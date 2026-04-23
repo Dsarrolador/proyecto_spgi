@@ -800,14 +800,14 @@
         <div id="modal-content-novedades" class="d-none animate__animated animate__fadeIn">
             <div class="row g-0">
                 <!-- Historial -->
-                <div class="col-12 col-md-7 border-end p-4 overflow-auto" style="height: 500px; background: var(--bg-master); border-color: var(--border-main) !important;" id="modal-historial-list">
+                <div class="col-12 col-md-7 border-end p-4 overflow-auto" style="height: 500px; background: var(--bg-master); border-color: var(--border-main) !important; padding-bottom: 100px !important;" id="modal-historial-list">
                     <!-- Los items se cargan aquí -->
                 </div>
 
                 <!-- Formulario -->
                 <div class="col-12 col-md-5 p-4 d-flex flex-column" style="background: var(--bg-surface); border-color: var(--border-main) !important;">
                     <h6 class="fw-bold mb-3 small text-uppercase text-muted" id="modal-form-title">Agregar Seguimiento</h6>
-                    <form id="modal-form-novedad-dinamico" enctype="multipart/form-data">
+                    <form id="modal-form-novedad-dinamico" enctype="multipart/form-data" data-no-loader="true">
                         @csrf
                         <input type="hidden" name="requerimiento_id" id="modal-req-id">
                         <input type="hidden" name="cliente_id" id="modal-cliente-id">
@@ -923,7 +923,7 @@
         }
 
         modalHistorialList.innerHTML = filtered.reverse().map(n => `
-            <div class="glass-card-premium p-3 mb-3 border-0 animate__animated animate__fadeIn position-relative novelty-item-container" style="border-left: 4px solid ${tipo === 'cliente' ? '#3b82f6' : '#10b981'} !important;">
+            <div class="glass-card-premium p-3 mb-3 border-0 animate__animated animate__fadeIn position-relative novelty-item-container" style="border-left: 4px solid ${tipo === 'cliente' ? '#3b82f6' : '#10b981'} !important; overflow: visible !important;">
                 <div class="d-flex justify-content-between align-items-start mb-2">
                     <div>
                         <span class="fw-bold small d-block ${tipo === 'cliente' ? 'text-primary' : 'text-success'}">
