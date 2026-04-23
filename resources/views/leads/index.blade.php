@@ -142,6 +142,9 @@
                                 <a href="{{ route('leads.show', $lead->id) }}" class="btn btn-primary" title="Ver detalle">
                                     <i class="bi bi-eye"></i>
                                 </a>
+                                <a href="{{ route('leads.calculadora', $lead->id) }}" class="btn btn-warning" title="Calculadora Matrix">
+                                    <i class="bi bi-calculator text-dark"></i>
+                                </a>
                                 <a href="{{ route('leads.edit', $lead->id) }}" class="btn btn-outline-info" title="Editar">
                                     <i class="bi bi-pencil"></i>
                                 </a>

@@ -876,5 +876,6 @@ request()->routeIs('mantenimiento.categorias.*');
         });
     })();
   </script>
+  @yield('scripts')
 </body>
 </html>

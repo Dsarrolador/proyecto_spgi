@@ -11,14 +11,20 @@ class Lead extends Model
 
     protected $fillable = [
         'nombre',
+        'persona_contacto',
         'direccion',
         'contacto',
         'correo',
         'cotizacion_pdf',
         'total_estimado',
+        'calculo_data',
         'observaciones',
         'status',
         'user_id',
+    ];
+
+    protected $casts = [
+        'calculo_data' => 'array',
     ];
 
     public function user()

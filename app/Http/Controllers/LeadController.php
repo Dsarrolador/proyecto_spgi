@@ -110,12 +110,14 @@ class LeadController extends Controller
 
         $request->validate([
             'nombre' => 'required|string|max:255',
+            'persona_contacto' => 'nullable|string|max:255',
             'direccion' => 'nullable|string',
             'contacto' => 'nullable|string|max:255',
             'correo' => 'nullable|email|max:255',
-            'cotizacion_pdf' => 'nullable|mimes:pdf|max:10240',
+            'cotizacion_pdf' => 'nullable|mimes:pdf,xlsx,xls|max:10240',
             'total_estimado' => 'nullable|numeric',
             'observaciones' => 'nullable|string',
+            'calculo_data' => 'nullable|json',
         ]);
 
         $data = $request->except('cotizacion_pdf');
@@ -160,13 +162,15 @@ class LeadController extends Controller
 
         $request->validate([
             'nombre' => 'required|string|max:255',
+            'persona_contacto' => 'nullable|string|max:255',
             'direccion' => 'nullable|string',
             'contacto' => 'nullable|string|max:255',
             'correo' => 'nullable|email|max:255',
-            'cotizacion_pdf' => 'nullable|mimes:pdf|max:10240',
+            'cotizacion_pdf' => 'nullable|mimes:pdf,xlsx,xls|max:10240',
             'total_estimado' => 'nullable|numeric',
             'observaciones' => 'nullable|string',
             'status' => 'required|string',
+            'calculo_data' => 'nullable|json',
         ]);
 
         $data = $request->except('cotizacion_pdf');
@@ -199,5 +203,41 @@ class LeadController extends Controller
         $lead->delete();
 
         return redirect()->route('leads.index')->with('success', 'Lead eliminado correctamente.');
+    }
+
+    public function calculadora($id)
+    {
+        if (!$this->esAdminOEncargado()) {
+            return redirect()->route('bienvenido')->with('error', 'Acceso denegado.');
+        }
+
+        $lead = Lead::findOrFail($id);
+        return view('leads.calculadora', compact('lead'));
+    }
+
+    public function saveCalculo(Request $request, $id)
+    {
+        if (!$this->esAdminOEncargado()) {
+            return response()->json(['error' => 'No autorizado'], 403);
+        }
+
+        $lead = Lead::findOrFail($id);
+
+        $request->validate([
+            'total_estimado' => 'required|numeric',
+            'calculo_data' => 'required',
+        ]);
+
+        $calculo_data = $request->calculo_data;
+        if (is_string($calculo_data)) {
+            $calculo_data = json_decode($calculo_data, true);
+        }
+
+        $lead->update([
+            'total_estimado' => $request->total_estimado,
+            'calculo_data' => $calculo_data,
+        ]);
+
+        return response()->json(['success' => true, 'total_estimado' => $request->total_estimado]);
     }
 }

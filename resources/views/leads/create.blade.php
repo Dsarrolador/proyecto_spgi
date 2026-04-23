@@ -35,12 +35,17 @@
                                 <textarea name="direccion" class="form-control" rows="2" placeholder="Ubicación física">{{ old('direccion') }}</textarea>
                             </div>
 
+                             <div class="col-md-6">
+                                <label class="form-label fw-bold">Persona de Contacto</label>
+                                <input type="text" name="persona_contacto" class="form-control" value="{{ old('persona_contacto') }}" placeholder="Nombre de la persona contactada">
+                            </div>
+
                             <div class="col-md-6">
                                 <label class="form-label fw-bold">Contacto (Teléfono/WhatsApp)</label>
                                 <input type="text" name="contacto" class="form-control" value="{{ old('contacto') }}" placeholder="Ej: +1 809-555-5555">
                             </div>
 
-                            <div class="col-md-6">
+                            <div class="col-md-12">
                                 <label class="form-label fw-bold">Correo Electrónico</label>
                                 <input type="email" name="correo" class="form-control" value="{{ old('correo') }}" placeholder="ejemplo@correo.com">
                             </div>
@@ -52,9 +57,9 @@
                             </div>
 
                             <div class="col-md-6">
-                                <label class="form-label fw-bold">Subir Cotización (PDF)</label>
-                                <input type="file" name="cotizacion_pdf" class="form-control" accept="application/pdf">
-                                <small class="text-muted">Tamaño máximo: 10MB</small>
+                                <label class="form-label fw-bold">Subir Cotización (PDF / Excel)</label>
+                                <input type="file" name="cotizacion_pdf" class="form-control" accept=".pdf,.xlsx,.xls">
+                                <small class="text-muted">Formatos permitidos: PDF, XLSX, XLS. Máx: 10MB</small>
                             </div>
 
                             <div class="col-12">
@@ -79,26 +84,68 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const displayInput = document.getElementById('total_estimado_input');
-    const hiddenInput = document.getElementById('total_estimado_hidden');
+    // --- Calculation Logic ---
+    const calcCosto = document.getElementById('calc_costo');
+    const calcItbisPerc = document.getElementById('calc_itbis_perc');
+    const calcMarginPerc = document.getElementById('calc_margin_perc');
+    const calcItbisSalesPerc = document.getElementById('calc_itbis_sales_perc');
+    const calcQty = document.getElementById('calc_qty');
+    const calcAdjPrice = document.getElementById('calc_adj_price');
+    const calculoDataHidden = document.getElementById('calculo_data_hidden');
 
-    function formatNumber(val) {
-        if (!val) return '';
-        // Remove non-numeric characters except for the decimal point
-        let parts = val.toString().split(".");
-        parts[0] = parts[0].replace(/\D/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-        return parts.join(".");
+    function updateCalculations() {
+        const costo = parseFloat(calcCosto.value) || 0;
+        const itbis_perc = parseFloat(calcItbisPerc.value) || 0;
+        const margin_perc = parseFloat(calcMarginPerc.value) || 0;
+        const itbis_sales_perc = parseFloat(calcItbisSalesPerc.value) || 0;
+        const qty = parseFloat(calcQty.value) || 1;
+        const adj_price = parseFloat(calcAdjPrice.value) || 0;
+
+        const itbis_amt = costo * (itbis_perc / 100);
+        const subtotal = costo + itbis_amt;
+        const price_si = margin_perc < 100 ? (subtotal / (1 - (margin_perc / 100))) : 0;
+        const margin_amt = price_si - subtotal;
+        const itbis_sales_amt = price_si * (itbis_sales_perc / 100);
+        const final_price = price_si + itbis_sales_amt;
+        
+        const final_margin_unit = adj_price > 0 ? (adj_price - subtotal) : 0;
+        const diff = adj_price > 0 ? (final_margin_unit - margin_amt) : 0;
+        const total_margin = final_margin_unit * qty;
+        const total_value = adj_price * qty;
+
+        // Update UI
+        document.getElementById('res_itbis').innerText = itbis_amt.toFixed(2);
+        document.getElementById('res_subtotal').innerText = subtotal.toFixed(2);
+        document.getElementById('res_price_si').innerText = price_si.toFixed(2);
+        document.getElementById('res_margin_amt').innerText = margin_amt.toFixed(2);
+        document.getElementById('res_itbis_sales').innerText = itbis_sales_amt.toFixed(2);
+        document.getElementById('res_final_price').innerText = final_price.toFixed(2);
+        document.getElementById('res_diff').innerText = diff.toFixed(2);
+        document.getElementById('res_total_margin').innerText = total_margin.toFixed(2);
+        document.getElementById('res_total_value').innerText = total_value.toFixed(2);
+        document.getElementById('res_final_margin_unit').innerText = final_margin_unit.toFixed(2);
+
+        // Sync with Total Estimado
+        let mainTotal = 0;
+        if (total_value > 0) {
+            mainTotal = total_value;
+        } else if (final_price > 0) {
+            mainTotal = final_price;
+        }
+
+        if (mainTotal > 0) {
+            hiddenInput.value = mainTotal.toFixed(2);
+            displayInput.value = formatNumber(mainTotal.toFixed(2));
+        }
+
+        // Save JSON data
+        calculoDataHidden.value = JSON.stringify({
+            costo, itbis_perc, margin_perc, itbis_sales_perc, adj_price, qty
+        });
     }
 
-    displayInput.addEventListener('input', function(e) {
-        let value = e.target.value.replace(/,/g, '');
-        if (isNaN(value) && value !== '.') {
-            e.target.value = e.target.value.slice(0, -1);
-            return;
-        }
-        hiddenInput.value = value;
-        e.target.value = formatNumber(value);
+    [calcCosto, calcItbisPerc, calcMarginPerc, calcItbisSalesPerc, calcQty, calcAdjPrice].forEach(input => {
+        input.addEventListener('input', updateCalculations);
     });
 
     // Handle old value on load

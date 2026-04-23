@@ -58,6 +58,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/comerciales/reportes', [LeadController::class, 'reportes'])->name('leads.reportes');
         Route::resource('lead-requirements', LeadRequirementController::class);
         Route::resource('leads', LeadController::class);
+        Route::get('/leads/{id}/calculadora', [LeadController::class, 'calculadora'])->name('leads.calculadora');
+        Route::post('/leads/{id}/save-calculo', [LeadController::class, 'saveCalculo'])->name('leads.saveCalculo');
 
         // Administración Dashboard y Facturación
         Route::get('/administracion/bienvenido', function () {
