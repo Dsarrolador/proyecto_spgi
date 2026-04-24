@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Lead;
+use App\Models\User;
+use App\Models\NotificacionSistema;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -239,5 +241,136 @@ class LeadController extends Controller
         ]);
 
         return response()->json(['success' => true, 'total_estimado' => $request->total_estimado]);
+    }
+
+    public function indexCalculos(Request $request)
+    {
+        $query = Lead::whereNotNull('calculo_data');
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $leads = $query->orderBy('created_at', 'desc')->get();
+        return view('leads.index_calculos', compact('leads'));
+    }
+
+    public function updatePdf(Request $request, $id)
+    {
+        $request->validate([
+            'cotizacion_pdf' => 'required|file|mimes:pdf,xlsx,xls|max:5120',
+        ]);
+
+        $lead = Lead::findOrFail($id);
+        
+        $wasRealizado = ($lead->status === 'Realizado');
+
+        if ($lead->cotizacion_pdf) {
+            Storage::disk('public')->delete($lead->cotizacion_pdf);
+        }
+
+        $path = $request->file('cotizacion_pdf')->store('cotizaciones', 'public');
+        $lead->cotizacion_pdf = $path;
+        
+        // Si el estado era Realizado, lo devolvemos a En proceso para que se pueda volver a validar
+        if ($wasRealizado) {
+            $lead->status = 'En proceso';
+        }
+        
+        $lead->save();
+
+        // Notificar a Admin y Encargados sobre la actualización del archivo
+        $admins = User::with('role')->get()->filter(function($u) {
+            return $u->es_admin || $u->es_encargado;
+        });
+        
+        $sender = Auth::user();
+
+        foreach ($admins as $admin) {
+            NotificacionSistema::create([
+                'user_id' => $admin->id,
+                'sender_id' => $sender->id ?? null,
+                'titulo' => 'Cotización Actualizada',
+                'mensaje' => "El comercial " . ($sender->name ?? 'Sistema') . " ha actualizado el archivo de cotización del lead: {$lead->nombre}" . ($wasRealizado ? " (Estado regresó a En proceso)." : "."),
+                'url' => route('leads.indexCalculos'),
+            ]);
+        }
+
+        return back()->with('success', 'Documento actualizado correctamente.');
+    }
+
+    public function validar($id)
+    {
+        try {
+            return DB::transaction(function() use ($id) {
+                $lead = Lead::findOrFail($id);
+                $lead->status = 'Realizado';
+                $lead->save();
+
+                // Notificar a Admin y Encargados
+                $admins = User::with('role')->get()->filter(function($u) {
+                    return $u->es_admin || $u->es_encargado;
+                });
+                
+                $sender = Auth::user();
+
+                foreach ($admins as $admin) {
+                    NotificacionSistema::create([
+                        'user_id' => $admin->id,
+                        'sender_id' => $sender->id ?? null,
+                        'titulo' => 'Cotización Validada',
+                        'mensaje' => "El comercial " . ($sender->name ?? 'Sistema') . " ha validado la cotización del lead: {$lead->nombre}.",
+                        'url' => route('leads.indexCalculos'),
+                    ]);
+                }
+
+                return response()->json(['success' => true]);
+            });
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function aprobar($id)
+    {
+        if (!$this->esAdminOEncargado()) return response()->json(['error' => 'No autorizado'], 403);
+
+        $lead = Lead::findOrFail($id);
+        $lead->status = 'Ganado';
+        $lead->save();
+
+        // Notificar al Comercial (creador del lead)
+        if ($lead->user_id) {
+            NotificacionSistema::create([
+                'user_id' => $lead->user_id,
+                'sender_id' => Auth::id(),
+                'titulo' => 'Cotización APROBADA',
+                'mensaje' => "Tu cotización para el lead {$lead->nombre} ha sido aprobada por la administración.",
+                'url' => route('leads.show', $lead->id),
+            ]);
+        }
+
+        return response()->json(['success' => true]);
+    }
+
+    public function rechazar(Request $request, $id)
+    {
+        if (!$this->esAdminOEncargado()) return response()->json(['error' => 'No autorizado'], 403);
+
+        $lead = Lead::findOrFail($id);
+        $lead->status = 'Pendiente'; // Vuelve a pendiente para corrección
+        $lead->save();
+
+        if ($lead->user_id) {
+            NotificacionSistema::create([
+                'user_id' => $lead->user_id,
+                'sender_id' => Auth::id(),
+                'titulo' => 'Cotización RECHAZADA',
+                'mensaje' => "Tu cotización para {$lead->nombre} ha sido rechazada. Motivo: " . ($request->motivo ?? 'No especificado'),
+                'url' => route('leads.calculadora', $lead->id),
+            ]);
+        }
+
+        return response()->json(['success' => true]);
     }
 }

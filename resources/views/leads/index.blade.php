@@ -85,6 +85,9 @@
 
     <div class="spgi-toolbar">
       <div class="toolbar-actions">
+        <a href="{{ route('leads.indexCalculos') }}" class="btn btn-outline-primary rounded-pill d-flex align-items-center gap-2">
+          <i class="bi bi-calculator"></i> Dashboard de Cálculos
+        </a>
         <a href="{{ route('leads.create') }}" class="btn btn-spgi">
           <i class="bi bi-plus-lg me-1"></i> Nuevo Lead
         </a>

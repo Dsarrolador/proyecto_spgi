@@ -58,6 +58,11 @@ Route::middleware('auth')->group(function () {
         Route::get('/comerciales/reportes', [LeadController::class, 'reportes'])->name('leads.reportes');
         Route::resource('lead-requirements', LeadRequirementController::class);
         Route::resource('leads', LeadController::class);
+        Route::get('/leads-calculos', [LeadController::class, 'indexCalculos'])->name('leads.indexCalculos');
+        Route::post('/leads/{id}/update-pdf', [LeadController::class, 'updatePdf'])->name('leads.updatePdf');
+        Route::post('/leads/{id}/validar', [LeadController::class, 'validar'])->name('leads.validar');
+        Route::post('/leads/{id}/aprobar', [LeadController::class, 'aprobar'])->name('leads.aprobar');
+        Route::post('/leads/{id}/rechazar', [LeadController::class, 'rechazar'])->name('leads.rechazar');
         Route::get('/leads/{id}/calculadora', [LeadController::class, 'calculadora'])->name('leads.calculadora');
         Route::post('/leads/{id}/save-calculo', [LeadController::class, 'saveCalculo'])->name('leads.saveCalculo');
 

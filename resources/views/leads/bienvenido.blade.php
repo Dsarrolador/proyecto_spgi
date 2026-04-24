@@ -100,6 +100,14 @@
         </div>
       </a>
 
+      <a class="quick-card glass-card-premium border-primary" href="{{ route('leads.indexCalculos') }}">
+        <div class="quick-ico icon-float" style="background: rgba(13, 110, 253, 0.1); color: #0d6efd;"><i class="bi bi-calculator"></i></div>
+        <div class="quick-meta text-start">
+          <p class="t text-primary">Dashboard de Cálculos</p>
+          <p class="d">Gestión de cotizaciones y archivos adjuntos</p>
+        </div>
+      </a>
+
     </div>
 
     <div class="divider"></div>
