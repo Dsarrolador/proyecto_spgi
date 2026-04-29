@@ -120,10 +120,11 @@ Route::middleware('auth')->group(function () {
 
     /*
     |--------------------------------------------------------------------------
-    | 👤 USUARIOS
+    | 👤 USUARIOS Y AUDITORIA
     |--------------------------------------------------------------------------
     */
     Route::resource('usuarios', UsuarioController::class)->middleware(\App\Http\Middleware\CheckAdmin::class);
+    Route::get('/auditoria', [\App\Http\Controllers\AuditLogController::class, 'index'])->name('auditoria.index')->middleware(\App\Http\Middleware\CheckAdminOrEncargado::class);
 
     /*
     |--------------------------------------------------------------------------

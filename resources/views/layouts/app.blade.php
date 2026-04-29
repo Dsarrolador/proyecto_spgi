@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="csrf-token" content="{{ csrf_token() }}">
 <title>Proyecto SPGI</title>
+<link rel="icon" type="image/png" href="{{ asset('favicon.png') }}?v=3">
 
 <!-- Bootstrap -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -139,6 +140,21 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.m
   @keyframes iconFloat {
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-8px); }
+  }
+
+  /* DEVELOPER SIGNATURE */
+  .developer-signature {
+      position: fixed; bottom: 20px; right: 24px;
+      background: var(--bg-surface-glass); backdrop-filter: blur(16px);
+      border: 1px solid var(--border-main); padding: 8px 16px; border-radius: 50px;
+      font-size: 0.75rem; color: var(--text-muted); z-index: 9999;
+      display: flex; align-items: center; gap: 8px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.05); transition: all 0.4s ease;
+      pointer-events: none;
+  }
+  .developer-signature i { color: var(--spgi-primary); font-size: 0.9rem; }
+  [data-bs-theme="dark"] .developer-signature {
+      background: rgba(15, 23, 42, 0.6); box-shadow: 0 10px 25px rgba(0,0,0,0.4);
   }
 
   /* SIDEBAR STRUCTURE */
@@ -535,10 +551,15 @@ request()->routeIs('mantenimiento.categorias.*');
         </a>
         @endif
 
-        @if(Auth::user()->es_admin)
+        @if(Auth::user()->es_admin || Auth::user()->es_encargado)
         <div class="nav-section-title">Configuración</div>
+        @if(Auth::user()->es_admin)
         <a class="nav-link {{ request()->routeIs('usuarios.*') ? 'active' : '' }}" href="{{ route('usuarios.index') }}">
           <i class="bi bi-people"></i> Usuarios
+        </a>
+        @endif
+        <a class="nav-link {{ request()->routeIs('auditoria.*') ? 'active' : '' }}" href="{{ route('auditoria.index') ?? '#' }}">
+          <i class="bi bi-shield-lock"></i> Auditoría
         </a>
         @endif
 
@@ -966,6 +987,83 @@ request()->routeIs('mantenimiento.categorias.*');
         });
     })();
   </script>
+
+  <!-- IDLE TIMER -->
+  @auth
+  <div class="modal fade" id="idleWarningModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+        <div class="modal-body p-4 text-center">
+          <i class="bi bi-shield-lock-fill text-warning mb-3" style="font-size: 3rem;"></i>
+          <h4 class="fw-bold">Sesión por expirar</h4>
+          <p class="text-muted">Por seguridad, tu sesión se cerrará automáticamente por inactividad en <span id="idleSeconds" class="fw-bold text-danger">120</span> segundos.</p>
+          <button type="button" class="btn btn-primary px-4 rounded-pill mt-2" onclick="resetIdleTimer()" data-bs-dismiss="modal">Continuar trabajando</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let idleTimeout;
+    let warningTimeout;
+    let countdownInterval;
+    const IDLE_LIMIT = 20 * 60 * 1000; // 20 minutes
+    const WARNING_LIMIT = 18 * 60 * 1000; // 18 minutes
+
+    function resetIdleTimer() {
+        clearTimeout(idleTimeout);
+        clearTimeout(warningTimeout);
+        clearInterval(countdownInterval);
+        
+        const modalEl = document.getElementById('idleWarningModal');
+        if (modalEl) {
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            if (modal) modal.hide();
+        }
+
+        warningTimeout = setTimeout(showIdleWarning, WARNING_LIMIT);
+        idleTimeout = setTimeout(logoutUser, IDLE_LIMIT);
+    }
+
+    function showIdleWarning() {
+        let secondsLeft = (IDLE_LIMIT - WARNING_LIMIT) / 1000;
+        const span = document.getElementById('idleSeconds');
+        if (span) span.textContent = secondsLeft;
+        
+        const modalEl = document.getElementById('idleWarningModal');
+        if (modalEl) {
+            const modal = new bootstrap.Modal(modalEl);
+            modal.show();
+        }
+
+        countdownInterval = setInterval(() => {
+            secondsLeft--;
+            if (span) span.textContent = secondsLeft;
+            if (secondsLeft <= 0) {
+                clearInterval(countdownInterval);
+            }
+        }, 1000);
+    }
+
+    function logoutUser() {
+        window.location.href = '{{ route("logout") }}';
+    }
+
+    // Setup event listeners for user activity
+    ['mousemove', 'keydown', 'scroll', 'click', 'touchstart'].forEach(evt => {
+        document.addEventListener(evt, resetIdleTimer, { passive: true });
+    });
+
+    // Start timer initially
+    resetIdleTimer();
+  </script>
+  @endauth
+
+  <div class="developer-signature">
+      <i class="bi bi-code-slash"></i>
+      <span>Desarrollado por <strong>Sebastian Lopez Maria</strong></span>
+  </div>
+
   @yield('scripts')
 </body>
 </html>

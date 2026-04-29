@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Iniciar sesión - Proyecto SPGI</title>
+    <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}?v=3">
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -107,29 +108,53 @@
         </div>
     @endif
 
-    <form action="{{ route('login.submit') }}" method="POST">
-        @csrf
-
-        <div class="mb-3 text-start">
-            <label class="form-label">Nombre de usuario</label>
-            <input type="text" name="name" class="form-control" required autofocus>
+    @if(isset($seconds_left) && $seconds_left > 0)
+        <div class="alert alert-danger py-4 text-center mt-4" style="border-radius: 20px; background: rgba(220, 38, 38, 0.1); border-color: rgba(220, 38, 38, 0.2); color: #f87171;">
+            <i class="bi bi-shield-lock-fill d-block mb-3" style="font-size: 3rem;"></i>
+            <h5 class="fw-bold mb-2">Acceso bloqueado</h5>
+            <p class="small mb-0">Demasiados intentos fallidos. Podrá intentar nuevamente en <strong id="lockout-timer">{{ ceil($seconds_left / 60) }} minutos</strong>.</p>
         </div>
+        <script>
+            let secondsLeft = {{ $seconds_left }};
+            setInterval(() => {
+                secondsLeft--;
+                if(secondsLeft <= 0) {
+                    window.location.reload();
+                } else {
+                    let mins = Math.ceil(secondsLeft / 60);
+                    document.getElementById('lockout-timer').innerText = mins + ' minuto' + (mins !== 1 ? 's' : '');
+                }
+            }, 1000);
+        </script>
+    @else
+        <form action="{{ route('login.submit') }}" method="POST">
+            @csrf
 
-        <div class="mb-3 text-start">
-            <label class="form-label">Contraseña</label>
-            <input type="password" name="password" class="form-control" required>
-        </div>
+            <div class="mb-3 text-start">
+                <label class="form-label">Nombre de usuario</label>
+                <input type="text" name="name" class="form-control" required autofocus>
+            </div>
 
-        <button class="btn btn-primary w-100 btn-main">
-            <i class="bi bi-box-arrow-in-right me-2"></i>
-            Entrar
-        </button>
-    </form>
+            <div class="mb-3 text-start">
+                <label class="form-label">Contraseña</label>
+                <input type="password" name="password" class="form-control" required>
+            </div>
+
+            <button class="btn btn-primary w-100 btn-main">
+                <i class="bi bi-box-arrow-in-right me-2"></i>
+                Entrar
+            </button>
+        </form>
+    @endif
 
 </div>
 
 <div class="brand">
-    SPGI • {{ date('Y') }}
+    <div class="mb-3">SPGI • {{ date('Y') }}</div>
+    <div class="d-inline-flex align-items-center gap-2 px-3 py-2 rounded-pill" style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-main); backdrop-filter: blur(12px); box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+        <i class="bi bi-code-slash" style="color: var(--spgi-primary); font-size: 0.9rem;"></i>
+        <span style="font-size: 0.75rem; color: var(--text-muted); letter-spacing: 0.5px;">Desarrollado por <strong style="color: var(--text-main);">Sebastian Lopez Maria</strong></span>
+    </div>
 </div>
 
 </body>
