@@ -274,6 +274,7 @@ class RequerimientoClienteController extends Controller
             'es_colaborativo'  => 'nullable|boolean',
             'colaboradores_ids' => 'nullable|array',
             'colaboradores_ids.*' => 'exists:users,id',
+            'estado_id'        => 'nullable|exists:estado_requerimientos,id',
         ]);
 
         $rutaFoto = null;
@@ -293,7 +294,7 @@ class RequerimientoClienteController extends Controller
             'tipo_soporte_id'  => $request->tipo_soporte_id,
             'texto_imagen'     => $request->texto_imagen,
             'foto'             => $rutaFoto,
-            'estado_id'        => 1,
+            'estado_id'        => $request->filled('estado_id') ? $request->estado_id : 1,
             'user_id'          => $creadoPor,
             'creador_user_id'  => $creadoPor,
             'asignado_user_id' => $asignadoId,

@@ -169,7 +169,7 @@
             </table>
         </div>
         <div class="d-flex justify-content-center mt-3 p-3 border-top">
-            {{ $leads->links('pagination::bootstrap-5') }}
+            {{ $leads->links() }}
         </div>
     </div>
 </div>
@@ -201,6 +201,7 @@
                                 <th class="text-end">COSTO DOP</th>
                                 <th class="text-end text-muted small">ITBIS C.</th>
                                 <th class="text-end">COSTO TOTAL</th>
+                                <th class="text-end text-secondary">P. SUG. S/I</th>
                                 <th class="text-end">P. SUGERIDO</th>
                                 <th class="text-end">P. AJUSTADO</th>
                                 <th class="text-center">CANT.</th>
@@ -290,6 +291,7 @@ function viewMatrix(name, data) {
                 <td class="text-end text-main">${fmt(cD)}</td>
                 <td class="text-end text-muted small">${fmt(iC)}</td>
                 <td class="text-end fw-bold text-main">${fmt(sub)}</td>
+                <td class="text-end text-secondary">${fmt(pSi)}</td>
                 <td class="text-end text-warning">${fmt(pF)}</td>
                 <td class="text-end text-primary fw-bold">${fmt(adj)}</td>
                 <td class="text-center text-main">${qty}</td>
@@ -306,7 +308,7 @@ function viewMatrix(name, data) {
             <td class="text-end text-main">$${gT.cost.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
             <td class="text-end text-main">$${gT.itbis.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
             <td class="text-end text-main">$${gT.sub.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
-            <td colspan="3"></td>
+            <td colspan="4"></td>
             <td class="text-center text-main">${gT.qty}</td>
             <td class="text-end text-success">$${gT.gan.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
             <td class="text-end pe-4 text-primary">$${gT.val.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
@@ -317,7 +319,7 @@ function viewMatrix(name, data) {
 }
 
 function exportMatrixToExcel(name, data) {
-    const tableData = [["Artículo", "Divisa", "Costo Orig.", "Costo DOP", "ITBIS Compra", "Costo Total", "Precio Sug.", "Precio Ajustado", "Cant.", "Ganancia Real", "Subtotal Venta"]];
+    const tableData = [["Artículo", "Divisa", "Costo Orig.", "Costo DOP", "ITBIS Compra", "Costo Total", "Precio Sug. (S/I)", "Precio Sug.", "Precio Ajustado", "Cant.", "Ganancia Real", "Subtotal Venta"]];
     const tasa = parseFloat(data.global_tasa) || 63.23;
     const itbis_c_p = parseFloat(data.global_itbis_compra) || 18;
     const gan_p = parseFloat(data.global_ganancia) || 25;
@@ -332,7 +334,7 @@ function exportMatrixToExcel(name, data) {
         const pSi = gan_p < 100 ? (sub / (1 - (gan_p / 100))) : 0;
         const pF = pSi * (1 + (itbis_v_p/100));
         const vT = (adj > 0 ? adj : pF) * q; const gF = adj > 0 ? (adj - sub) * q : 0;
-        tableData.push([item.nombre_articulo, mon, cO, cD, iC, sub, pF, adj, q, gF, vT]);
+        tableData.push([item.nombre_articulo, mon, cO, cD, iC, sub, pSi, pF, adj, q, gF, vT]);
     });
     const ws = XLSX.utils.aoa_to_sheet(tableData);
     const wb = XLSX.utils.book_new();

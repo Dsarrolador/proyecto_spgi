@@ -58,6 +58,21 @@
             </select>
         </div>
 
+        <!-- ESTADO INICIAL -->
+        <div class="mb-3">
+            <label class="form-label">Estado Inicial</label>
+            <select name="estado_id" class="form-select">
+                @foreach($estados as $estado)
+                    <option value="{{ $estado->id }}" {{ $estado->id == 1 ? 'selected' : '' }}>
+                        {{ $estado->nombre }}
+                    </option>
+                @endforeach
+            </select>
+            <small class="text-muted d-block mt-1">
+                Por defecto el estado es Pendiente.
+            </small>
+        </div>
+
         <!-- COLABORATIVO -->
         <div class="mb-3">
             <div class="form-check form-switch p-3 border rounded d-flex flex-column justify-content-center" style="background: rgba(var(--text-main), 0.03); border-color: var(--border-main) !important;">

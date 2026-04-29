@@ -208,6 +208,7 @@
                                 <th class="text-end">Costo DOP</th>
                                 <th class="text-end">ITBIS C.</th>
                                 <th class="text-end">Costo Total</th>
+                                <th class="text-end text-secondary">P. Sug. S/I</th>
                                 <th class="text-end">P. Sugerido</th>
                                 <th class="text-end">P. Ajustado</th>
                                 <th class="text-center">Cant.</th>
@@ -286,6 +287,10 @@ function addProduct(data = {}) {
                 <div class="fw-bold" id="res_subtotal_c_${productIdx}">0.00</div>
             </div>
             <div class="item-group">
+                <label class="item-label">P. Sug. S/I</label>
+                <div class="fw-bold text-secondary" id="res_precio_sin_itbis_${productIdx}">0.00</div>
+            </div>
+            <div class="item-group">
                 <label class="item-label">P. Sugerido (DOP)</label>
                 <div class="fw-bold text-warning" id="res_precio_f_${productIdx}">0.00</div>
             </div>
@@ -349,6 +354,7 @@ function updateAll() {
         const fmt = (v) => '$' + v.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
         document.getElementById(`res_itbis_c_${id}`).innerText = fmt(itbis_c);
         document.getElementById(`res_subtotal_c_${id}`).innerText = fmt(sub_c);
+        document.getElementById(`res_precio_sin_itbis_${id}`).innerText = fmt(p_si);
         document.getElementById(`res_precio_f_${id}`).innerText = fmt(p_f);
         document.getElementById(`res_ganancia_f_${id}`).innerText = fmt(gan_f);
         document.getElementById(`res_valor_t_${id}`).innerText = fmt(val_t);
@@ -402,6 +408,7 @@ function showMatrixModal() {
                 <td class="text-end">${fmt(cDOP)}</td>
                 <td class="text-end">${fmt(iC)}</td>
                 <td class="text-end fw-bold">${fmt(sub)}</td>
+                <td class="text-end text-secondary">${fmt(pSi)}</td>
                 <td class="text-end text-warning">${fmt(pF)}</td>
                 <td class="text-end text-primary fw-bold">${fmt(adj)}</td>
                 <td class="text-center">${qty}</td>
@@ -418,7 +425,7 @@ function showMatrixModal() {
             <td class="text-end">$${gTotals.cost.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
             <td class="text-end">$${gTotals.itbis.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
             <td class="text-end">$${gTotals.sub.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
-            <td colspan="3"></td>
+            <td colspan="4"></td>
             <td class="text-center">${gTotals.qty}</td>
             <td class="text-end text-success">$${gTotals.gan.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
             <td class="text-end pe-4 text-primary">$${gTotals.val.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
@@ -428,7 +435,7 @@ function showMatrixModal() {
             <td class="text-end text-muted">US$${(gTotals.cost / tasa).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
             <td class="text-end text-muted">US$${(gTotals.itbis / tasa).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
             <td class="text-end text-muted">US$${(gTotals.sub / tasa).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
-            <td colspan="3"></td>
+            <td colspan="4"></td>
             <td class="text-center text-muted">${gTotals.qty}</td>
             <td class="text-end text-muted">US$${(gTotals.gan / tasa).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
             <td class="text-end pe-4 text-muted">US$${(gTotals.val / tasa).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
@@ -438,7 +445,7 @@ function showMatrixModal() {
 }
 
 function exportToExcel() {
-    const data = [["Artículo", "Divisa", "Costo Orig.", "Costo DOP", "ITBIS Compra", "Costo Total", "Precio Sug.", "Precio Ajustado", "Cant.", "Ganancia Real", "Subtotal Venta"]];
+    const data = [["Artículo", "Divisa", "Costo Orig.", "Costo DOP", "ITBIS Compra", "Costo Total", "Precio Sug. (S/I)", "Precio Sug.", "Precio Ajustado", "Cant.", "Ganancia Real", "Subtotal Venta"]];
     const tasa = parseFloat(document.getElementById('global_tasa').value) || 1;
     const itbis_c_p = parseFloat(document.getElementById('global_itbis_compra').value) || 0;
     const gan_p = parseFloat(document.getElementById('global_ganancia').value) || 0;
@@ -455,7 +462,7 @@ function exportToExcel() {
         const pSi = gan_p < 100 ? (sub / (1 - (gan_p / 100))) : 0;
         const pF = pSi * (1 + (itbis_v_p/100));
         const vT = (adj > 0 ? adj : pF) * q; const gF = adj > 0 ? (adj - sub) * q : 0;
-        data.push([n, mon, cO, cD, iC, sub, pF, adj, q, gF, vT]);
+        data.push([n, mon, cO, cD, iC, sub, pSi, pF, adj, q, gF, vT]);
     });
 
     const ws = XLSX.utils.aoa_to_sheet(data);

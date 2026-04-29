@@ -187,6 +187,17 @@ Route::middleware('auth')->group(function () {
 
     /*
     |--------------------------------------------------------------------------
+    | 🚚 CONDUCES
+    |--------------------------------------------------------------------------
+    */
+    Route::post('/conduces', [\App\Http\Controllers\ConduceController::class, 'store'])
+        ->name('conduces.store');
+
+    Route::get('/conduces/{id}/pdf', [\App\Http\Controllers\ConduceController::class, 'generatePdf'])
+        ->name('conduces.pdf');
+
+    /*
+    |--------------------------------------------------------------------------
     | 🛠️ MANTENIMIENTO
     |--------------------------------------------------------------------------
     */
