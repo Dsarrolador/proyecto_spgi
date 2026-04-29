@@ -36,6 +36,19 @@
     
     .matrix-header { background: #1e293b; color: #fff; padding: 20px; }
     .card-dashboard { background: var(--bg-surface-glass); border: 1px solid var(--border-main); backdrop-filter: blur(10px); }
+
+    /* Estilos Responsivos Adicionales */
+    @media (max-width: 768px) {
+        .btn-action { width: 36px; height: 36px; border-radius: 8px; }
+        .table-premium th, .table-premium td { white-space: nowrap; }
+        .h3 { font-size: 1.5rem !important; }
+        .matrix-header h5 { font-size: 1.25rem !important; }
+    }
+    
+    /* Prevenir salto de línea feo en la matriz para móviles */
+    #modalMatrix .table th, #modalMatrix .table td {
+        white-space: nowrap;
+    }
 </style>
 
 <div class="container-fluid py-4">
@@ -154,6 +167,9 @@
                     @endforelse
                 </tbody>
             </table>
+        </div>
+        <div class="d-flex justify-content-center mt-3 p-3 border-top">
+            {{ $leads->links('pagination::bootstrap-5') }}
         </div>
     </div>
 </div>

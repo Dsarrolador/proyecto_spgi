@@ -339,6 +339,77 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.m
   [data-bs-theme="dark"] .theme-switch-wrap {
     background: rgba(255,255,255,0.05);
   }
+
+  /* GLOBAL MOBILE RESPONSIVENESS */
+  @media (max-width: 768px) {
+    /* Forzar que las tablas gigantes hagan scroll lateral sin deformar la pantalla */
+    .table-responsive, .table { 
+      display: block; 
+      width: 100%; 
+      overflow-x: auto; 
+      white-space: nowrap; 
+      -webkit-overflow-scrolling: touch; 
+    }
+    
+    /* Reducir el padding global excesivo */
+    main.p-4 { padding: 1rem !important; }
+    
+    /* Ajuste de Topbar */
+    .spgi-topbar { padding: 0 1rem; }
+    
+    /* Titulares compactos */
+    .h3, h1, h2, h3 { font-size: 1.25rem !important; }
+    
+    /* Optimizar el dropdown de notificaciones para que no se desborde */
+    .dropdown-menu-end[id="notif-list-container"] {
+      width: 100% !important;
+      max-width: 350px;
+      right: 0 !important;
+      left: auto !important;
+    }
+  }
+
+  /* -------------------------------------------------------------
+     GLOBAL MOBILE DARK MODE OVERRIDES
+     Fuerza los colores oscuros en las tarjetas móviles generadas en vistas individuales
+     ------------------------------------------------------------- */
+  [data-bs-theme="dark"] .spgi-client-card,
+  [data-bs-theme="dark"] .spgi-field,
+  [data-bs-theme="dark"] .spgi-empty,
+  [data-bs-theme="dark"] .spgi-card,
+  [data-bs-theme="dark"] .req-mobile-card,
+  [data-bs-theme="dark"] .req-card,
+  [data-bs-theme="dark"] .mobile-card {
+    background: var(--bg-surface) !important;
+    border-color: var(--border-main) !important;
+    color: var(--text-main) !important;
+  }
+
+  [data-bs-theme="dark"] .spgi-client-name,
+  [data-bs-theme="dark"] .spgi-field-value,
+  [data-bs-theme="dark"] .spgi-title,
+  [data-bs-theme="dark"] .text-dark {
+    color: var(--text-main) !important;
+  }
+
+  [data-bs-theme="dark"] .spgi-field-label,
+  [data-bs-theme="dark"] .text-muted {
+    color: var(--text-muted) !important;
+  }
+
+  [data-bs-theme="dark"] .bg-white, 
+  [data-bs-theme="dark"] .bg-light {
+    background-color: var(--bg-surface) !important;
+    color: var(--text-main) !important;
+  }
+
+  [data-bs-theme="dark"] input,
+  [data-bs-theme="dark"] select,
+  [data-bs-theme="dark"] textarea {
+    background-color: var(--bg-master) !important;
+    color: var(--text-main) !important;
+    border-color: var(--border-main) !important;
+  }
 </style>
 </head>
 
@@ -561,16 +632,35 @@ request()->routeIs('mantenimiento.categorias.*');
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   
   <script>
-    document.addEventListener('mousemove', (e) => {
-      const cards = document.querySelectorAll('.glass-card-premium');
-      cards.forEach(card => {
-        const rect = card.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        card.style.setProperty('--mouse-x', `${x}px`);
-        card.style.setProperty('--mouse-y', `${y}px`);
+    // OPTIMIZED: Solo corre en PC (ratón). Ahorra CPU/Batería en Móviles.
+    if (window.matchMedia("(pointer: fine)").matches) {
+      let cardsCache = null;
+      let isTicking = false;
+      let mouseX = 0, mouseY = 0;
+
+      document.addEventListener('mousemove', (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+        
+        if (!isTicking) {
+          window.requestAnimationFrame(() => {
+            if (!cardsCache) cardsCache = document.querySelectorAll('.glass-card-premium');
+            
+            cardsCache.forEach(card => {
+              const rect = card.getBoundingClientRect();
+              card.style.setProperty('--mouse-x', `${mouseX - rect.left}px`);
+              card.style.setProperty('--mouse-y', `${mouseY - rect.top}px`);
+            });
+            isTicking = false;
+          });
+          isTicking = true;
+        }
       });
-    });
+
+      // Limpia caché si hay redibujo grande (SPA/Ajax)
+      new MutationObserver(() => cardsCache = null)
+        .observe(document.body, { childList: true, subtree: true });
+    }
 
     function toggleSidebar() {
       const sidebar = document.getElementById('sidebar');

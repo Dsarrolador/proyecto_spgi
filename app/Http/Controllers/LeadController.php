@@ -251,7 +251,7 @@ class LeadController extends Controller
             $query->where('status', $request->status);
         }
 
-        $leads = $query->orderBy('created_at', 'desc')->get();
+        $leads = $query->orderBy('created_at', 'desc')->paginate(15);
         return view('leads.index_calculos', compact('leads'));
     }
 
@@ -280,9 +280,11 @@ class LeadController extends Controller
         $lead->save();
 
         // Notificar a Admin y Encargados sobre la actualización del archivo
-        $admins = User::with('role')->get()->filter(function($u) {
-            return $u->es_admin || $u->es_encargado;
-        });
+        $admins = User::whereIn('cod_roleUser', [1, 2])
+            ->orWhereHas('role', function($q) {
+                $q->where('nombre', 'like', '%admin%')
+                  ->orWhere('nombre', 'like', '%encargado%');
+            })->get();
         
         $sender = Auth::user();
 
@@ -308,9 +310,11 @@ class LeadController extends Controller
                 $lead->save();
 
                 // Notificar a Admin y Encargados
-                $admins = User::with('role')->get()->filter(function($u) {
-                    return $u->es_admin || $u->es_encargado;
-                });
+                $admins = User::whereIn('cod_roleUser', [1, 2])
+                    ->orWhereHas('role', function($q) {
+                        $q->where('nombre', 'like', '%admin%')
+                          ->orWhere('nombre', 'like', '%encargado%');
+                    })->get();
                 
                 $sender = Auth::user();
 
