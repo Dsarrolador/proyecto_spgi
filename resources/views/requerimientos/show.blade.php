@@ -10,6 +10,18 @@
         : null;
 @endphp
 
+@if($requerimiento->estado_id == 6)
+    <div class="alert alert-danger border-0 shadow-sm rounded-4 p-4 mb-4 d-flex align-items-center gap-3">
+        <div class="bg-danger text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; flex-shrink: 0;">
+            <i class="bi bi-trash3-fill fs-3"></i>
+        </div>
+        <div>
+            <h5 class="fw-bold mb-1">REQUERIMIENTO EN PAPELERA</h5>
+            <p class="mb-0 opacity-75">Este registro ha sido marcado como eliminado y no aparecerá en los listados activos.</p>
+        </div>
+    </div>
+@endif
+
 <style>
   .spgi-page{ padding: 12px 0 24px 0; }
   .spgi-header{ display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:32px; flex-wrap:wrap; }
@@ -115,54 +127,65 @@
         <p class="spgi-subtitle">Consulta y actualiza la información del requerimiento.</p>
       </div>
 
-      <div class="spgi-header-actions">
-        <button type="button"
-                class="btn btn-secondary spgi-btn-action"
-                data-bs-toggle="modal"
-                data-bs-target="#modalEstado">
-          <i class="bi bi-flag me-1"></i> Cambiar estado
-        </button>
+      <div class="spgi-header-actions d-flex gap-2 gap-md-3 flex-wrap">
+        @if($requerimiento->estado_id == 6)
+            <form action="{{ route('requerimientos.update', $requerimiento->id) }}" method="POST" class="d-inline">
+                @csrf
+                @method('PUT')
+                <input type="hidden" name="estado_id" value="1">
+                <button type="submit" class="btn btn-success spgi-btn-action">
+                    <i class="bi bi-arrow-counterclockwise me-1"></i> Restaurar Requerimiento
+                </button>
+            </form>
+        @else
+            <button type="button"
+                    class="btn btn-secondary spgi-btn-action"
+                    data-bs-toggle="modal"
+                    data-bs-target="#modalEstado">
+              <i class="bi bi-flag me-1"></i> Cambiar estado
+            </button>
 
-        <a href="{{ route('requerimientos.edit', $requerimiento->id) }}"
-           class="btn btn-warning spgi-btn-action">
-          <i class="bi bi-pencil-square me-1"></i> Editar
-        </a>
+            <a href="{{ route('requerimientos.edit', $requerimiento->id) }}"
+               class="btn btn-warning spgi-btn-action">
+              <i class="bi bi-pencil-square me-1"></i> Editar
+            </a>
 
-        <!-- Botón con Menú Desplegable para Conduces -->
-        <div class="dropdown d-inline-block">
-          <button class="btn btn-primary dropdown-toggle spgi-btn-action" type="button" id="dropdownConduce" data-bs-toggle="dropdown" aria-expanded="false">
-            <i class="bi bi-truck me-1"></i> Generar Conduce
-          </button>
-          <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-3" aria-labelledby="dropdownConduce" style="min-width: 220px;">
-            <li>
-              <a class="dropdown-item rounded-3 py-2" href="#" data-bs-toggle="modal" data-bs-target="#modalConduce">
-                <div class="d-flex align-items-center">
-                  <div class="bg-primary bg-opacity-10 text-primary rounded-circle p-2 me-3">
-                    <i class="bi bi-tools"></i>
-                  </div>
-                  <div>
-                    <span class="d-block fw-bold">Conduce de Trabajo</span>
-                    <small class="text-muted">Entrega de productos/servicios</small>
-                  </div>
-                </div>
-              </a>
-            </li>
-            <li><hr class="dropdown-divider opacity-50"></li>
-            <li>
-              <a class="dropdown-item rounded-3 py-2" href="#" data-bs-toggle="modal" data-bs-target="#modalConduceHora">
-                <div class="d-flex align-items-center">
-                  <div class="bg-success bg-opacity-10 text-success rounded-circle p-2 me-3">
-                    <i class="bi bi-clock-history"></i>
-                  </div>
-                  <div>
-                    <span class="d-block fw-bold">Conduce por Hora</span>
-                    <small class="text-muted">Registro de horas trabajadas</small>
-                  </div>
-                </div>
-              </a>
-            </li>
-          </ul>
-        </div>
+            <!-- Botón con Menú Desplegable para Conduces -->
+            <div class="dropdown d-inline-block">
+              <button class="btn btn-primary dropdown-toggle spgi-btn-action" type="button" id="dropdownConduce" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-truck me-1"></i> Generar Conduce
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-3" aria-labelledby="dropdownConduce" style="min-width: 220px;">
+                <li>
+                  <a class="dropdown-item rounded-3 py-2" href="#" data-bs-toggle="modal" data-bs-target="#modalConduce">
+                    <div class="d-flex align-items-center">
+                      <div class="bg-primary bg-opacity-10 text-primary rounded-circle p-2 me-3">
+                        <i class="bi bi-tools"></i>
+                      </div>
+                      <div>
+                        <span class="d-block fw-bold">Conduce de Trabajo</span>
+                        <small class="text-muted">Entrega de productos/servicios</small>
+                      </div>
+                    </div>
+                  </a>
+                </li>
+                <li><hr class="dropdown-divider opacity-50"></li>
+                <li>
+                  <a class="dropdown-item rounded-3 py-2" href="#" data-bs-toggle="modal" data-bs-target="#modalConduceHora">
+                    <div class="d-flex align-items-center">
+                      <div class="bg-success bg-opacity-10 text-success rounded-circle p-2 me-3">
+                        <i class="bi bi-clock-history"></i>
+                      </div>
+                      <div>
+                        <span class="d-block fw-bold">Conduce por Hora</span>
+                        <small class="text-muted">Registro de horas trabajadas</small>
+                      </div>
+                    </div>
+                  </a>
+                </li>
+              </ul>
+            </div>
+        @endif
 
         <a href="{{ route('requerimientos.index') }}" class="btn btn-secondary spgi-btn-back">
           <i class="bi bi-arrow-left me-1"></i> Volver

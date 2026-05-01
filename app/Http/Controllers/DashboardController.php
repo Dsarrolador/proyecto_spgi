@@ -90,9 +90,11 @@ class DashboardController extends Controller
         }
 
         if ($estado === 'Solo_Pendientes') {
-            $query->where('estado_id', '!=', 3);
+            $query->whereNotIn('estado_id', [6, 3]);
         } elseif ($estado !== 'Todos') {
             $query->where('estado_id', (int) $estado);
+        } else {
+            $query->where('estado_id', '!=', 6);
         }
 
         if ($cliente_id) {

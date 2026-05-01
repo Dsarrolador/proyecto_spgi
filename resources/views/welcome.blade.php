@@ -193,7 +193,7 @@
 
     <footer>
         <div class="container">
-            <p>&copy; {{ date('Y') }} Derechos reservados por Intecsol SRL</p>
+            <p>SPGI • {{ date('Y') }}</p>
         </div>
     </footer>
 

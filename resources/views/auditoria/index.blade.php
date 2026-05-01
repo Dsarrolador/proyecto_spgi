@@ -1,9 +1,21 @@
 @extends('layouts.app')
 
-@section('page_title', 'Auditoría del Sistema')
+@section('page_title', 'Bitácora de Movimientos')
 
 @section('content')
-<div class="container-fluid p-0 animate__animated animate__fadeIn">
+<style>
+    .glass-card-premium.no-hover:hover {
+        transform: none !important;
+        border-color: var(--border-main) !important;
+    }
+    .glass-card-premium.no-hover::before {
+        display: none !important;
+    }
+    .table tbody tr:hover {
+        background-color: transparent !important;
+    }
+</style>
+<div class="container-fluid p-0">
     <!-- FILTROS -->
     <div class="glass-card-premium p-4 mb-4">
         <form method="GET" action="{{ route('auditoria.index') }}" class="row g-3">
@@ -47,9 +59,9 @@
     </div>
 
     <!-- TABLA DE LOGS -->
-    <div class="glass-card-premium p-0 overflow-hidden">
+    <div class="glass-card-premium no-hover p-0 overflow-hidden">
         <div class="table-responsive">
-            <table class="table table-hover mb-0 align-middle">
+            <table class="table mb-0 align-middle">
                 <thead>
                     <tr>
                         <th class="ps-4">Fecha / Hora</th>
@@ -88,8 +100,16 @@
                             @endif
                         </td>
                         <td>
-                            <div class="small" style="max-width: 300px; white-space: normal;">
-                                {{ $log->description }}
+                            <div class="small" style="max-width: 450px; white-space: normal; line-height: 1.4;">
+                                @php $targetUrl = $log->getTargetUrl(); @endphp
+                                @if($targetUrl && $log->action !== 'deleted')
+                                    <a href="{{ $targetUrl }}" class="text-decoration-none fw-medium" style="color: var(--text-main); transition: opacity 0.2s;" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">
+                                        <i class="bi bi-box-arrow-up-right text-primary me-2" style="font-size: 0.8rem;"></i>
+                                        {{ $log->description }}
+                                    </a>
+                                @else
+                                    <span class="text-muted-light">{{ $log->description }}</span>
+                                @endif
                             </div>
                         </td>
                         <td>

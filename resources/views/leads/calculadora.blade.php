@@ -116,7 +116,7 @@
     <div class="container-fluid px-5">
         <div class="row align-items-center">
             <div class="col-md-5">
-                <h1 class="h2 fw-900 mb-0">Cotizador <span class="text-primary">Multidivisa</span></h1>
+                <h1 class="h2 fw-900 mb-0">Cotizador <span class="text-primary">Matrix Pro v2</span></h1>
             </div>
             <div class="col-md-7 text-end d-flex gap-2 justify-content-end">
                 <button type="button" class="btn btn-success btn-lg rounded-pill px-4 fw-bold" onclick="exportToExcel()">
@@ -205,15 +205,15 @@
                                 <th class="ps-4">Artículo</th>
                                 <th class="text-center">Divisa</th>
                                 <th class="text-end">Costo Orig.</th>
-                                <th class="text-end">Costo DOP</th>
-                                <th class="text-end">ITBIS C.</th>
-                                <th class="text-end">Costo Total</th>
-                                <th class="text-end text-secondary">P. Sug. S/I</th>
-                                <th class="text-end">P. Sugerido</th>
-                                <th class="text-end">P. Ajustado</th>
+                                <th class="text-end">Costo (S/I)</th>
+                                <th class="text-end">ITBIS Compra</th>
+                                <th class="text-end">Costo Total (C/I)</th>
+                                <th class="text-end text-secondary">P. Sin ITBIS</th>
+                                <th class="text-end text-warning">P. Final (C/I)</th>
+                                <th class="text-end text-primary">P. Ajustado</th>
                                 <th class="text-center">Cant.</th>
-                                <th class="text-end">Ganancia R.</th>
-                                <th class="text-end pe-4">Subtotal V.</th>
+                                <th class="text-end text-success">Ganancia Total</th>
+                                <th class="text-end pe-4 text-primary">Subtotal Item</th>
                             </tr>
                         </thead>
                         <tbody id="matrix-horizontal-body"></tbody>
@@ -275,40 +275,51 @@ function addProduct(data = {}) {
                 </select>
             </div>
             <div class="item-group">
-                <label class="item-label">Costo <span class="curr-label">DOP</span></label>
+                <label class="item-label">Costo (S/I)</label>
                 <input type="number" class="m-input-compact m-input-editable item-costo" value="${data.costo || ''}" oninput="updateAll()">
             </div>
             <div class="item-group">
-                <label class="item-label">ITBIS Compra</label>
-                <div class="fw-bold" id="res_itbis_c_${productIdx}">0.00</div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <label class="item-label text-warning mb-0">ITBIS %</label>
+                    <input type="checkbox" class="item-has-itbis-c" ${data.has_itbis_c !== false ? 'checked' : ''} onchange="updateAll()">
+                </div>
+                <input type="number" class="m-input-compact m-input-editable border-warning item-itbis-compra" value="${data.itbis_perc ?? document.getElementById('global_itbis_compra').value}" oninput="updateAll()">
             </div>
             <div class="item-group">
-                <label class="item-label">Costo Total (DOP)</label>
-                <div class="fw-bold" id="res_subtotal_c_${productIdx}">0.00</div>
+                <label class="item-label text-success">Ganancia %</label>
+                <input type="number" class="m-input-compact m-input-editable border-success item-ganancia" value="${data.margin_perc ?? document.getElementById('global_ganancia').value}" oninput="updateAll()">
             </div>
             <div class="item-group">
-                <label class="item-label">P. Sug. S/I</label>
-                <div class="fw-bold text-secondary" id="res_precio_sin_itbis_${productIdx}">0.00</div>
+                <label class="item-label">Total Compra</label>
+                <div class="fw-bold" id="res_subtotal_c_${productIdx}">$0.00</div>
             </div>
             <div class="item-group">
-                <label class="item-label">P. Sugerido (DOP)</label>
-                <div class="fw-bold text-warning" id="res_precio_f_${productIdx}">0.00</div>
+                <label class="item-label text-warning">Precio SI</label>
+                <div class="fw-bold text-warning" id="res_p_si_${productIdx}">$0.00</div>
             </div>
             <div class="item-group">
-                <label class="item-label text-primary">P. Ajustado (DOP)</label>
+                <label class="item-label text-muted">Precio Final</label>
+                <div class="fw-bold text-muted" id="res_precio_f_${productIdx}">$0.00</div>
+            </div>
+            <div class="item-group">
+                <label class="item-label text-primary">P. Ajustado</label>
                 <input type="number" class="m-input-compact m-input-editable border-primary item-adj" value="${data.adj_price || ''}" oninput="updateAll()">
             </div>
+            <div class="item-group text-end">
+                <label class="item-label text-success">Ganancia Unit.</label>
+                <div class="fw-bold text-success" id="res_ganancia_u_${productIdx}">$0.00</div>
+            </div>
             <div class="item-group">
-                <label class="item-label">Cantidad</label>
+                <label class="item-label">Cant.</label>
                 <input type="number" class="m-input-compact m-input-editable item-qty" value="${data.qty || 1}" oninput="updateAll()">
             </div>
-            <div class="item-group text-end pe-2">
-                <label class="item-label text-success">Ganancia Real</label>
-                <div class="h5 fw-900 text-success mb-0" id="res_ganancia_f_${productIdx}">0.00</div>
+            <div class="item-group text-end">
+                <label class="item-label text-success">Ganancia T</label>
+                <div class="h5 fw-900 text-success mb-0" id="res_ganancia_f_${productIdx}">$0.00</div>
             </div>
             <div class="item-group text-end">
-                <label class="item-label text-primary">Subtotal Item</label>
-                <div class="h5 fw-900 text-primary mb-0" id="res_valor_t_${productIdx}">0.00</div>
+                <label class="item-label text-primary">Valor Total</label>
+                <div class="h5 fw-900 text-primary mb-0" id="res_valor_t_${productIdx}">$0.00</div>
             </div>
         </div>
     `;
@@ -325,8 +336,8 @@ function removeProduct(id) {
 
 function updateAll() {
     const tasa = parseFloat(document.getElementById('global_tasa').value) || 1;
-    const itbis_c_perc = parseFloat(document.getElementById('global_itbis_compra').value) || 0;
-    const ganancia_perc = parseFloat(document.getElementById('global_ganancia').value) || 0;
+    const itbis_global = parseFloat(document.getElementById('global_itbis_compra').value) || 0;
+    const ganancia_global = parseFloat(document.getElementById('global_ganancia').value) || 0;
     const itbis_v_perc = parseFloat(document.getElementById('global_itbis_ventas').value) || 0;
 
     let totalV = 0; let totalM = 0; let count = 0;
@@ -336,28 +347,41 @@ function updateAll() {
         const id = col.id.split('_')[2];
         const moneda = col.querySelector('.item-currency').value;
         const costoOrig = parseFloat(col.querySelector('.item-costo').value) || 0;
+        
+        const itbisInput = col.querySelector('.item-itbis-compra');
+        const hasItbisC = col.querySelector('.item-has-itbis-c').checked;
+        const itbis_c_perc = (itbisInput && hasItbisC) ? (parseFloat(itbisInput.value) || 0) : 0;
+        
+        const gananciaInput = col.querySelector('.item-ganancia');
+        const ganancia_perc = gananciaInput ? (parseFloat(gananciaInput.value) || 0) : ganancia_global;
+
         const adj = parseFloat(col.querySelector('.item-adj').value) || 0;
         const qty = parseFloat(col.querySelector('.item-qty').value) || 1;
 
-        col.querySelector('.curr-label').innerText = moneda;
-
+        // Fórmulas EXACTAS de Excel:
         const costoDOP = moneda === 'USD' ? costoOrig * tasa : costoOrig;
-        const itbis_c = costoDOP * (itbis_c_perc / 100);
-        const sub_c = costoDOP + itbis_c;
-        const p_si = ganancia_perc < 100 ? (sub_c / (1 - (ganancia_perc / 100))) : 0;
-        const p_f = p_si + (p_si * (itbis_v_perc / 100));
+        const itbis_compra = costoDOP * (itbis_c_perc / 100);
+        const costo_total_compra = (costoDOP + itbis_compra) * qty; // Total Compra (de todas las unidades)
+        
+        const ganancia_u = costoDOP * (ganancia_perc / 100);
+        const p_si = costoDOP + ganancia_u;
+        const itbis_v = p_si * (itbis_v_perc / 100);
+        const p_f = p_si + itbis_v;
         
         const fP = adj > 0 ? adj : p_f;
-        const val_t = fP * qty;
-        const gan_f = adj > 0 ? (adj - sub_c) * qty : 0;
+        const val_t = fP * qty; // Valor Total
+        
+        // Ganancia T (Según Excel siempre se basa en el markup sugerido)
+        const gan_f = ganancia_u * qty;
 
         const fmt = (v) => '$' + v.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-        document.getElementById(`res_itbis_c_${id}`).innerText = fmt(itbis_c);
-        document.getElementById(`res_subtotal_c_${id}`).innerText = fmt(sub_c);
-        document.getElementById(`res_precio_sin_itbis_${id}`).innerText = fmt(p_si);
-        document.getElementById(`res_precio_f_${id}`).innerText = fmt(p_f);
-        document.getElementById(`res_ganancia_f_${id}`).innerText = fmt(gan_f);
-        document.getElementById(`res_valor_t_${id}`).innerText = fmt(val_t);
+        
+        if(document.getElementById(`res_subtotal_c_${id}`)) document.getElementById(`res_subtotal_c_${id}`).innerText = fmt(costo_total_compra);
+        if(document.getElementById(`res_p_si_${id}`)) document.getElementById(`res_p_si_${id}`).innerText = fmt(p_si);
+        if(document.getElementById(`res_precio_f_${id}`)) document.getElementById(`res_precio_f_${id}`).innerText = fmt(p_f);
+        if(document.getElementById(`res_ganancia_u_${id}`)) document.getElementById(`res_ganancia_u_${id}`).innerText = fmt(ganancia_u);
+        if(document.getElementById(`res_ganancia_f_${id}`)) document.getElementById(`res_ganancia_f_${id}`).innerText = fmt(gan_f);
+        if(document.getElementById(`res_valor_t_${id}`)) document.getElementById(`res_valor_t_${id}`).innerText = fmt(val_t);
 
         totalV += val_t; totalM += gan_f;
     });
@@ -387,16 +411,23 @@ function showMatrixModal() {
     document.querySelectorAll('.product-item-col').forEach(col => {
         const moneda = col.querySelector('.item-currency').value;
         const cOrig = parseFloat(col.querySelector('.item-costo').value) || 0;
+        const hasItbisC = col.querySelector('.item-has-itbis-c').checked;
+        const itbis_c_perc = hasItbisC ? (parseFloat(col.querySelector('.item-itbis-compra').value) || 0) : 0;
+        const ganancia_perc = parseFloat(col.querySelector('.item-ganancia').value) || 0;
         const adj = parseFloat(col.querySelector('.item-adj').value) || 0;
         const qty = parseFloat(col.querySelector('.item-qty').value) || 0;
 
         const cDOP = moneda === 'USD' ? cOrig * tasa : cOrig;
         const iC = cDOP * (itbis_c_perc / 100);
-        const sub = cDOP + iC;
-        const pSi = ganancia_perc < 100 ? (sub / (1 - (ganancia_perc / 100))) : 0;
+        const sub = (cDOP + iC) * qty;
+        
+        const gan_u = cDOP * (ganancia_perc / 100);
+        const pSi = cDOP + gan_u;
         const pF = pSi * (1 + (itbis_v_perc/100));
-        const vT = (adj > 0 ? adj : pF) * qty;
-        const gF = adj > 0 ? (adj - sub) * qty : 0;
+        
+        const fP = adj > 0 ? adj : pF;
+        const vT = fP * qty;
+        const gF = gan_u * qty;
 
         const fmt = (v) => '$' + v.toLocaleString('en-US', {minimumFractionDigits: 2});
         
@@ -408,8 +439,8 @@ function showMatrixModal() {
                 <td class="text-end">${fmt(cDOP)}</td>
                 <td class="text-end">${fmt(iC)}</td>
                 <td class="text-end fw-bold">${fmt(sub)}</td>
-                <td class="text-end text-secondary">${fmt(pSi)}</td>
-                <td class="text-end text-warning">${fmt(pF)}</td>
+                <td class="text-end text-warning fw-bold">${fmt(pSi)}</td>
+                <td class="text-end text-muted">${fmt(pF)}</td>
                 <td class="text-end text-primary fw-bold">${fmt(adj)}</td>
                 <td class="text-center">${qty}</td>
                 <td class="text-end text-success fw-bold">${fmt(gF)}</td>
@@ -445,23 +476,32 @@ function showMatrixModal() {
 }
 
 function exportToExcel() {
-    const data = [["Artículo", "Divisa", "Costo Orig.", "Costo DOP", "ITBIS Compra", "Costo Total", "Precio Sug. (S/I)", "Precio Sug.", "Precio Ajustado", "Cant.", "Ganancia Real", "Subtotal Venta"]];
+    const data = [["Artículo", "Divisa", "Costo Orig.", "Costo (S/I)", "ITBIS Compra", "Costo Total (C/I)", "P. Sin ITBIS", "P. Final (C/I)", "P. Ajustado", "Cant.", "Ganancia Total", "Subtotal Item"]];
     const tasa = parseFloat(document.getElementById('global_tasa').value) || 1;
-    const itbis_c_p = parseFloat(document.getElementById('global_itbis_compra').value) || 0;
-    const gan_p = parseFloat(document.getElementById('global_ganancia').value) || 0;
     const itbis_v_p = parseFloat(document.getElementById('global_itbis_ventas').value) || 0;
 
     document.querySelectorAll('.product-item-col').forEach(col => {
         const n = col.querySelector('.item-nombre').value;
         const mon = col.querySelector('.item-currency').value;
         const cO = parseFloat(col.querySelector('.item-costo').value) || 0;
+        const itbis_c_p = parseFloat(col.querySelector('.item-itbis-compra').value) || 0;
+        const hasItbisC = col.querySelector('.item-has-itbis-c').checked;
+        const gan_p = parseFloat(col.querySelector('.item-ganancia').value) || 0;
         const adj = parseFloat(col.querySelector('.item-adj').value) || 0;
         const q = parseFloat(col.querySelector('.item-qty').value) || 0;
+        
         const cD = mon === 'USD' ? cO * tasa : cO;
-        const iC = cD * (itbis_c_p / 100); const sub = cD + iC;
-        const pSi = gan_p < 100 ? (sub / (1 - (gan_p / 100))) : 0;
+        const iC = hasItbisC ? (cD * (itbis_c_p / 100)) : 0; 
+        const sub = (cD + iC) * q;
+        
+        const gan_u = cD * (gan_p / 100);
+        const pSi = cD + gan_u;
         const pF = pSi * (1 + (itbis_v_p/100));
-        const vT = (adj > 0 ? adj : pF) * q; const gF = adj > 0 ? (adj - sub) * q : 0;
+        
+        const fP = adj > 0 ? adj : pF;
+        const vT = fP * q; 
+        const gF = gan_u * q;
+        
         data.push([n, mon, cO, cD, iC, sub, pSi, pF, adj, q, gF, vT]);
     });
 
@@ -481,10 +521,11 @@ async function saveCalculo() {
             moneda: col.querySelector('.item-currency').value,
             costo: parseFloat(col.querySelector('.item-costo').value) || 0,
             adj_price: parseFloat(col.querySelector('.item-adj').value) || 0,
+            itbis_perc: parseFloat(col.querySelector('.item-itbis-compra').value) || 0,
+            has_itbis_c: col.querySelector('.item-has-itbis-c').checked,
+            margin_perc: parseFloat(col.querySelector('.item-ganancia').value) || 0,
             qty: parseFloat(col.querySelector('.item-qty').value) || 0,
-            itbis_perc: parseFloat(document.getElementById('global_itbis_compra').value) || 18,
             itbis_sales_perc: parseFloat(document.getElementById('global_itbis_ventas').value) || 18,
-            margin_perc: parseFloat(document.getElementById('global_ganancia').value) || 25
         });
     });
     const total_estimado = parseFloat(document.getElementById('grand_total_value').innerText.replace(/[$,]/g, '')) || 0;

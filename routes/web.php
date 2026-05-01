@@ -315,3 +315,22 @@ Route::middleware('auth')->group(function () {
         Route::delete('/equipo/{id}', [ClienteEntornoController::class, 'destroyEquipo'])->name('equipo.destroy');
     });
 });
+
+/*
+|--------------------------------------------------------------------------
+| Portal de Clientes
+|--------------------------------------------------------------------------
+*/
+Route::prefix('portal')->name('cliente.')->group(function () {
+    Route::get('/login', [App\Http\Controllers\Cliente\ClienteLoginController::class, 'showLoginForm'])->name('login');
+    Route::post('/login', [App\Http\Controllers\Cliente\ClienteLoginController::class, 'login']);
+    Route::post('/logout', [App\Http\Controllers\Cliente\ClienteLoginController::class, 'logout'])->name('logout');
+
+    Route::middleware(['auth:cliente'])->group(function () {
+        Route::get('/dashboard', [App\Http\Controllers\Cliente\ClienteDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/historial', [App\Http\Controllers\Cliente\ClienteDashboardController::class, 'historial'])->name('historial');
+        Route::get('/requerimientos/{id}', [App\Http\Controllers\Cliente\ClienteDashboardController::class, 'showRequerimiento'])->name('requerimientos.show');
+        Route::post('/requerimientos/{id}/novedad', [App\Http\Controllers\Cliente\ClienteDashboardController::class, 'storeNovedad'])->name('requerimientos.novedad.store');
+        Route::get('/novedades', [App\Http\Controllers\Cliente\ClienteDashboardController::class, 'novedades'])->name('novedades');
+    });
+});

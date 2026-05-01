@@ -96,9 +96,13 @@ class RequerimientoClienteController extends Controller
         }
 
         if (!$estado) {
-            $query->where('estado_id', '!=', 3);
+            $query->whereNotIn('estado_id', [6, 3]); // 6 = Eliminado
+        } elseif ($estado === 'Eliminados' || (string)$estado === '6') {
+            $query->where('estado_id', 6);
         } elseif ($estado !== 'Todos') {
             $query->where('estado_id', (int) $estado);
+        } else {
+            $query->where('estado_id', '!=', 6);
         }
 
         if ($cliente_id) {
@@ -605,10 +609,25 @@ class RequerimientoClienteController extends Controller
     public function destroy($id)
     {
         $req = RequerimientoCliente::findOrFail($id);
-        $req->delete();
+        $req->update(['estado_id' => 6]);
 
         return redirect()->route('requerimientos.index')
-            ->with('success', 'Requerimiento eliminado correctamente.');
+            ->with('success', 'Requerimiento movido a eliminados correctamente.');
+    }
+
+    public function eliminados(Request $request)
+    {
+        $query = RequerimientoCliente::with(['clienteRelation', 'asignado', 'user'])
+            ->where('estado_id', 0);
+
+        if ($request->filled('cliente_id')) {
+            $query->where('cliente_id', $request->cliente_id);
+        }
+
+        $requerimientos = $query->orderByDesc('id')->paginate(15)->withQueryString();
+        $clientes = ClienteMaestro::orderBy('nombre')->get();
+
+        return view('requerimientos.eliminados', compact('requerimientos', 'clientes'));
     }
 
     public function facturacion(Request $request)

@@ -481,7 +481,7 @@ request()->routeIs('mantenimiento.categorias.*');
         </a>
 
         <div class="nav-section-title mt-4">Requerimientos</div>
-        <a class="nav-link" href="{{ route('requerimientos.index') }}">
+        <a class="nav-link {{ request()->routeIs('requerimientos.index') ? 'active' : '' }}" href="{{ route('requerimientos.index') }}">
           <i class="bi bi-clipboard-check"></i> Requerimientos
         </a>
         <a class="nav-link" href="{{ route('bienvenido') }}" style="background: rgba(var(--spgi-primary), 0.05); margin-top: 10px;">
@@ -521,7 +521,7 @@ request()->routeIs('mantenimiento.categorias.*');
         </a>
 
         <div class="nav-section-title">Requerimientos</div>
-        <a class="nav-link {{ request()->routeIs('requerimientos.*') ? 'active' : '' }}" href="{{ route('requerimientos.index') }}">
+        <a class="nav-link {{ (request()->routeIs('requerimientos.index') || request()->routeIs('requerimientos.show')) ? 'active' : '' }}" href="{{ route('requerimientos.index') }}">
           <i class="bi bi-clipboard-check"></i> Requerimientos
         </a>
         <a class="nav-link {{ request()->routeIs('proyectos.*') ? 'active' : '' }}" href="{{ route('proyectos.index') }}">
@@ -559,7 +559,7 @@ request()->routeIs('mantenimiento.categorias.*');
         </a>
         @endif
         <a class="nav-link {{ request()->routeIs('auditoria.*') ? 'active' : '' }}" href="{{ route('auditoria.index') ?? '#' }}">
-          <i class="bi bi-shield-lock"></i> Auditoría
+          <i class="bi bi-shield-lock"></i> Bitácora de Movimientos
         </a>
         @endif
 
@@ -1059,10 +1059,7 @@ request()->routeIs('mantenimiento.categorias.*');
   </script>
   @endauth
 
-  <div class="developer-signature">
-      <i class="bi bi-code-slash"></i>
-      <span>Desarrollado por <strong>Sebastian Lopez Maria</strong></span>
-  </div>
+
 
   @yield('scripts')
 </body>

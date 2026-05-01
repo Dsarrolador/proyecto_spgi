@@ -351,9 +351,10 @@
         <select name="estado" class="form-select" onchange="this.form.submit()">
           <option value="">Todos (sin completados)</option>
           @foreach($estados as $e)
-            <option value="{{ $e->id }}" {{ request('estado') == $e->id ? 'selected' : '' }}>{{ $e->nombre }}</option>
+            <option value="{{ $e->id }}" {{ (string)request('estado') === (string)$e->id ? 'selected' : '' }}>{{ $e->nombre }}</option>
           @endforeach
           <option value="Todos" {{ request('estado') == 'Todos' ? 'selected' : '' }}>Mostrar Todos</option>
+          <option value="Eliminados" {{ request('estado') == 'Eliminados' ? 'selected' : '' }} style="color: #dc3545; font-weight: bold;">🗑️ Eliminados</option>
         </select>
 
         <select name="cliente_id" class="form-select" onchange="this.form.submit()">
@@ -441,8 +442,8 @@
 
                   <td class="text-center">
                     @php
-                      $_color = optional($req->estadoRequerimiento)->color ?? 'bg-secondary';
-                      $_nombre = optional($req->estadoRequerimiento)->nombre ?? 'Pendiente';
+                      $_color = $req->estado_id == 6 ? 'bg-danger' : (optional($req->estadoRequerimiento)->color ?? 'bg-secondary');
+                      $_nombre = $req->estado_id == 6 ? 'Eliminado' : (optional($req->estadoRequerimiento)->nombre ?? 'Pendiente');
                     @endphp
                     @if(\Illuminate\Support\Str::startsWith($_color, '#'))
                       <span class="badge" style="background-color: {{ $_color }}; color: #fff;">{{ $_nombre }}</span>
@@ -558,8 +559,8 @@
                 <span class="spgi-field-label">Estado</span>
                 <div class="spgi-field-value">
                   @php
-                    $_colorMob = optional($req->estadoRequerimiento)->color ?? 'bg-secondary';
-                    $_nombreMob = optional($req->estadoRequerimiento)->nombre ?? 'Pendiente';
+                    $_colorMob = $req->estado_id == 6 ? 'bg-danger' : (optional($req->estadoRequerimiento)->color ?? 'bg-secondary');
+                    $_nombreMob = $req->estado_id == 6 ? 'Eliminado' : (optional($req->estadoRequerimiento)->nombre ?? 'Pendiente');
                   @endphp
                   @if(\Illuminate\Support\Str::startsWith($_colorMob, '#'))
                     <span class="badge" style="background-color: {{ $_colorMob }}; color: #fff;">{{ $_nombreMob }}</span>
@@ -625,9 +626,10 @@
               <select name="estado" class="form-select">
                 <option value="">Todos (sin completados)</option>
                 @foreach($estados as $e)
-                  <option value="{{ $e->id }}" {{ request('estado') == $e->id ? 'selected' : '' }}>{{ $e->nombre }}</option>
+                  <option value="{{ $e->id }}" {{ (string)request('estado') === (string)$e->id ? 'selected' : '' }}>{{ $e->nombre }}</option>
                 @endforeach
                 <option value="Todos" {{ request('estado') == 'Todos' ? 'selected' : '' }}>Mostrar Todos</option>
+                <option value="Eliminados" {{ request('estado') == 'Eliminados' ? 'selected' : '' }}>🗑️ Eliminados</option>
               </select>
             </div>
 
