@@ -36,4 +36,9 @@ class Lead extends Model
     {
         return $this->hasMany(LeadRequirement::class);
     }
+
+    public function files()
+    {
+        return $this->hasMany(LeadFile::class);
+    }
 }

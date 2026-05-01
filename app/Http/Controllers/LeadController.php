@@ -245,7 +245,7 @@ class LeadController extends Controller
 
     public function indexCalculos(Request $request)
     {
-        $query = Lead::whereNotNull('calculo_data');
+        $query = Lead::with('files')->whereNotNull('calculo_data');
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
@@ -255,26 +255,32 @@ class LeadController extends Controller
         return view('leads.index_calculos', compact('leads'));
     }
 
-    public function updatePdf(Request $request, $id)
+    public function uploadFiles(Request $request, $id)
     {
         $request->validate([
-            'cotizacion_pdf' => 'required|file|mimes:pdf,xlsx,xls|max:5120',
+            'cotizacion_files.*' => 'required|file|mimes:pdf,xlsx,xls,doc,docx|max:10240',
         ]);
 
         $lead = Lead::findOrFail($id);
         
         $wasRealizado = ($lead->status === 'Realizado');
 
-        if ($lead->cotizacion_pdf) {
-            Storage::disk('public')->delete($lead->cotizacion_pdf);
+        if ($request->hasFile('cotizacion_files')) {
+            foreach ($request->file('cotizacion_files') as $file) {
+                $path = $file->store('cotizaciones', 'public');
+                \App\Models\LeadFile::create([
+                    'lead_id' => $lead->id,
+                    'filename' => $file->getClientOriginalName(),
+                    'path' => $path,
+                    'type' => $file->getClientOriginalExtension(),
+                ]);
+            }
         }
-
-        $path = $request->file('cotizacion_pdf')->store('cotizaciones', 'public');
-        $lead->cotizacion_pdf = $path;
         
         // Si el estado era Realizado, lo devolvemos a En proceso para que se pueda volver a validar
         if ($wasRealizado) {
             $lead->status = 'En proceso';
+            $lead->save();
         }
         
         $lead->save();
@@ -297,8 +303,21 @@ class LeadController extends Controller
                 'url' => route('leads.indexCalculos'),
             ]);
         }
+        return back()->with('success', 'Documentos adjuntados correctamente.');
+    }
+    
+    public function deleteFile($file_id)
+    {
+        $file = \App\Models\LeadFile::findOrFail($file_id);
+        
+        if (!$this->esAdminOEncargado()) {
+            return response()->json(['error' => 'No autorizado'], 403);
+        }
 
-        return back()->with('success', 'Documento actualizado correctamente.');
+        \Illuminate\Support\Facades\Storage::disk('public')->delete($file->path);
+        $file->delete();
+
+        return back()->with('success', 'Archivo eliminado correctamente.');
     }
 
     public function validar($id)

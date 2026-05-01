@@ -115,23 +115,34 @@
                             ${{ number_format($l->total_estimado, 2) }}
                         </td>
                         <td class="text-center">
-                            @if($l->cotizacion_pdf)
-                                <div class="d-inline-flex flex-column align-items-center">
-                                    <a href="{{ asset('storage/' . $l->cotizacion_pdf) }}" target="_blank" class="btn btn-sm btn-light border rounded-pill px-3 fw-bold mb-1 shadow-sm">
-                                        <i class="bi bi-file-pdf text-danger"></i> Ver PDF
-                                    </a>
-                                    <button class="btn btn-link btn-sm text-muted p-0 text-decoration-none" onclick="document.getElementById('file_input_{{ $l->id }}').click()">
-                                        <small>Cambiar</small>
-                                    </button>
+                            @if($l->files->count() > 0)
+                                <div class="d-flex flex-column align-items-center gap-1 mb-2">
+                                    @foreach($l->files as $file)
+                                        <div class="d-flex align-items-center bg-light rounded-pill px-2 py-1 shadow-sm border" style="font-size: 0.75rem;">
+                                            <a href="{{ asset('storage/' . $file->path) }}" target="_blank" class="text-decoration-none text-dark text-truncate d-inline-block" style="max-width: 100px;" title="{{ $file->filename }}">
+                                                <i class="bi bi-file-earmark-text text-primary me-1"></i>{{ $file->filename }}
+                                            </a>
+                                            <form action="{{ route('leads.deleteFile', $file->id) }}" method="POST" class="ms-1 m-0 p-0 d-inline">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-link text-danger p-0 m-0 border-0" onclick="return confirm('¿Eliminar archivo?')" title="Eliminar">
+                                                    <i class="bi bi-x-circle-fill"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    @endforeach
                                 </div>
+                                <button class="btn btn-link btn-sm text-muted p-0 text-decoration-none" onclick="document.getElementById('file_input_{{ $l->id }}').click()">
+                                    <small><i class="bi bi-plus-circle me-1"></i>Agregar más</small>
+                                </button>
                             @else
                                 <button class="btn btn-sm btn-outline-success rounded-pill px-3 fw-bold shadow-sm" onclick="document.getElementById('file_input_{{ $l->id }}').click()">
                                     <i class="bi bi-upload me-1"></i> Adjuntar
                                 </button>
                             @endif
-                            <form action="{{ route('leads.updatePdf', $l->id) }}" method="POST" enctype="multipart/form-data" class="d-none">
+                            <form action="{{ route('leads.uploadFiles', $l->id) }}" method="POST" enctype="multipart/form-data" class="d-none">
                                 @csrf
-                                <input type="file" id="file_input_{{ $l->id }}" name="cotizacion_pdf" onchange="this.form.submit()" accept=".pdf,.xlsx,.xls">
+                                <input type="file" id="file_input_{{ $l->id }}" name="cotizacion_files[]" multiple onchange="this.form.submit()" accept=".pdf,.xlsx,.xls,.doc,.docx">
                             </form>
                         </td>
                         <td class="text-center">

@@ -59,7 +59,8 @@ Route::middleware('auth')->group(function () {
         Route::resource('lead-requirements', LeadRequirementController::class);
         Route::resource('leads', LeadController::class);
         Route::get('/leads-calculos', [LeadController::class, 'indexCalculos'])->name('leads.indexCalculos');
-        Route::post('/leads/{id}/update-pdf', [LeadController::class, 'updatePdf'])->name('leads.updatePdf');
+        Route::post('/leads/{id}/upload-files', [LeadController::class, 'uploadFiles'])->name('leads.uploadFiles');
+        Route::delete('/leads/file/{file_id}', [LeadController::class, 'deleteFile'])->name('leads.deleteFile');
         Route::post('/leads/{id}/validar', [LeadController::class, 'validar'])->name('leads.validar');
         Route::post('/leads/{id}/aprobar', [LeadController::class, 'aprobar'])->name('leads.aprobar');
         Route::post('/leads/{id}/rechazar', [LeadController::class, 'rechazar'])->name('leads.rechazar');
