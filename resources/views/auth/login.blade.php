@@ -151,10 +151,6 @@
 
 <div class="brand">
     <div class="mb-3">SPGI • {{ date('Y') }}</div>
-    <div class="d-inline-flex align-items-center gap-2 px-3 py-2 rounded-pill" style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-main); backdrop-filter: blur(12px); box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
-        <i class="bi bi-code-slash" style="color: var(--spgi-primary); font-size: 0.9rem;"></i>
-        <span style="font-size: 0.75rem; color: var(--text-muted); letter-spacing: 0.5px;">Desarrollado por <strong style="color: var(--text-main);">Sebastian Lopez Maria</strong></span>
-    </div>
 </div>
 
 </body>

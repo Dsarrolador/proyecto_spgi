@@ -193,7 +193,7 @@
 
     <footer>
         <div class="container">
-            <p>&copy; {{ date('Y') }} PROYECTO SPGI • Deep Navy Design System • Todos los derechos reservados.</p>
+            <p>&copy; {{ date('Y') }} Derechos reservados por Intecsol SRL</p>
         </div>
     </footer>
 
