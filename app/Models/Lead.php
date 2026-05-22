@@ -41,4 +41,9 @@ class Lead extends Model
     {
         return $this->hasMany(LeadFile::class);
     }
+
+    public function calculations()
+    {
+        return $this->hasMany(LeadCalculation::class);
+    }
 }

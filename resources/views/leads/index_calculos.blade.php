@@ -95,31 +95,32 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($leads as $l)
+                    @forelse($calculations as $calc)
+                    @php $l = $calc->lead; @endphp
                     <tr>
                         <td class="ps-4">
-                            <div class="fw-bold text-main fs-6">{{ $l->nombre }}</div>
-                            <div class="text-muted small"><i class="bi bi-person me-1"></i>{{ $l->persona_contacto }}</div>
+                            <div class="fw-bold text-main fs-6">{{ $calc->nombre }}</div>
+                            <div class="text-muted small"><i class="bi bi-person me-1"></i>{{ $l->nombre }} ({{ $l->persona_contacto }})</div>
                         </td>
                         <td class="text-center">
                             @php
-                                $statusClass = match($l->status) {
+                                $statusClass = match($calc->status) {
                                     'Realizado' => 'bg-success',
                                     'En proceso' => 'bg-info',
                                     default => 'bg-warning text-dark'
                                 };
                             @endphp
-                            <span class="badge {{ $statusClass }} rounded-pill px-3 shadow-sm">{{ $l->status }}</span>
+                            <span class="badge {{ $statusClass }} rounded-pill px-3 shadow-sm">{{ $calc->status }}</span>
                         </td>
                         <td class="text-end fw-900 text-primary fs-5">
-                            ${{ number_format($l->total_estimado, 2) }}
+                            ${{ number_format($calc->total_estimado, 2) }}
                         </td>
                         <td class="text-center">
-                            @if($l->files->count() > 0)
+                            @if($calc->files->count() > 0)
                                 <div class="d-flex flex-column align-items-center gap-1 mb-2">
-                                    @foreach($l->files as $file)
+                                    @foreach($calc->files as $file)
                                         <div class="d-flex align-items-center bg-light rounded-pill px-2 py-1 shadow-sm border" style="font-size: 0.75rem;">
-                                            <a href="{{ asset('storage/' . $file->path) }}" target="_blank" class="text-decoration-none text-dark text-truncate d-inline-block" style="max-width: 100px;" title="{{ $file->filename }}">
+                                            <a href="{{ route('leads.downloadFile', $file->id) }}" target="_blank" class="text-decoration-none text-dark text-truncate d-inline-block" style="max-width: 100px;" title="{{ $file->filename }}">
                                                 <i class="bi bi-file-earmark-text text-primary me-1"></i>{{ $file->filename }}
                                             </a>
                                             <form action="{{ route('leads.deleteFile', $file->id) }}" method="POST" class="ms-1 m-0 p-0 d-inline">
@@ -132,38 +133,39 @@
                                         </div>
                                     @endforeach
                                 </div>
-                                <button class="btn btn-link btn-sm text-muted p-0 text-decoration-none" onclick="document.getElementById('file_input_{{ $l->id }}').click()">
+                                <button class="btn btn-link btn-sm text-muted p-0 text-decoration-none" onclick="document.getElementById('file_input_{{ $calc->id }}').click()">
                                     <small><i class="bi bi-plus-circle me-1"></i>Agregar más</small>
                                 </button>
                             @else
-                                <button class="btn btn-sm btn-outline-success rounded-pill px-3 fw-bold shadow-sm" onclick="document.getElementById('file_input_{{ $l->id }}').click()">
+                                <button class="btn btn-sm btn-outline-success rounded-pill px-3 fw-bold shadow-sm" onclick="document.getElementById('file_input_{{ $calc->id }}').click()">
                                     <i class="bi bi-upload me-1"></i> Adjuntar
                                 </button>
                             @endif
                             <form action="{{ route('leads.uploadFiles', $l->id) }}" method="POST" enctype="multipart/form-data" class="d-none">
                                 @csrf
-                                <input type="file" id="file_input_{{ $l->id }}" name="cotizacion_files[]" multiple onchange="this.form.submit()" accept=".pdf,.xlsx,.xls,.doc,.docx">
+                                <input type="hidden" name="calculation_id" value="{{ $calc->id }}">
+                                <input type="file" id="file_input_{{ $calc->id }}" name="cotizacion_files[]" multiple onchange="this.form.submit()" accept=".pdf,.xlsx,.xls,.doc,.docx">
                             </form>
                         </td>
                         <td class="text-center">
                             <div class="d-flex justify-content-center gap-2">
-                                <a href="{{ route('leads.show', $l->id) }}" class="btn-action btn-view" title="Ver Detalles">
+                                <a href="{{ route('leads.show', $l->id) }}" class="btn-action btn-view" title="Ver Lead">
                                     <i class="bi bi-eye"></i>
                                 </a>
                                 <button type="button" class="btn-action btn-matrix" title="Ver Matriz Horizontal" 
-                                        onclick='viewMatrix(@json($l->nombre), @json($l->calculo_data))'>
+                                        onclick='viewMatrix(@json($calc->nombre), @json($calc->calculo_data))'>
                                     <i class="bi bi-table"></i>
                                 </button>
                                 
-                                @if($l->status !== 'Realizado')
+                                @if($calc->status !== 'Realizado')
                                     <button type="button" class="btn-action btn-validar" title="Validar Cotización"
-                                            onclick="validarLead({{ $l->id }}, '{{ $l->nombre }}')">
+                                            onclick="validarCalculation({{ $calc->id }}, '{{ $calc->nombre }}')">
                                         <i class="bi bi-check-lg"></i>
                                     </button>
                                 @endif
 
-                                <a href="{{ route('leads.edit', $l->id) }}" class="btn-action btn-edit" title="Editar Lead">
-                                    <i class="bi bi-pencil"></i>
+                                <a href="{{ route('leads.calculadora', [$l->id, 'calculation_id' => $calc->id]) }}" class="btn-action btn-edit" title="Editar Cálculo">
+                                    <i class="bi bi-calculator"></i>
                                 </a>
                             </div>
                         </td>
@@ -180,7 +182,7 @@
             </table>
         </div>
         <div class="d-flex justify-content-center mt-3 p-3 border-top">
-            {{ $leads->links() }}
+            {{ $calculations->links() }}
         </div>
     </div>
 </div>
@@ -238,10 +240,10 @@
 <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-async function validarLead(id, name) {
+async function validarCalculation(id, name) {
     const result = await Swal.fire({
         title: '¿Validar Cotización?',
-        text: `Se marcará el lead "${name}" como Realizado y se notificará a los supervisores.`,
+        text: `Se marcará la versión "${name}" como Realizada.`,
         icon: 'question',
         showCancelButton: true,
         confirmButtonColor: '#10b981',
@@ -250,7 +252,7 @@ async function validarLead(id, name) {
     });
     if (result.isConfirmed) {
         try {
-            const resp = await fetch(`/leads/${id}/validar`, {
+            const resp = await fetch(`/leads/calculations/${id}/validar`, {
                 method: 'POST',
                 headers: {
                     'X-CSRF-TOKEN': '{{ csrf_token() }}',

@@ -23,6 +23,7 @@ use App\Http\Controllers\LeadRequirementController;
 use App\Http\Controllers\CatEquipoController;
 use App\Http\Controllers\CatTipoEquipoController;
 use App\Http\Controllers\ClienteEntornoController;
+use App\Http\Controllers\ProveedorController;
 
 /*
 |--------------------------------------------------------------------------
@@ -59,13 +60,18 @@ Route::middleware('auth')->group(function () {
         Route::resource('lead-requirements', LeadRequirementController::class);
         Route::resource('leads', LeadController::class);
         Route::get('/leads-calculos', [LeadController::class, 'indexCalculos'])->name('leads.indexCalculos');
+        Route::get('/leads/file/{id}/download', [LeadController::class, 'downloadFile'])->name('leads.downloadFile');
+        Route::get('/leads/serve-file', [LeadController::class, 'serveFile'])->name('leads.serveFile');
         Route::post('/leads/{id}/upload-files', [LeadController::class, 'uploadFiles'])->name('leads.uploadFiles');
         Route::delete('/leads/file/{file_id}', [LeadController::class, 'deleteFile'])->name('leads.deleteFile');
         Route::post('/leads/{id}/validar', [LeadController::class, 'validar'])->name('leads.validar');
         Route::post('/leads/{id}/aprobar', [LeadController::class, 'aprobar'])->name('leads.aprobar');
         Route::post('/leads/{id}/rechazar', [LeadController::class, 'rechazar'])->name('leads.rechazar');
-        Route::get('/leads/{id}/calculadora', [LeadController::class, 'calculadora'])->name('leads.calculadora');
-        Route::post('/leads/{id}/save-calculo', [LeadController::class, 'saveCalculo'])->name('leads.saveCalculo');
+        Route::get('/leads/{lead}/calculadora', [LeadController::class, 'calculadora'])->name('leads.calculadora');
+        Route::post('/leads/{lead}/save-calculo', [LeadController::class, 'saveCalculo'])->name('leads.saveCalculo');
+        Route::get('/leads/{lead}/calculations/{calc_id}', [LeadController::class, 'getCalculationDetails'])->name('leads.getCalculationDetails');
+        Route::post('/leads/calculations/{id}/validar', [LeadController::class, 'validarCalculation'])->name('leads.validarCalculation');
+        Route::delete('/leads/calculations/{calc_id}', [LeadController::class, 'deleteCalculation'])->name('leads.deleteCalculation');
 
         // Administración Dashboard y Facturación
         Route::get('/administracion/bienvenido', function () {
@@ -78,6 +84,33 @@ Route::middleware('auth')->group(function () {
             ->name('requerimientos.subir-factura');
         Route::post('/requerimientos/{id}/toggle-facturado', [RequerimientoClienteController::class, 'toggleFacturado'])
             ->name('requerimientos.toggle-facturado');
+
+        Route::resource('proveedores', ProveedorController::class);
+        
+        Route::post('tarifarios/tipo/ajax', [\App\Http\Controllers\TarifarioController::class, 'storeTipoAjax'])->name('tarifarios.tipo.ajax');
+        Route::resource('tarifarios', \App\Http\Controllers\TarifarioController::class);
+
+        // Rendición de Gastos
+        Route::resource('rendiciones', \App\Http\Controllers\RendicionController::class)->except(['edit', 'update']);
+        Route::put('rendiciones/{id}/general-info', [\App\Http\Controllers\RendicionController::class, 'updateGeneralInfo'])->name('rendiciones.general-info');
+        Route::post('rendiciones/metodo-pago/ajax', [\App\Http\Controllers\RendicionController::class, 'storeMetodoPago'])->name('rendiciones.metodo-pago.ajax');
+        Route::post('rendiciones/{id}/gastos', [\App\Http\Controllers\RendicionController::class, 'storeGasto'])->name('rendiciones.gastos.store');
+        Route::delete('rendiciones/{id}/gastos/{gasto_id}', [\App\Http\Controllers\RendicionController::class, 'deleteGasto'])->name('rendiciones.gastos.destroy');
+        Route::get('rendiciones/{id}/pdf', [\App\Http\Controllers\RendicionController::class, 'generarPdf'])->name('rendiciones.pdf');
+
+        // Planilla de Horas Extras
+        Route::resource('horas-extras', \App\Http\Controllers\HoraExtraController::class);
+        Route::get('horas-extras/{id}/pdf', [\App\Http\Controllers\HoraExtraController::class, 'generarPdf'])->name('horas-extras.pdf');
+        Route::post('horas-extras/{id}/detalles', [\App\Http\Controllers\HoraExtraController::class, 'storeDetalle'])->name('horas-extras.detalles.store');
+        Route::delete('horas-extras/{id}/detalles/{detalle_id}', [\App\Http\Controllers\HoraExtraController::class, 'deleteDetalle'])->name('horas-extras.detalles.destroy');
+        Route::put('horas-extras/{id}/general', [\App\Http\Controllers\HoraExtraController::class, 'updateGeneral'])->name('horas-extras.general.update');
+        Route::post('horas-extras/{id}/aprobar', [\App\Http\Controllers\HoraExtraController::class, 'aprobarPlanilla'])->name('horas-extras.aprobar');
+
+        // Estado de Cuenta
+        Route::get('estado-cuentas/pdf', [\App\Http\Controllers\EstadoCuentaController::class, 'generarPdf'])->name('estado-cuentas.pdf');
+        Route::resource('estado-cuentas', \App\Http\Controllers\EstadoCuentaController::class)->parameters([
+            'estado-cuentas' => 'id'
+        ]);
     });
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -206,6 +239,7 @@ Route::middleware('auth')->group(function () {
     Route::prefix('mantenimiento')->name('mantenimiento.')->group(function () {
 
         // Tipo de soporte
+        Route::post('tipo-soporte/ajax', [TipoSoporteController::class, 'storeAjax'])->name('tipo-soporte.ajax');
         Route::resource('tipo-soporte', TipoSoporteController::class)
             ->parameters(['tipo-soporte' => 'tipo_soporte'])
             ->names('tipo-soporte');
@@ -307,6 +341,7 @@ Route::middleware('auth')->group(function () {
         
         // Documentos
         Route::post('/documento', [ClienteEntornoController::class, 'storeDocumento'])->name('documento.store');
+        Route::put('/documento/{id}', [ClienteEntornoController::class, 'updateDocumento'])->name('documento.update');
         Route::get('/documento/{id}/download', [ClienteEntornoController::class, 'downloadDocumento'])->name('documento.download');
         Route::delete('/documento/{id}', [ClienteEntornoController::class, 'destroyDocumento'])->name('documento.destroy');
         
@@ -314,6 +349,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/equipo', [ClienteEntornoController::class, 'storeEquipo'])->name('equipo.store');
         Route::put('/equipo/{id}', [ClienteEntornoController::class, 'updateEquipo'])->name('equipo.update');
         Route::delete('/equipo/{id}', [ClienteEntornoController::class, 'destroyEquipo'])->name('equipo.destroy');
+        Route::post('/equipo/{id}/duplicate', [ClienteEntornoController::class, 'duplicateEquipo'])->name('equipo.duplicate');
     });
 });
 

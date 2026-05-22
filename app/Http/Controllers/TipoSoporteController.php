@@ -49,6 +49,29 @@ public function store(Request $request)
         ->with('success', 'Tipo de soporte creado correctamente.');
 }
 
+    public function storeAjax(Request $request)
+    {
+        $request->validate([
+            'nombre' => 'required|string|max:150|unique:tipo_soporte,nombre',
+        ]);
+
+        $id = DB::table('tipo_soporte')->insertGetId([
+            'nombre'       => $request->input('nombre'),
+            'descripcion'  => null,
+            'activo'       => true,
+            'created_at'   => now(),
+            'updated_at'   => now(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'id' => $id,
+                'nombre' => $request->input('nombre')
+            ]
+        ]);
+    }
+
 
     public function edit($id)
     {

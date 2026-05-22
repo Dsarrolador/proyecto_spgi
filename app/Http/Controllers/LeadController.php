@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Lead;
 use App\Models\User;
 use App\Models\NotificacionSistema;
+use App\Models\LeadCalculation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -140,7 +141,7 @@ class LeadController extends Controller
             return redirect()->route('bienvenido')->with('error', 'Acceso denegado.');
         }
 
-        $lead = Lead::findOrFail($id);
+        $lead = Lead::with('calculations')->findOrFail($id);
         return view('leads.show', compact('lead'));
     }
 
@@ -207,14 +208,19 @@ class LeadController extends Controller
         return redirect()->route('leads.index')->with('success', 'Lead eliminado correctamente.');
     }
 
-    public function calculadora($id)
+    public function calculadora($id, Request $request)
     {
         if (!$this->esAdminOEncargado()) {
             return redirect()->route('bienvenido')->with('error', 'Acceso denegado.');
         }
 
         $lead = Lead::findOrFail($id);
-        return view('leads.calculadora', compact('lead'));
+        $calculation = null;
+        if ($request->filled('calculation_id')) {
+            $calculation = \App\Models\LeadCalculation::where('lead_id', $id)->findOrFail($request->calculation_id);
+        }
+        
+        return view('leads.calculadora', compact('lead', 'calculation'));
     }
 
     public function saveCalculo(Request $request, $id)
@@ -228,6 +234,7 @@ class LeadController extends Controller
         $request->validate([
             'total_estimado' => 'required|numeric',
             'calculo_data' => 'required',
+            'nombre_calculo' => 'required|string|max:255',
         ]);
 
         $calculo_data = $request->calculo_data;
@@ -235,24 +242,51 @@ class LeadController extends Controller
             $calculo_data = json_decode($calculo_data, true);
         }
 
+        $calculation = null;
+        if ($request->filled('calculation_id')) {
+            $calculation = \App\Models\LeadCalculation::where('lead_id', $lead->id)->find($request->calculation_id);
+        }
+
+        if ($calculation) {
+            $calculation->update([
+                'nombre' => $request->nombre_calculo,
+                'total_estimado' => $request->total_estimado,
+                'calculo_data' => $calculo_data,
+            ]);
+        } else {
+            $calculation = \App\Models\LeadCalculation::create([
+                'lead_id' => $lead->id,
+                'nombre' => $request->nombre_calculo,
+                'total_estimado' => $request->total_estimado,
+                'calculo_data' => $calculo_data,
+            ]);
+        }
+
+        // Sincronizar el total_estimado del lead con la SUMA de todos sus cálculos realizados
+        $nuevo_total = \App\Models\LeadCalculation::where('lead_id', $lead->id)->sum('total_estimado');
+        
         $lead->update([
-            'total_estimado' => $request->total_estimado,
-            'calculo_data' => $calculo_data,
+            'total_estimado' => $nuevo_total,
+            'calculo_data' => $calculo_data, // Mantenemos el último para compatibilidad visual
         ]);
 
-        return response()->json(['success' => true, 'total_estimado' => $request->total_estimado]);
+        return response()->json(['success' => true, 'total_estimado' => $nuevo_total, 'calculation_id' => $calculation->id]);
     }
 
     public function indexCalculos(Request $request)
     {
-        $query = Lead::with('files')->whereNotNull('calculo_data');
+        if (!$this->esAdminOEncargado()) {
+            return redirect()->route('bienvenido')->with('error', 'Acceso denegado.');
+        }
+
+        $query = LeadCalculation::with('lead');
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
-        $leads = $query->orderBy('created_at', 'desc')->paginate(15);
-        return view('leads.index_calculos', compact('leads'));
+        $calculations = $query->latest()->paginate(15);
+        return view('leads.index_calculos', compact('calculations'));
     }
 
     public function uploadFiles(Request $request, $id)
@@ -262,6 +296,7 @@ class LeadController extends Controller
         ]);
 
         $lead = Lead::findOrFail($id);
+        $calculation_id = $request->input('calculation_id');
         
         $wasRealizado = ($lead->status === 'Realizado');
 
@@ -270,6 +305,7 @@ class LeadController extends Controller
                 $path = $file->store('cotizaciones', 'public');
                 \App\Models\LeadFile::create([
                     'lead_id' => $lead->id,
+                    'calculation_id' => $calculation_id,
                     'filename' => $file->getClientOriginalName(),
                     'path' => $path,
                     'type' => $file->getClientOriginalExtension(),
@@ -277,13 +313,17 @@ class LeadController extends Controller
             }
         }
         
-        // Si el estado era Realizado, lo devolvemos a En proceso para que se pueda volver a validar
-        if ($wasRealizado) {
+        // Si hay un cálculo específico, actualizamos su estado individual
+        if ($calculation_id) {
+            $calc = LeadCalculation::find($calculation_id);
+            if ($calc && $calc->status !== 'Realizado') {
+                $calc->status = 'En proceso';
+                $calc->save();
+            }
+        } elseif (!$wasRealizado) {
             $lead->status = 'En proceso';
             $lead->save();
         }
-        
-        $lead->save();
 
         // Notificar a Admin y Encargados sobre la actualización del archivo
         $admins = User::whereIn('cod_roleUser', [1, 2])
@@ -306,6 +346,26 @@ class LeadController extends Controller
         return back()->with('success', 'Documentos adjuntados correctamente.');
     }
     
+    public function downloadFile($id)
+    {
+        $file = \App\Models\LeadFile::findOrFail($id);
+        
+        if (!Storage::disk('public')->exists($file->path)) {
+            return back()->with('error', 'El archivo no existe en el servidor.');
+        }
+
+        return Storage::disk('public')->response($file->path);
+    }
+
+    public function serveFile(Request $request)
+    {
+        $path = $request->query('path');
+        if (!$path || !Storage::disk('public')->exists($path)) {
+            abort(404);
+        }
+        return Storage::disk('public')->response($path);
+    }
+
     public function deleteFile($file_id)
     {
         $file = \App\Models\LeadFile::findOrFail($file_id);
@@ -393,6 +453,40 @@ class LeadController extends Controller
                 'url' => route('leads.calculadora', $lead->id),
             ]);
         }
+
+        return response()->json(['success' => true]);
+    }
+
+    public function validarCalculation($id)
+    {
+        if (!$this->esAdminOEncargado()) return response()->json(['error' => 'No autorizado'], 403);
+
+        $calculation = LeadCalculation::findOrFail($id);
+        $calculation->status = 'Realizado';
+        $calculation->save();
+
+        return response()->json(['success' => true]);
+    }
+
+    public function getCalculationDetails($id, $calc_id)
+    {
+        if (!$this->esAdminOEncargado()) return response()->json(['error' => 'No autorizado'], 403);
+
+        $calculation = LeadCalculation::where('lead_id', $id)->findOrFail($calc_id);
+        return response()->json($calculation);
+    }
+
+    public function deleteCalculation($id)
+    {
+        if (!$this->esAdminOEncargado()) return response()->json(['error' => 'No autorizado'], 403);
+
+        $calculation = \App\Models\LeadCalculation::findOrFail($id);
+        $lead_id = $calculation->lead_id;
+        $calculation->delete();
+
+        // Recalcular total del lead tras eliminar
+        $nuevo_total = \App\Models\LeadCalculation::where('lead_id', $lead_id)->sum('total_estimado');
+        Lead::where('id', $lead_id)->update(['total_estimado' => $nuevo_total]);
 
         return response()->json(['success' => true]);
     }

@@ -167,6 +167,21 @@
           <a class="hover-scale" href="{{ route('mantenimiento.estados-requerimiento.index') }}"><i class="bi bi-flag"></i> Estados de Req.</a>
         </div>
       </div>
+
+      <div class="quick-card glass-card-premium flex-column align-items-stretch" style="grid-column: span 2; min-height: auto;">
+        <div class="d-flex align-items-center gap-3">
+          <div class="quick-ico icon-float" style="background: rgba(99, 102, 241, 0.1); color: #6366f1;"><i class="bi bi-shield-lock-fill"></i></div>
+          <div class="quick-meta text-start">
+            <p class="t">Administración</p>
+            <p class="d">Gestión de recursos y facturación</p>
+          </div>
+        </div>
+        <div class="submenu mt-3">
+          <a class="hover-scale" href="{{ route('requerimientos.facturacion') }}"><i class="bi bi-receipt-cutoff"></i> Facturación</a>
+          <a class="hover-scale" href="{{ route('proveedores.index') }}"><i class="bi bi-truck"></i> Proveedores</a>
+          <a class="hover-scale" href="{{ route('tarifarios.index') }}"><i class="bi bi-currency-dollar"></i> Tarifario</a>
+        </div>
+      </div>
       @endif
 
     </div>

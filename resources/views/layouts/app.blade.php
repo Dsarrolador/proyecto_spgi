@@ -487,17 +487,32 @@ request()->routeIs('mantenimiento.categorias.*');
         <a class="nav-link" href="{{ route('bienvenido') }}" style="background: rgba(var(--spgi-primary), 0.05); margin-top: 10px;">
           <i class="bi bi-clipboard-check"></i> Requerimientos
         </a>
-      @elseif((request()->is('administracion/*') || request()->routeIs('administracion.*') || request()->routeIs('requerimientos.facturacion')) && (auth()->user()->es_admin || auth()->user()->es_encargado))
+      @elseif((request()->is('administracion/*') || request()->routeIs('administracion.*') || request()->routeIs('requerimientos.facturacion') || request()->routeIs('horas-extras.*') || request()->routeIs('estado-cuentas.*')) && (auth()->user()->es_admin || auth()->user()->es_encargado))
         <!-- SIDEBAR ADMINISTRACIÓN -->
         <div class="nav-section-title">Administración</div>
         <a class="nav-link {{ request()->routeIs('seleccion') ? 'active' : '' }}" href="{{ route('seleccion') }}">
-          <i class="bi bi-grid-fill"></i> Inicio
+            <i class="bi bi-grid-fill"></i> Inicio
         </a>
         <a class="nav-link {{ request()->routeIs('administracion.bienvenido') ? 'active' : '' }}" href="{{ route('administracion.bienvenido') }}">
-          <i class="bi bi-house-door"></i> Dashboard Admin
+            <i class="bi bi-house-door"></i> Dashboard Admin
+        </a>
+        <a class="nav-link {{ request()->routeIs('proveedores.*') ? 'active' : '' }}" href="{{ route('proveedores.index') }}">
+            <i class="bi bi-truck"></i> Proveedores
+        </a>
+        <a class="nav-link {{ request()->routeIs('tarifarios.*') ? 'active' : '' }}" href="{{ route('tarifarios.index') }}">
+            <i class="bi bi-currency-dollar"></i> Tarifario
+        </a>
+        <a class="nav-link {{ request()->routeIs('rendiciones.*') ? 'active' : '' }}" href="{{ route('rendiciones.index') }}">
+            <i class="bi bi-receipt"></i> Rendición de Gastos
+        </a>
+        <a class="nav-link {{ request()->routeIs('horas-extras.*') ? 'active' : '' }}" href="{{ route('horas-extras.index') }}">
+            <i class="bi bi-clock-history"></i> Horas Extras
+        </a>
+        <a class="nav-link {{ request()->routeIs('estado-cuentas.*') ? 'active' : '' }}" href="{{ route('estado-cuentas.index') }}">
+            <i class="bi bi-wallet2"></i> Estado de Cuenta
         </a>
         <a class="nav-link {{ request()->routeIs('requerimientos.facturacion') ? 'active' : '' }}" href="{{ route('requerimientos.facturacion') }}">
-          <i class="bi bi-receipt-cutoff"></i> Facturación
+            <i class="bi bi-receipt-cutoff"></i> Facturación
         </a>
         <a class="nav-link" href="{{ route('leads.bienvenido') }}" style="background: rgba(16, 185, 129, 0.05); margin-top: 10px; color: #10b981;">
           <i class="bi bi-briefcase"></i> Comerciales

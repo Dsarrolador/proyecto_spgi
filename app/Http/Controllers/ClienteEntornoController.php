@@ -180,6 +180,44 @@ class ClienteEntornoController extends Controller
         return redirect()->to(route('clientes.entorno.show', $clienteId) . '#docs')->with('success', 'Registro/Documento guardado.');
     }
 
+    public function updateDocumento(Request $request, $clienteId, $id)
+    {
+        $request->validate([
+            'tipo' => 'required',
+            'nombre' => 'required',
+            'archivo' => 'nullable|file|max:5242880',
+        ]);
+
+        $doc = ClienteEntornoDocumento::findOrFail($id);
+        $data = $request->only(['tipo', 'nombre', 'url', 'usuario']);
+        
+        if ($request->filled('clave')) {
+            $data['clave'] = encrypt($request->clave); // The model's setClaveAttribute might encrypt it, let's verify if the model does it. 
+            // Wait, looking at storeDocumento:
+            // $data = $request->only(['tipo', 'nombre', 'url', 'usuario', 'clave']);
+            // ClienteEntornoDocumento::create($data); 
+            // So I should just assign 'clave'.
+            $data['clave'] = $request->clave;
+        }
+
+        if ($request->hasFile('archivo')) {
+            if ($doc->archivo_path && Storage::disk('public')->exists($doc->archivo_path)) {
+                Storage::disk('public')->delete($doc->archivo_path);
+            }
+            $file = $request->file('archivo');
+            $originalName = $file->getClientOriginalName();
+            $path = $file->storeAs('entorno/' . $clienteId, $originalName, 'public');
+            $data['archivo_path'] = $path;
+        }
+
+        $doc->update($data);
+
+        $cliente = ClienteMaestro::find($clienteId);
+        $this->notifyAdmins($clienteId, 'Entorno: Documento/Clave actualizado', auth()->user()->name . " actualizó registro de " . $request->tipo . " para el cliente " . ($cliente->nombre ?? ''));
+
+        return redirect()->to(route('clientes.entorno.show', $clienteId) . '#docs')->with('success', 'Registro/Documento actualizado.');
+    }
+
     public function downloadDocumento($clienteId, $id)
     {
         $doc = ClienteEntornoDocumento::findOrFail($id);
@@ -332,6 +370,8 @@ class ClienteEntornoController extends Controller
     public function updateEquipo(Request $request, $clienteId, $id)
     {
         $validator = \Validator::make($request->all(), [
+            'cat_equipo_id'           => 'nullable|exists:cat_equipos,id',
+            'parent_id'               => 'nullable|exists:cliente_equipos,id',
             'serie'                   => 'nullable|string|max:255',
             'configuracion_especifica'=> 'nullable|string',
             'sistema_file'            => 'nullable|file|max:5242880',
@@ -430,6 +470,8 @@ class ClienteEntornoController extends Controller
         }
 
         $inv->update([
+            'cat_equipo_id'            => $request->has('cat_equipo_id') ? ($request->cat_equipo_id ?: $inv->cat_equipo_id) : $inv->cat_equipo_id,
+            'parent_id'                => $request->has('parent_id') ? ($request->parent_id ?: null) : $inv->parent_id,
             'alias'                    => $request->alias ?? $inv->alias,
             'serie'                    => $request->serie,
             'wiki_document_id'         => $wikiDocId,
@@ -456,5 +498,34 @@ class ClienteEntornoController extends Controller
         
         $inv->delete();
         return redirect()->to(route('clientes.entorno.show', $clienteId) . '#equipos')->with('success', 'Equipo removido del inventario del cliente.');
+    }
+
+    public function duplicateEquipo(Request $request, $clienteId, $id)
+    {
+        $request->validate([
+            'nuevo_nombre' => 'required|string|max:255',
+        ]);
+
+        $original = ClienteEquipo::findOrFail($id);
+
+        // Duplicar el equipo principal
+        $nuevo = $original->replicate();
+        $nuevo->alias = $request->nuevo_nombre;
+        // set serial as null/empty to allow user to assign it new later
+        $nuevo->serie = null; 
+        $nuevo->save();
+
+        // Duplicar también los periféricos/hijos
+        $peripherals = ClienteEquipo::where('parent_id', $original->id)->get();
+        foreach ($peripherals as $per) {
+            $nuevoPer = $per->replicate();
+            $nuevoPer->parent_id = $nuevo->id;
+            $nuevoPer->save();
+        }
+
+        $cliente = ClienteMaestro::find($clienteId);
+        $this->notifyAdmins($clienteId, 'Entorno: Equipo duplicado', auth()->user()->name . " duplicó el equipo " . ($original->alias ?: $original->catalogo->nombre) . " como " . $request->nuevo_nombre . " para el cliente " . ($cliente->nombre ?? ''));
+
+        return redirect()->to(route('clientes.entorno.show', $clienteId) . '#equipos')->with('success', 'Equipo duplicado correctamente. Puedes editar la serie y otros campos si lo deseas.');
     }
 }

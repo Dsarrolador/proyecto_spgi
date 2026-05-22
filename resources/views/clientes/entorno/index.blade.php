@@ -183,10 +183,18 @@
                                                             @endif
                                                         </td>
                                                         <td class="text-end pe-4">
-                                                            <form action="{{ route('clientes.entorno.documento.destroy', ['cliente' => $cliente->id, 'id' => $doc->id]) }}" method="POST">
-                                                                @csrf @method('DELETE')
-                                                                <button class="btn btn-outline-danger btn-sm rounded-circle d-flex align-items-center justify-content-center mx-auto" style="width: 32px; height: 32px;"><i class="bi bi-trash"></i></button>
-                                                            </form>
+                                                            <div class="d-flex justify-content-end gap-1">
+                                                                <button class="btn btn-outline-warning btn-sm rounded-circle d-flex align-items-center justify-content-center" 
+                                                                        style="width: 32px; height: 32px;"
+                                                                        data-bs-toggle="modal" 
+                                                                        data-bs-target="#modalEditDoc{{ $doc->id }}">
+                                                                    <i class="bi bi-pencil-fill small"></i>
+                                                                </button>
+                                                                <form action="{{ route('clientes.entorno.documento.destroy', ['cliente' => $cliente->id, 'id' => $doc->id]) }}" method="POST">
+                                                                    @csrf @method('DELETE')
+                                                                    <button class="btn btn-outline-danger btn-sm rounded-circle d-flex align-items-center justify-content-center mx-auto" style="width: 32px; height: 32px;"><i class="bi bi-trash"></i></button>
+                                                                </form>
+                                                            </div>
                                                         </td>
                                                     </tr>
                                                 @empty
@@ -261,6 +269,9 @@
                                                 </a>
                                             @endif
 
+                                            <button class="btn btn-outline-info btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#modalDuplicateEquipo{{ $pc->id }}">
+                                                <i class="bi bi-files me-1"></i> Duplicar
+                                            </button>
                                             <button class="btn btn-outline-warning btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#modalEditEquipo{{ $pc->id }}">
                                                 <i class="bi bi-pencil me-1"></i> Editar
                                             </button>
@@ -360,6 +371,37 @@
                                         </div>
                                     @endif
                                 </div>
+
+                                <!-- Modal Duplicate Equipo -->
+                                <div class="modal fade" id="modalDuplicateEquipo{{ $pc->id }}" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content text-start">
+                                            <form action="{{ route('clientes.entorno.equipo.duplicate', ['cliente' => $cliente->id, 'id' => $pc->id]) }}" method="POST">
+                                                @csrf
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title fw-bold">
+                                                        <i class="bi bi-files me-2 text-info"></i>Duplicar Equipo
+                                                    </h5>
+                                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <div class="modal-body p-4 text-start">
+                                                    <div class="row g-3">
+                                                        <div class="col-md-12 text-start">
+                                                            <label class="form-label text-start">Nombre / Alias del Nuevo Equipo</label>
+                                                            <input type="text" name="nuevo_nombre" class="form-control text-start" value="{{ $pc->alias ? $pc->alias . ' - Copia' : ($pc->catalogo->nombre . ' - Copia') }}" required placeholder="Ej: PC Principal Copia">
+                                                            <small class="text-muted mt-2 d-block text-start"><i class="bi bi-info-circle"></i> Se duplicará el equipo principal y todos sus componentes asociados. El número de serie se dejará vacío para que puedas asignarle uno nuevo.</small>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary px-4 rounded-pill" data-bs-dismiss="modal">Cancelar</button>
+                                                    <button type="submit" class="btn btn-spgi">Duplicar ahora</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+
                             </div>
                         @empty
                             <div class="col-12">
@@ -568,6 +610,65 @@
     </div>
 </div>
 
+<!-- Modal Edit Doc -->
+@foreach($documentos as $doc)
+<div class="modal fade" id="modalEditDoc{{ $doc->id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form action="{{ route('clientes.entorno.documento.update', ['cliente' => $cliente->id, 'id' => $doc->id]) }}" method="POST" enctype="multipart/form-data">
+                @csrf @method('PUT')
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Editar Registro / Documento</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Tipo</label>
+                            <select name="tipo" class="form-select" required>
+                                <option value="IP" {{ $doc->tipo == 'IP' ? 'selected' : '' }}>Listado de IP</option>
+                                <option value="Mapa" {{ $doc->tipo == 'Mapa' ? 'selected' : '' }}>Mapa Conceptual</option>
+                                <option value="Credencial" {{ $doc->tipo == 'Credencial' ? 'selected' : '' }}>Usuario / Clave</option>
+                                <option value="Reporte" {{ $doc->tipo == 'Reporte' ? 'selected' : '' }}>Informe / Reporte</option>
+                                <option value="Driver" {{ $doc->tipo == 'Driver' ? 'selected' : '' }}>Driver de Equipo</option>
+                                <option value="Otro" {{ $doc->tipo == 'Otro' ? 'selected' : '' }}>Otro</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Nombre / Descripción</label>
+                            <input type="text" name="nombre" class="form-control" value="{{ $doc->nombre }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Usuario (Opcional)</label>
+                            <input type="text" name="usuario" class="form-control" value="{{ $doc->usuario }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Clave (Opcional) <small class="text-muted fw-normal">(Dejar en blanco para no cambiar)</small></label>
+                            <input type="password" name="clave" class="form-control">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Reemplazar Archivo (Opcional)</label>
+                            <input type="file" name="archivo" class="form-control">
+                            @if($doc->archivo_path)
+                                <small class="text-info"><i class="bi bi-info-circle"></i> Actualmente tiene un archivo adjunto.</small>
+                            @endif
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">URL / Link (Si aplica)</label>
+                            <input type="url" name="url" class="form-control" value="{{ $doc->url }}">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary px-4 rounded-pill" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-spgi">Actualizar Registro</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endforeach
+
 <!-- Modal Add AnyDesk -->
 <div class="modal fade" id="modalAddAnydesk" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -639,6 +740,31 @@
                 </div>
                 <div class="modal-body p-4">
                     <div class="row g-3">
+                        @if(!$inv->extra_system_id && !$inv->driver_id)
+                        <div class="col-md-6">
+                            <label class="form-label">Equipo del Catálogo</label>
+                            <select name="cat_equipo_id" class="form-select" required>
+                                @foreach($catalogoEquipos as $cat)
+                                    <option value="{{ $cat->id }}" {{ $inv->cat_equipo_id == $cat->id ? 'selected' : '' }}>
+                                        {{ $cat->nombre }} ({{ $cat->marca }} - {{ $cat->modelo }})
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        @endif
+                        <div class="col-md-6">
+                            <label class="form-label">Estación / Equipo Principal (Padre)</label>
+                            <select name="parent_id" class="form-select">
+                                <option value="">Es un Equipo Principal / Estación</option>
+                                @foreach($equiposPadre as $p)
+                                    @if($p->id != $inv->id)
+                                        <option value="{{ $p->id }}" {{ $inv->parent_id == $p->id ? 'selected' : '' }}>
+                                            {{ $p->alias ?: $p->catalogo->nombre }} ({{ $p->serie ?: 'S/N: N/A' }})
+                                        </option>
+                                    @endif
+                                @endforeach
+                            </select>
+                        </div>
                         <div class="col-md-6">
                             <label class="form-label">Nombre / Alias del Equipo</label>
                             <input type="text" name="alias" class="form-control" value="{{ $inv->alias }}" placeholder="Ej: PC Principal, Laptop Gerencia...">

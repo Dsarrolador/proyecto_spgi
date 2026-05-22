@@ -77,14 +77,45 @@
         </div>
       </a>
 
-      <!-- Placeholder para futuras funciones administrativas -->
-      <div class="quick-card opacity-50" style="cursor: not-allowed; border-style: dashed;">
-        <div class="quick-ico"><i class="bi bi-shield-check"></i></div>
+      <a class="quick-card glass-card-premium" href="{{ route('proveedores.index') }}">
+        <div class="quick-ico icon-float"><i class="bi bi-truck"></i></div>
         <div class="quick-meta text-start">
-          <p class="t">Reportes Administrativos</p>
-          <p class="d">Próximamente: KPIs financieros</p>
+          <p class="t">Proveedores</p>
+          <p class="d">Gestión de proveedores de servicios</p>
         </div>
-      </div>
+      </a>
+
+      <a class="quick-card glass-card-premium" href="{{ route('tarifarios.index') }}">
+        <div class="quick-ico icon-float"><i class="bi bi-currency-dollar"></i></div>
+        <div class="quick-meta text-start">
+          <p class="t">Tarifario</p>
+          <p class="d">Gestión de tarifas por tipo de soporte</p>
+        </div>
+      </a>
+
+      <a class="quick-card glass-card-premium" href="{{ route('rendiciones.index') }}">
+        <div class="quick-ico icon-float"><i class="bi bi-receipt"></i></div>
+        <div class="quick-meta text-start">
+          <p class="t">Rendición de Gastos</p>
+          <p class="d">Registro y visualización en formato PDF</p>
+        </div>
+      </a>
+
+      <a class="quick-card glass-card-premium" href="{{ route('horas-extras.index') }}">
+        <div class="quick-ico icon-float"><i class="bi bi-clock-history"></i></div>
+        <div class="quick-meta text-start">
+          <p class="t">Horas Extras</p>
+          <p class="d">Planillas de registro y exportación a PDF</p>
+        </div>
+      </a>
+
+      <a class="quick-card glass-card-premium" href="{{ route('estado-cuentas.index') }}">
+        <div class="quick-ico icon-float"><i class="bi bi-wallet2"></i></div>
+        <div class="quick-meta text-start">
+          <p class="t">Estado de Cuenta</p>
+          <p class="d">Conciliación de pagos, facturas y saldos de clientes</p>
+        </div>
+      </a>
 
     </div>
 

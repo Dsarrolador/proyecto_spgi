@@ -180,6 +180,10 @@
                     <div class="item-label text-success">Ganancia Neta (DOP)</div>
                     <div class="h4 fw-900 mb-0 text-success" id="grand_total_margin">$0.00</div>
                 </div>
+                <div>
+                    <div class="item-label text-warning">ITBIS (DOP)</div>
+                    <div class="h4 fw-900 mb-0 text-warning" id="grand_total_itbis">$0.00</div>
+                </div>
             </div>
             <div class="col-md-6 text-end">
                 <span class="item-label me-3">Total Cotizado (DOP)</span>
@@ -236,7 +240,8 @@
 <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 <script>
 let productIdx = 0;
-const leadData = @json($lead->calculo_data);
+const calculationId = @json($calculation ? $calculation->id : null);
+const leadData = @json($calculation ? $calculation->calculo_data : $lead->calculo_data);
 
 document.addEventListener('DOMContentLoaded', () => {
     if (leadData) {
@@ -339,8 +344,7 @@ function updateAll() {
     const itbis_global = parseFloat(document.getElementById('global_itbis_compra').value) || 0;
     const ganancia_global = parseFloat(document.getElementById('global_ganancia').value) || 0;
     const itbis_v_perc = parseFloat(document.getElementById('global_itbis_ventas').value) || 0;
-
-    let totalV = 0; let totalM = 0; let count = 0;
+    let totalV = 0; let totalM = 0; let totalI = 0; let count = 0;
 
     document.querySelectorAll('.product-item-col').forEach(col => {
         count++;
@@ -383,11 +387,12 @@ function updateAll() {
         if(document.getElementById(`res_ganancia_f_${id}`)) document.getElementById(`res_ganancia_f_${id}`).innerText = fmt(gan_f);
         if(document.getElementById(`res_valor_t_${id}`)) document.getElementById(`res_valor_t_${id}`).innerText = fmt(val_t);
 
-        totalV += val_t; totalM += gan_f;
+        totalV += val_t; totalM += gan_f; totalI += (itbis_compra * qty);
     });
 
     document.getElementById('total-items-count').innerText = count;
     document.getElementById('grand_total_margin').innerText = '$' + totalM.toLocaleString('en-US', {minimumFractionDigits: 2});
+    document.getElementById('grand_total_itbis').innerText = '$' + totalI.toLocaleString('en-US', {minimumFractionDigits: 2});
     
     const totalUSD = totalV / tasa;
     document.getElementById('grand_total_value').innerHTML = `
@@ -512,6 +517,21 @@ function exportToExcel() {
 }
 
 async function saveCalculo() {
+    const { value: nombreCalculo } = await Swal.fire({
+        title: 'Nombre del Cálculo',
+        input: 'text',
+        inputLabel: 'Asigna un nombre para identificar este cálculo',
+        inputValue: 'Cotización ' + new Date().toLocaleDateString(),
+        showCancelButton: true,
+        confirmButtonText: 'Guardar',
+        cancelButtonText: 'Cancelar',
+        inputValidator: (value) => {
+            if (!value) return '¡Debes ingresar un nombre para guardar!'
+        }
+    });
+
+    if (!nombreCalculo) return;
+
     const btn = document.getElementById('btnSaveCalculo');
     const orig = btn.innerHTML; btn.disabled = true; btn.innerHTML = 'Procesando...';
     const items = [];
@@ -540,16 +560,22 @@ async function saveCalculo() {
         const resp = await fetch(`/leads/${@json($lead->id)}/save-calculo`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-            body: JSON.stringify({ total_estimado, calculo_data })
+            body: JSON.stringify({ total_estimado, calculo_data, nombre_calculo: nombreCalculo, calculation_id: calculationId })
         });
         const res = await resp.json();
         if (res.success) {
             Swal.fire({ 
                 icon: 'success', 
                 title: 'Cotización Guardada', 
-                text: 'Los cambios se han sincronizado correctamente.',
-                showConfirmButton: false, 
-                timer: 2000 
+                text: 'El cálculo "' + nombreCalculo + '" se ha guardado correctamente.',
+                showConfirmButton: true,
+                confirmButtonText: 'Ir al Listado',
+                showCancelButton: true,
+                cancelButtonText: 'Seguir Editando'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = "{{ route('leads.show', $lead->id) }}";
+                }
             });
         }
     } catch (e) { alert('Error de conexión'); } finally { btn.disabled = false; btn.innerHTML = orig; }
