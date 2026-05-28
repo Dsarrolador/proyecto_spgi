@@ -13,12 +13,43 @@ class RequerimientoProyectoController extends Controller
 {
     public function index(Proyecto $proyecto)
     {
-        $requerimientos = RequerimientoProyecto::with(['cliente', 'contacto', 'user'])
-            ->deProyecto($proyecto->id)
-            ->latest()
-            ->paginate(15);
+        $query = RequerimientoProyecto::with(['cliente', 'contacto', 'user', 'estadoRequerimiento', 'colaboradores'])
+            ->deProyecto($proyecto->id);
 
-        return view('proyectos.show', compact('proyecto', 'requerimientos'));
+        if (request('estado')) {
+            $query->where('estado_id', request('estado'));
+        }
+
+        if (request('asignado_id') && request('asignado_id') !== 'todos') {
+            if (request('asignado_id') == 'mios') {
+                $query->where('asignado_user_id', auth()->id());
+            } else {
+                $query->where('asignado_user_id', request('asignado_id'));
+            }
+        }
+
+        if (request()->has('facturado') && request('facturado') != '') {
+            $query->where('facturado', request('facturado'));
+        }
+
+        if (request('desde')) {
+            $query->whereDate('created_at', '>=', request('desde'));
+        }
+
+        if (request('hasta')) {
+            $query->whereDate('created_at', '<=', request('hasta'));
+        }
+
+        if (request('prioridad')) {
+            $query->where('prioridad', request('prioridad'));
+        }
+
+        $requerimientos = $query->orderByDesc('prioridad')->latest()->paginate(15)->withQueryString();
+        
+        $usuarios = \App\Models\User::orderBy('name')->get(['id', 'name', 'email']);
+        $estados = \App\Models\EstadoRequerimiento::all();
+
+        return view('proyectos.show', compact('proyecto', 'requerimientos', 'usuarios', 'estados'));
     }
 
     public function create(Request $request, Proyecto $proyecto)
@@ -26,13 +57,9 @@ class RequerimientoProyectoController extends Controller
         $clientes = ClienteMaestro::orderBy('nombre')->get();
         $tiposSoporte = TipoSoporte::orderBy('nombre')->get();
         $estados = \App\Models\EstadoRequerimiento::all();
+        $usuarios = \App\Models\User::orderBy('name')->get();
 
-        $parent = null;
-        if ($request->filled('parent_id')) {
-            $parent = RequerimientoProyecto::findOrFail($request->parent_id);
-        }
-
-        return view('proyectos.requerimientos_create', compact('proyecto', 'clientes', 'tiposSoporte', 'estados', 'parent'));
+        return view('proyectos.requerimientos_create', compact('proyecto', 'clientes', 'tiposSoporte', 'estados', 'usuarios'));
     }
 
     public function store(Request $request, Proyecto $proyecto)
@@ -52,7 +79,7 @@ class RequerimientoProyectoController extends Controller
             $path = $request->file('foto')->store('RequerimientoProyecto', 'public');
         }
 
-        RequerimientoProyecto::create([
+        $req = RequerimientoProyecto::create([
             'id_proyecto'       => $proyecto->id,
             'cliente_id'        => $request->cliente_id ?: $proyecto->cliente_id,
             'contacto_id'       => $request->contacto_id ?: $proyecto->contacto_id,
@@ -64,9 +91,18 @@ class RequerimientoProyectoController extends Controller
             'tiempo_transcurrido' => null,
             'fecha_finalizado'  => null,
             'tiempo_invertido'  => null,
-            'facturado'         => 0,
-            'parent_id'         => $request->parent_id ?: null,
+            'facturado'         => $request->has('facturado') ? $request->facturado : 0,
+            'prioridad'         => $request->filled('prioridad') ? $request->prioridad : 3,
+            'asignado_user_id'  => $request->filled('asignado_user_id') ? $request->asignado_user_id : null,
+            'es_recurrente'     => $request->has('es_recurrente'),
+            'frecuencia'        => $request->frecuencia,
+            'fecha_inicio_recurrencia' => $request->fecha_inicio_recurrencia,
+            'es_colaborativo'   => $request->has('es_colaborativo'),
         ]);
+
+        if ($req->es_colaborativo && $request->filled('colaboradores_ids')) {
+            $req->colaboradores()->sync($request->colaboradores_ids);
+        }
 
         return redirect()
             ->route('proyectos.show', $proyecto->id)
@@ -75,8 +111,11 @@ class RequerimientoProyectoController extends Controller
 
     public function show(RequerimientoProyecto $requerimientos_proyecto)
     {
+        $estados = \App\Models\EstadoRequerimiento::all();
+        
         return view('proyectos.requerimientos_show', [
-            'r' => $requerimientos_proyecto
+            'r' => $requerimientos_proyecto,
+            'estados' => $estados
         ]);
     }
 
@@ -86,13 +125,15 @@ class RequerimientoProyectoController extends Controller
         $clientes = ClienteMaestro::orderBy('nombre')->get();
         $tiposSoporte = TipoSoporte::orderBy('nombre')->get();
         $estados = \App\Models\EstadoRequerimiento::all();
+        $usuarios = \App\Models\User::orderBy('name')->get();
 
         return view('proyectos.requerimientos_edit', [
             'r' => $requerimientos_proyecto,
             'proyecto' => $proyecto,
             'clientes' => $clientes,
             'tiposSoporte' => $tiposSoporte,
-            'estados' => $estados
+            'estados' => $estados,
+            'usuarios' => $usuarios
         ]);
     }
 
@@ -113,7 +154,17 @@ class RequerimientoProyectoController extends Controller
             'tipo_soporte_id' => $request->tipo_soporte_id,
             'texto_imagen'    => $request->texto_imagen,
             'estado_id'       => $request->estado_id,
+            'prioridad'       => $request->filled('prioridad') ? $request->prioridad : 3,
+            'asignado_user_id'=> $request->filled('asignado_user_id') ? $request->asignado_user_id : null,
+            'es_recurrente'   => $request->has('es_recurrente'),
+            'frecuencia'      => $request->frecuencia,
+            'fecha_inicio_recurrencia' => $request->fecha_inicio_recurrencia,
+            'es_colaborativo' => $request->has('es_colaborativo'),
         ];
+
+        if ($request->has('facturado')) {
+            $data['facturado'] = $request->facturado;
+        }
 
         if ($request->hasFile('foto')) {
             // Delete old photo if exists
@@ -124,6 +175,12 @@ class RequerimientoProyectoController extends Controller
         }
 
         $requerimientos_proyecto->update($data);
+
+        if ($request->has('es_colaborativo') && $request->filled('colaboradores_ids')) {
+            $requerimientos_proyecto->colaboradores()->sync($request->colaboradores_ids);
+        } elseif (!$request->has('es_colaborativo')) {
+            $requerimientos_proyecto->colaboradores()->detach();
+        }
 
         return redirect()
             ->route('proyectos.show', $requerimientos_proyecto->id_proyecto)

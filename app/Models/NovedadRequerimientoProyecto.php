@@ -9,7 +9,11 @@ class NovedadRequerimientoProyecto extends Model
 {
     use HasFactory;
 
+<<<<<<< HEAD
     protected $table = 'novedades_proyectos';
+=======
+    protected $table = 'novedades_requerimientos_proyectos';
+>>>>>>> master
 
     protected $fillable = [
         'requerimiento_proyecto_id',
@@ -26,11 +30,26 @@ class NovedadRequerimientoProyecto extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
+<<<<<<< HEAD
     public function requerimientoProyecto()
+=======
+    public function requerimiento()
+>>>>>>> master
     {
         return $this->belongsTo(
             RequerimientoProyecto::class,
             'requerimiento_proyecto_id'
         );
     }
+<<<<<<< HEAD
+=======
+
+    public function cliente()
+    {
+        return $this->belongsTo(
+            ClienteMaestro::class,
+            'cliente_id'
+        );
+    }
+>>>>>>> master
 }

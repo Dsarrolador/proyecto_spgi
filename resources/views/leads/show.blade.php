@@ -323,8 +323,150 @@
                         {{ $lead->observaciones ?? 'Sin observaciones registradas.' }}
                     </div>
                 </div>
+
+                <!-- SECCIÓN CUESTIONARIOS TÉCNICOS (CHECKLISTS) -->
+                <div class="col-12 mt-5 pt-4 border-top">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="info-label mb-0"><i class="bi bi-clipboard2-check me-2"></i>Evaluaciones Técnicas (Checklists)</div>
+                        <div class="d-flex gap-2">
+                            <a href="{{ route('checklists.index') }}" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-bold">
+                                <i class="bi bi-gear me-1"></i> Gestionar Plantillas
+                            </a>
+                            <a href="{{ route('leads.checklists.create', $lead->id) }}" class="btn btn-sm btn-primary rounded-pill px-3 fw-bold">
+                                <i class="bi bi-plus-circle me-1"></i> Nueva Evaluación
+                            </a>
+                        </div>
+                    </div>
+
+                    @php
+                        $leadChecklists = \App\Models\LeadChecklist::where('lead_id', $lead->id)->with('template', 'user')->orderBy('created_at', 'desc')->get();
+                    @endphp
+
+                    @if($leadChecklists->count() > 0)
+                        <div class="row g-3">
+                            @foreach($leadChecklists as $lCheck)
+                                <div class="col-md-6">
+                                    <div class="card border-0 shadow-sm rounded-4 p-3 h-100" style="background: rgba(var(--text-main), 0.02); border: 1px solid var(--border-main) !important;">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <div>
+                                                <div class="fw-bold text-white fs-6">{{ $lCheck->template->nombre }}</div>
+                                                <div class="text-muted small"><i class="bi bi-calendar-event me-1"></i>{{ $lCheck->created_at->format('d/m/Y h:i A') }}</div>
+                                            </div>
+                                            @php
+                                                $lblClass = 'bg-success';
+                                                if ($lCheck->estado_cliente == 'Crítico') {
+                                                    $lblClass = 'bg-danger';
+                                                } elseif ($lCheck->estado_cliente == 'Regular') {
+                                                    $lblClass = 'bg-warning text-dark';
+                                                }
+                                            @endphp
+                                            <span class="badge {{ $lblClass }} px-2 py-1 rounded-pill">{{ $lCheck->estado_cliente ?? 'Pendiente' }}</span>
+                                        </div>
+
+                                        <div class="d-flex align-items-center justify-content-between my-2 p-2 rounded" style="background: rgba(255,255,255,0.03);">
+                                            <span class="text-muted small">Puntuación Total:</span>
+                                            <span class="fw-bold text-success fs-5">{{ $lCheck->total_puntos ?? 0 }} pts</span>
+                                        </div>
+
+                                        @if($lCheck->accion_sugerida)
+                                            <div class="mb-3 text-muted small">
+                                                <strong>Siguiente Paso:</strong> {{ $lCheck->accion_sugerida }}
+                                            </div>
+                                        @endif
+
+                                        <div class="d-flex align-items-center justify-content-between mt-auto pt-2 border-top border-secondary border-opacity-10">
+                                            <span class="text-muted small"><i class="bi bi-person me-1"></i>{{ $lCheck->user->name ?? 'Usuario' }}</span>
+                                            <a href="{{ route('leads.checklists.edit', [$lead->id, $lCheck->id]) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-bold">
+                                                <i class="bi bi-pencil-square me-1"></i> Editar Respuestas
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @else
+                        <div class="text-muted small p-4 border rounded-3 bg-light text-center">
+                            <i class="bi bi-clipboard-x fs-2 d-block mb-2"></i> No hay evaluaciones técnicas registradas para este lead.
+                        </div>
+                    @endif
+                </div>
+
+                <!-- SECCIÓN NOVEDADES -->
+                <div class="col-12 mt-5 pt-4 border-top">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="info-label mb-0"><i class="bi bi-journal-text me-2"></i>Novedades (Bitácora)</div>
+                        <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 fw-bold" data-bs-toggle="modal" data-bs-target="#novedadModal">
+                            <i class="bi bi-plus-circle me-1"></i> Agregar Novedad
+                        </button>
+                    </div>
+
+                    @php
+                        // Cargar novedades si existen
+                        $novedades = \App\Models\NovedadLead::where('lead_id', $lead->id)->orderBy('created_at', 'desc')->get();
+                    @endphp
+
+                    @if($novedades->count() > 0)
+                        <div class="timeline ps-3" style="border-left: 2px solid var(--border-main);">
+                            @foreach($novedades as $novedad)
+                                <div class="position-relative mb-4 pb-2">
+                                    <div class="position-absolute bg-primary rounded-circle" style="width: 12px; height: 12px; left: -23px; top: 5px;"></div>
+                                    <div class="d-flex align-items-center mb-1 gap-2">
+                                        <div class="fw-bold text-main" style="font-size: 0.9rem;">
+                                            <i class="bi bi-person-circle me-1 text-muted"></i> {{ $novedad->user->name ?? 'Usuario' }}
+                                        </div>
+                                        <span class="badge bg-secondary" style="font-size: 0.65rem;">{{ ucfirst($novedad->tipo) }}</span>
+                                        <span class="text-muted small ms-auto"><i class="bi bi-clock me-1"></i>{{ $novedad->created_at->format('d/m/Y h:i A') }}</span>
+                                    </div>
+                                    <div class="p-3 rounded-3" style="background: rgba(var(--text-main), 0.02); border: 1px solid var(--border-main); font-size: 0.9rem; white-space: pre-wrap;">{{ $novedad->mensaje }}</div>
+                                    
+                                    @if($novedad->adjunto)
+                                        <div class="mt-2">
+                                            <a href="{{ route('leads.novedades.download', $novedad->id) }}" class="btn btn-sm btn-outline-secondary rounded-pill" style="font-size: 0.75rem;">
+                                                <i class="bi bi-paperclip me-1"></i> {{ $novedad->nombre_original ?? 'Descargar Adjunto' }}
+                                            </a>
+                                        </div>
+                                    @endif
+                                </div>
+                            @endforeach
+                        </div>
+                    @else
+                        <div class="text-muted small p-4 border rounded-3 bg-light text-center">
+                            <i class="bi bi-chat-square-text fs-2 d-block mb-2"></i> No hay novedades registradas.
+                        </div>
+                    @endif
+                </div>
+
             </div>
         </div>
+    </div>
+</div>
+
+<!-- Modal para Nueva Novedad -->
+<div class="modal fade" id="novedadModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form action="{{ route('leads.novedades.store', $lead->id) }}" method="POST" enctype="multipart/form-data">
+            @csrf
+            <div class="modal-content" style="background: var(--bg-surface); border-color: var(--border-main); color: var(--text-main);">
+                <div class="modal-header border-bottom-0">
+                    <h5 class="modal-title fw-bold">Agregar Novedad</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="filter: var(--bs-theme) == 'dark' ? 'invert(1)' : 'none';"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-bold">Mensaje / Detalle</label>
+                        <textarea name="mensaje" rows="4" class="form-control bg-transparent" required style="color: var(--text-main); border-color: var(--border-main);" placeholder="Describe la novedad, acuerdo o seguimiento..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-bold">Archivo Adjunto (Opcional)</label>
+                        <input type="file" name="adjunto" class="form-control bg-transparent" style="color: var(--text-main); border-color: var(--border-main);">
+                    </div>
+                </div>
+                <div class="modal-footer border-top-0">
+                    <button type="button" class="btn btn-light rounded-pill" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4">Guardar Novedad</button>
+                </div>
+            </div>
+        </form>
     </div>
 </div>
 </div>
@@ -333,6 +475,13 @@
 @section('scripts')
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+document.addEventListener('DOMContentLoaded', function() {
+    if(window.location.hash === '#novedadModal') {
+        var myModal = new bootstrap.Modal(document.getElementById('novedadModal'));
+        myModal.show();
+    }
+});
+
 async function showCalculationDetails(id) {
     try {
         const url = "{{ route('leads.getCalculationDetails', ['lead' => $lead->id, 'calc_id' => ':id']) }}".replace(':id', id);

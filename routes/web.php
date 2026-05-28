@@ -60,6 +60,28 @@ Route::middleware('auth')->group(function () {
         Route::get('/comerciales/reportes', [LeadController::class, 'reportes'])->name('leads.reportes');
         Route::resource('lead-requirements', LeadRequirementController::class);
         Route::resource('leads', LeadController::class);
+        
+        // Novedades Lead
+        Route::post('/leads/{lead}/novedades', [\App\Http\Controllers\NovedadLeadController::class, 'store'])->name('leads.novedades.store');
+        Route::get('/leads/novedades/{novedad}/download', [\App\Http\Controllers\NovedadLeadController::class, 'download'])->name('leads.novedades.download');
+
+        // Checklists
+        Route::resource('checklists', \App\Http\Controllers\ChecklistTemplateController::class);
+        Route::post('checklists/{checklist}/questions', [\App\Http\Controllers\ChecklistTemplateController::class, 'storeQuestion'])->name('checklists.questions.store');
+        Route::delete('checklists/questions/{question}', [\App\Http\Controllers\ChecklistTemplateController::class, 'destroyQuestion'])->name('checklists.questions.destroy');
+        Route::post('checklists/questions/{question}/answers', [\App\Http\Controllers\ChecklistTemplateController::class, 'storeAnswer'])->name('checklists.answers.store');
+        Route::delete('checklists/answers/{answer}', [\App\Http\Controllers\ChecklistTemplateController::class, 'destroyAnswer'])->name('checklists.answers.destroy');
+
+        Route::get('leads/{lead}/checklists/create', [\App\Http\Controllers\LeadChecklistController::class, 'create'])->name('leads.checklists.create');
+        Route::post('leads/{lead}/checklists', [\App\Http\Controllers\LeadChecklistController::class, 'store'])->name('leads.checklists.store');
+        Route::get('leads/{lead}/checklists/{checklist}/edit', [\App\Http\Controllers\LeadChecklistController::class, 'edit'])->name('leads.checklists.edit');
+        Route::put('leads/{lead}/checklists/{checklist}', [\App\Http\Controllers\LeadChecklistController::class, 'update'])->name('leads.checklists.update');
+
+        // Visitas de Campo
+        Route::get('visitas/{id}/pdf', [\App\Http\Controllers\VisitaController::class, 'generarPdf'])->name('visitas.pdf');
+        Route::post('visitas/{id}/enviar-correo', [\App\Http\Controllers\VisitaController::class, 'enviarCorreo'])->name('visitas.enviar-correo');
+        Route::resource('visitas', \App\Http\Controllers\VisitaController::class);
+
         Route::get('/leads-calculos', [LeadController::class, 'indexCalculos'])->name('leads.indexCalculos');
         Route::get('/leads/file/{id}/download', [LeadController::class, 'downloadFile'])->name('leads.downloadFile');
         Route::get('/leads/serve-file', [LeadController::class, 'serveFile'])->name('leads.serveFile');
@@ -220,6 +242,26 @@ Route::middleware('auth')->group(function () {
 
     Route::delete('/novedades/{novedad}', [NovedadRequerimientoController::class, 'destroy'])
         ->name('novedades.destroy');
+
+    /*
+    |--------------------------------------------------------------------------
+    | 📝 NOVEDADES DE REQUERIMIENTOS DE PROYECTOS
+    |--------------------------------------------------------------------------
+    |*/
+    Route::get('/proyectos-novedades/{requerimiento}', [\App\Http\Controllers\NovedadRequerimientoProyectoController::class, 'index'])
+        ->name('proyectos-novedades.index');
+
+    Route::post('/proyectos-novedades', [\App\Http\Controllers\NovedadRequerimientoProyectoController::class, 'store'])
+        ->name('proyectos-novedades.store');
+
+    Route::get('/proyectos-novedades/download/{novedad}', [\App\Http\Controllers\NovedadRequerimientoProyectoController::class, 'download'])
+        ->name('proyectos-novedades.download');
+
+    Route::patch('/proyectos-novedades/{novedad}', [\App\Http\Controllers\NovedadRequerimientoProyectoController::class, 'update'])
+        ->name('proyectos-novedades.update');
+
+    Route::delete('/proyectos-novedades/{novedad}', [\App\Http\Controllers\NovedadRequerimientoProyectoController::class, 'destroy'])
+        ->name('proyectos-novedades.destroy');
 
     /*
     |--------------------------------------------------------------------------

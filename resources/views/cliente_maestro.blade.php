@@ -538,6 +538,11 @@
           </div>
 
           <div class="mb-3">
+            <label class="form-label">Cumpleaños</label>
+            <input type="date" name="fecha_nacimiento" class="form-control">
+          </div>
+
+          <div class="mb-3">
             <label class="form-label">Nota</label>
             <textarea name="nota" class="form-control" rows="3"></textarea>
           </div>
@@ -671,6 +676,11 @@
               <div class="col-12 col-md-6">
                 <label class="form-label fw-bold">Correo</label>
                 <input type="email" name="correo" class="form-control" value="{{ $c->correo }}">
+              </div>
+
+              <div class="col-12 col-md-6">
+                <label class="form-label fw-bold">Cumpleaños</label>
+                <input type="date" name="fecha_nacimiento" class="form-control" value="{{ $c->fecha_nacimiento }}">
               </div>
 
               <div class="col-12">

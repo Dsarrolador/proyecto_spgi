@@ -124,12 +124,65 @@ class ProyectoController extends Controller
      ========================================================== */
     public function show(Proyecto $proyecto)
     {
-        // ✅ Solo requerimientos de ESTE proyecto
-        $requerimientos = RequerimientoProyecto::where('id_proyecto', $proyecto->id)
-            ->orderByDesc('id')
-            ->paginate(15);
+        $query = RequerimientoProyecto::with(['cliente', 'contacto', 'user', 'estadoRequerimiento', 'colaboradores'])
+            ->where('id_proyecto', $proyecto->id);
 
-        return view('proyectos.show', compact('proyecto', 'requerimientos'));
+        $estado = request('estado');
+        if (!$estado) {
+            $query->whereNotIn('estado_id', [6, 3]); // 6 = Eliminado, 3 = Completado
+        } elseif ($estado === 'Eliminados' || (string)$estado === '6') {
+            $query->where('estado_id', 6);
+        } elseif ($estado !== 'Todos') {
+            $query->where('estado_id', (int) $estado);
+        } else {
+            $query->where('estado_id', '!=', 6);
+        }
+
+        $asignado_id = request('asignado_id', 'mios'); // Default a mios para que coincida con requerimientos generales
+        $usuario = auth()->user();
+
+        if ($asignado_id === 'mios' || $asignado_id === null || $asignado_id === '') {
+            if ($usuario) {
+                $query->where(function($q) use ($usuario) {
+                    $q->where('asignado_user_id', $usuario->id)
+                      ->orWhere('user_id', $usuario->id)
+                      ->orWhereHas('colaboradores', function($sq) use ($usuario) {
+                          $sq->where('users.id', $usuario->id);
+                      });
+                });
+            }
+        } elseif ($asignado_id === 'todos') {
+            // sin filtro
+        } elseif (is_numeric($asignado_id)) {
+            $query->where('asignado_user_id', (int) $asignado_id);
+        } else {
+            if ($usuario) {
+                $query->where('asignado_user_id', $usuario->id);
+            }
+        }
+
+        if (request()->has('facturado') && request('facturado') != '') {
+            $query->where('facturado', request('facturado'));
+        }
+
+        if (request('desde')) {
+            $query->whereDate('created_at', '>=', request('desde'));
+        }
+
+        if (request('hasta')) {
+            $query->whereDate('created_at', '<=', request('hasta'));
+        }
+
+        if (request('prioridad')) {
+            $query->where('prioridad', request('prioridad'));
+        }
+
+        $requerimientos = $query->orderByDesc('prioridad')->latest()->paginate(15)->withQueryString();
+        
+        $usuarios = \App\Models\User::orderBy('name')->get(['id', 'name', 'email']);
+        $estados = \App\Models\EstadoRequerimiento::all();
+
+        return view('proyectos.show', compact('proyecto', 'requerimientos', 'usuarios', 'estados'));
     }
 
     /* ==========================================================

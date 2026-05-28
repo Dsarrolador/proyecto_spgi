@@ -108,6 +108,22 @@
         </div>
       </a>
 
+      <a class="quick-card glass-card-premium" href="{{ route('checklists.index') }}" style="border-color: rgba(245, 158, 11, 0.3);">
+        <div class="quick-ico icon-float" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;"><i class="bi bi-clipboard2-check"></i></div>
+        <div class="quick-meta text-start">
+          <p class="t" style="color: #f59e0b;">Plantillas Cuestionarios</p>
+          <p class="d">Administra cuestionarios y checklists técnicos</p>
+        </div>
+      </a>
+
+      <a class="quick-card glass-card-premium" href="{{ route('visitas.index') }}" style="border-color: rgba(16, 185, 129, 0.3);">
+        <div class="quick-ico icon-float" style="background: rgba(16, 185, 129, 0.1); color: #10b981;"><i class="bi bi-geo-alt"></i></div>
+        <div class="quick-meta text-start">
+          <p class="t" style="color: #10b981;">Visitas</p>
+          <p class="d">Registra visitas y ejecuta cuestionarios técnicos</p>
+        </div>
+      </a>
+
     </div>
 
     <div class="divider"></div>

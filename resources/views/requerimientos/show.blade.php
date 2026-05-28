@@ -241,6 +241,13 @@
                           <i class="bi bi-people-fill me-1"></i> Colaborativo
                         </span>
                       @endif
+                      
+                      @if($requerimiento->prioridad == 5) <span class="badge bg-danger spgi-badge" title="Muy Urgente"><i class="bi bi-exclamation-triangle-fill"></i> Prioridad 5</span>
+                      @elseif($requerimiento->prioridad == 4) <span class="badge bg-warning text-dark spgi-badge" title="Urgente">Prioridad 4</span>
+                      @elseif($requerimiento->prioridad == 3) <span class="badge bg-secondary spgi-badge" title="Media">Prioridad 3</span>
+                      @elseif($requerimiento->prioridad == 2) <span class="badge bg-info text-dark spgi-badge" title="Baja">Prioridad 2</span>
+                      @else <span class="badge bg-light text-dark border spgi-badge" title="Muy Baja">Prioridad 1</span>
+                      @endif
                     </div>
 
                     @if($requerimiento->colaboradores->count() > 0)

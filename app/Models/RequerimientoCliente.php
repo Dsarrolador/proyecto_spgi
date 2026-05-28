@@ -18,6 +18,7 @@ class RequerimientoCliente extends Model
         'texto_imagen',
         'foto',
         'estado_id',
+        'prioridad',
         'tiempo_transcurrido',
         'user_id',              // ✅ CREADO POR
         'asignado_user_id',     // ✅ ASIGNADO A
@@ -39,6 +40,7 @@ class RequerimientoCliente extends Model
         'fecha_inicio_recurrencia' => 'datetime',
         'es_recurrente' => 'boolean',
         'es_colaborativo' => 'boolean',
+        'prioridad' => 'integer',
     ];
 
     public function clienteRelation()

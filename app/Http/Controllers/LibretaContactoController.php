@@ -13,8 +13,10 @@ class LibretaContactoController extends Controller
      * ========================= */
     public function index()
     {
-        $contactos = LibretaContacto::with('rol')->get();
-        return view('LibretaContacto', compact('contactos'));
+        $contactos = LibretaContacto::with(['rol', 'cliente'])->get();
+        $roles = Roles::all();
+        $clientes = \App\Models\ClienteMaestro::orderBy('nombre')->get();
+        return view('LibretaContacto', compact('contactos', 'roles', 'clientes'));
     }
 
     /* =========================
@@ -36,6 +38,7 @@ class LibretaContactoController extends Controller
             'nombre'   => 'required|string|max:100',
             'telefono' => 'nullable|string|max:20',
             'correo'   => 'nullable|string|max:100',
+            'fecha_nacimiento' => 'nullable|date',
             'nota'     => 'nullable|string|max:255',
             'codigo_rol' => 'nullable|integer',
         ]);
@@ -71,6 +74,7 @@ class LibretaContactoController extends Controller
             'nombre'   => 'required|string|max:100',
             'telefono' => 'nullable|string|max:20',
             'correo'   => 'nullable|string|max:100',
+            'fecha_nacimiento' => 'nullable|date',
             'nota'     => 'nullable|string|max:255',
             'codigo_rol' => 'required|integer', // 🔐 YA ES OBLIGATORIO
         ]);

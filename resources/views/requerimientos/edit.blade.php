@@ -5,31 +5,8 @@
   use Illuminate\Support\Str;
 
   $esAdministracion = false;
-
-  if (isset($esAdmin)) {
-      $esAdministracion = (bool) $esAdmin;
-  } else {
-      $u = auth()->user();
-      $roleName = null;
-
-      if ($u) {
-          if (method_exists($u, 'rol') && optional($u->rol)->nombre) {
-              $roleName = $u->rol->nombre;
-          } elseif (method_exists($u, 'role') && optional($u->role)->nombre) {
-              $roleName = $u->role->nombre;
-          } elseif (isset($u->rol)) {
-              $roleName = $u->rol;
-          } elseif (isset($u->perfil)) {
-              $roleName = $u->perfil;
-          } elseif (isset($u->role_name)) {
-              $roleName = $u->role_name;
-          }
-      }
-
-      if ($roleName) {
-          $norm = Str::of($roleName)->ascii()->lower()->trim()->toString();
-          $esAdministracion = in_array($norm, ['administracion','administrador','admin','administration'], true);
-      }
+  if (auth()->check()) {
+      $esAdministracion = auth()->user()->es_administrativo;
   }
 
   $facturadoActual = (int) old('facturado', $requerimiento->facturado ?? 0);
@@ -174,6 +151,16 @@
                   {{ $e->nombre }}
                 </option>
               @endforeach
+            </select>
+
+            <div class="text-muted small mt-3">Prioridad</div>
+            @php $prioridad = old('prioridad', $requerimiento->prioridad ?? 3); @endphp
+            <select name="prioridad" id="prioridad" class="form-select d-inline-block" style="max-width: 220px;">
+                <option value="5" class="fw-bold text-danger" {{ $prioridad == 5 ? 'selected' : '' }}>5 - Muy Urgente</option>
+                <option value="4" class="fw-bold text-warning" {{ $prioridad == 4 ? 'selected' : '' }}>4 - Urgente</option>
+                <option value="3" {{ $prioridad == 3 ? 'selected' : '' }}>3 - Media</option>
+                <option value="2" {{ $prioridad == 2 ? 'selected' : '' }}>2 - Baja</option>
+                <option value="1" {{ $prioridad == 1 ? 'selected' : '' }}>1 - Muy Baja</option>
             </select>
 
             <div class="text-muted small mt-2">

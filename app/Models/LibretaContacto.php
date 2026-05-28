@@ -21,6 +21,7 @@ class LibretaContacto extends Model
         'nombre',
         'telefono',
         'correo',
+        'fecha_nacimiento',
         'nota',
         'codigo_rol',
     ];
