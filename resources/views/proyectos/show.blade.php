@@ -491,6 +491,7 @@
 @push('scripts')
 <script>
     let currentProyectoNovedadesData = [];
+    let proyectoNovedadesInterval = null;
     const modalProyectoDinamico = new bootstrap.Modal(document.getElementById('modalNovedadesProyectoDinamico'));
     const modalProyectoHistorialList = document.getElementById('modal-proyecto-historial-list');
     const modalProyectoBtnSave = document.getElementById('modal-proyecto-btn-save');
@@ -507,25 +508,51 @@
         
         modalProyectoDinamico.show();
 
-        // Cargar datos vía AJAX
-        fetch(`/proyectos-novedades/${id}`, {
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        })
-        .then(res => res.json())
-        .then(data => {
-            currentProyectoNovedadesData = data;
-            // Si hay un dot de notificaciones activo, podemos marcarlo como visto
-            const dot = document.getElementById(`pulse-dot-${id}`);
-            if (dot) dot.remove();
-            const btn = document.getElementById(`btn-notes-${id}`);
-            if (btn) {
-                btn.className = 'btn btn-outline-info btn-sm';
-            }
-        })
-        .catch(err => {
-            modalProyectoHistorialList.innerHTML = '<p class="text-danger p-4">Error al cargar el historial.</p>';
-        });
+        if (proyectoNovedadesInterval) clearInterval(proyectoNovedadesInterval);
+        
+        const loadProyectoNovedades = () => {
+            fetch(`/proyectos-novedades/${id}`, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(res => {
+                if (!res.ok) throw new Error('Error en el servidor');
+                return res.json();
+            })
+            .then(data => {
+                const fetchedData = Array.isArray(data) ? data : [];
+                // Solo re-renderizar si la data cambió
+                if (JSON.stringify(fetchedData) !== JSON.stringify(currentProyectoNovedadesData)) {
+                    currentProyectoNovedadesData = fetchedData;
+                    const activeTipo = document.getElementById('modal-proyecto-tipo-input').value;
+                    if (activeTipo) {
+                        renderFilteredProyectoNovedades(activeTipo);
+                    }
+                }
+                
+                // Si hay un dot de notificaciones activo, podemos marcarlo como visto
+                const dot = document.getElementById(`pulse-dot-${id}`);
+                if (dot) dot.remove();
+                const btn = document.getElementById(`btn-notes-${id}`);
+                if (btn) {
+                    btn.className = 'btn btn-outline-info btn-sm';
+                }
+            })
+            .catch(err => {
+                currentProyectoNovedadesData = [];
+                modalProyectoHistorialList.innerHTML = '<p class="text-danger p-4">Error al cargar el historial.</p>';
+            });
+        };
+
+        loadProyectoNovedades();
+        proyectoNovedadesInterval = setInterval(loadProyectoNovedades, 4000);
     }
+
+    document.getElementById('modalNovedadesProyectoDinamico').addEventListener('hidden.bs.modal', function () {
+        if (proyectoNovedadesInterval) {
+            clearInterval(proyectoNovedadesInterval);
+            proyectoNovedadesInterval = null;
+        }
+    });
 
     window.modalSwitchProyectoCategory = function(tipo) {
         document.getElementById('modal-dashboard-proyecto-novedades').classList.add('d-none');

@@ -944,6 +944,7 @@
 <script>
     // --- LÓGICA DEL MODAL DINÁMICO DE NOVEDADES ---
     let currentNovedadesData = [];
+    let novedadesInterval = null;
     const modalDinamico = new bootstrap.Modal(document.getElementById('modalNovedadesDinamico'));
     const modalHistorialList = document.getElementById('modal-historial-list');
     const modalBtnSave = document.getElementById('modal-btn-save');
@@ -962,33 +963,55 @@
         
         modalDinamico.show();
 
-        // Cargar datos vía AJAX
-        fetch(`/novedades/${id}`, {
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        })
-        .then(res => {
-            if (!res.ok) throw new Error('Error en el servidor');
-            return res.json();
-        })
-        .then(data => {
-            currentNovedadesData = Array.isArray(data) ? data : [];
-            // Si hay un dot de notificaciones activo, podemos marcarlo como visto
-            const dot = document.getElementById(`pulse-dot-${id}`);
-            if (dot) dot.remove();
-            const btn = document.getElementById(`btn-notes-${id}`);
-            if (btn) {
-                btn.className = 'btn btn-outline-info btn-sm';
-            }
-            const btnMob = document.getElementById(`btn-notes-mob-${id}`);
-            if (btnMob) {
-                btnMob.className = 'btn btn-outline-info btn-sm';
-            }
-        })
-        .catch(err => {
-            currentNovedadesData = [];
-            modalHistorialList.innerHTML = '<p class="text-danger p-4">Error al cargar el historial.</p>';
-        });
+        if (novedadesInterval) clearInterval(novedadesInterval);
+        
+        const loadNovedades = () => {
+            fetch(`/novedades/${id}`, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(res => {
+                if (!res.ok) throw new Error('Error en el servidor');
+                return res.json();
+            })
+            .then(data => {
+                const fetchedData = Array.isArray(data) ? data : [];
+                // Solo re-renderizar si la data cambió
+                if (JSON.stringify(fetchedData) !== JSON.stringify(currentNovedadesData)) {
+                    currentNovedadesData = fetchedData;
+                    const activeTipo = document.getElementById('modal-tipo-input').value;
+                    if (activeTipo) {
+                        renderFilteredNovedades(activeTipo);
+                    }
+                }
+                
+                // Si hay un dot de notificaciones activo, podemos marcarlo como visto
+                const dot = document.getElementById(`pulse-dot-${id}`);
+                if (dot) dot.remove();
+                const btn = document.getElementById(`btn-notes-${id}`);
+                if (btn) {
+                    btn.className = 'btn btn-outline-info btn-sm';
+                }
+                const btnMob = document.getElementById(`btn-notes-mob-${id}`);
+                if (btnMob) {
+                    btnMob.className = 'btn btn-outline-info btn-sm';
+                }
+            })
+            .catch(err => {
+                currentNovedadesData = [];
+                modalHistorialList.innerHTML = '<p class="text-danger p-4">Error al cargar el historial.</p>';
+            });
+        };
+
+        loadNovedades();
+        novedadesInterval = setInterval(loadNovedades, 4000);
     }
+
+    document.getElementById('modalNovedadesDinamico').addEventListener('hidden.bs.modal', function () {
+        if (novedadesInterval) {
+            clearInterval(novedadesInterval);
+            novedadesInterval = null;
+        }
+    });
 
     window.modalSwitchCategory = function(tipo) {
         document.getElementById('modal-dashboard-novedades').classList.add('d-none');
