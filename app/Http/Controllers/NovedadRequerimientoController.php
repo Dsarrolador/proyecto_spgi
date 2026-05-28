@@ -25,11 +25,11 @@ class NovedadRequerimientoController extends Controller
                 return [
                     'id' => $nov->id,
                     'user_id' => $nov->user_id,
-                    'user_name' => $nov->user->name ?? 'Usuario',
+                    'user_name' => $nov->user?->name ?? 'Usuario',
                     'novedad' => $nov->novedad,
-                    'created_at' => $nov->created_at->format('d/m/Y H:i'),
+                    'created_at' => $nov->created_at ? $nov->created_at->format('d/m/Y H:i') : '',
                     'file_url' => $nov->adjunto ? route('novedades.download', $nov->id) : null,
-                    'file_name' => $nov->nombre_original ?? basename($nov->adjunto),
+                    'file_name' => $nov->nombre_original ?? ($nov->adjunto ? basename($nov->adjunto) : null),
                     'tipo' => $nov->tipo ?? 'cliente'
                 ];
             });

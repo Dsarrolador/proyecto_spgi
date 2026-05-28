@@ -183,8 +183,8 @@
         </select>
 
         <select name="asignado_id" class="form-select" onchange="this.form.submit()">
-          <option value="mios" {{ request('asignado_id', 'mios') === 'mios' ? 'selected' : '' }}>Mis requerimientos</option>
-          <option value="todos" {{ request('asignado_id') === 'todos' ? 'selected' : '' }}>Todos</option>
+          <option value="mios" {{ request('asignado_id') === 'mios' ? 'selected' : '' }}>Mis requerimientos</option>
+          <option value="todos" {{ request('asignado_id', 'todos') === 'todos' ? 'selected' : '' }}>Todos</option>
           @foreach(($usuarios ?? collect()) as $u)
             <option value="{{ $u->id }}" {{ (string)request('asignado_id') === (string)$u->id ? 'selected' : '' }}>
               {{ $u->name ?? $u->nombre ?? $u->email }}
@@ -352,8 +352,8 @@
               <label class="form-label fw-bold text-muted small">Asignado a</label>
               <select name="asignado_id" class="form-select shadow-sm border-0">
                 <option value="">Cualquiera</option>
-                <option value="mios" {{ request('asignado_id', 'mios') === 'mios' ? 'selected' : '' }}>Mis requerimientos</option>
-                <option value="todos" {{ request('asignado_id') === 'todos' ? 'selected' : '' }}>Todos</option>
+                <option value="mios" {{ request('asignado_id') === 'mios' ? 'selected' : '' }}>Mis requerimientos</option>
+                <option value="todos" {{ request('asignado_id', 'todos') === 'todos' ? 'selected' : '' }}>Todos</option>
                 @foreach(($usuarios ?? collect()) as $u)
                   <option value="{{ $u->id }}" {{ (string)request('asignado_id') === (string)$u->id ? 'selected' : '' }}>
                     {{ $u->name }}

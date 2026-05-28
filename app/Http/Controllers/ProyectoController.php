@@ -138,7 +138,7 @@ class ProyectoController extends Controller
             $query->where('estado_id', '!=', 6);
         }
 
-        $asignado_id = request('asignado_id', 'mios'); // Default a mios para que coincida con requerimientos generales
+        $asignado_id = request('asignado_id', 'todos'); // Default a todos para que cualquier usuario los vea por defecto
         $usuario = auth()->user();
 
         if ($asignado_id === 'mios' || $asignado_id === null || $asignado_id === '') {

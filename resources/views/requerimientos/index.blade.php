@@ -966,9 +966,12 @@
         fetch(`/novedades/${id}`, {
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         })
-        .then(res => res.json())
+        .then(res => {
+            if (!res.ok) throw new Error('Error en el servidor');
+            return res.json();
+        })
         .then(data => {
-            currentNovedadesData = data;
+            currentNovedadesData = Array.isArray(data) ? data : [];
             // Si hay un dot de notificaciones activo, podemos marcarlo como visto
             const dot = document.getElementById(`pulse-dot-${id}`);
             if (dot) dot.remove();
@@ -982,6 +985,7 @@
             }
         })
         .catch(err => {
+            currentNovedadesData = [];
             modalHistorialList.innerHTML = '<p class="text-danger p-4">Error al cargar el historial.</p>';
         });
     }
