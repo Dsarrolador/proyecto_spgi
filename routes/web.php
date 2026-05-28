@@ -7,6 +7,7 @@ use App\Http\Controllers\ClienteMaestroController;
 use App\Http\Controllers\LibretaContactoController;
 use App\Http\Controllers\RequerimientoClienteController;
 use App\Http\Controllers\NovedadRequerimientoController;
+use App\Http\Controllers\NovedadRequerimientoProyectoController;
 use App\Http\Controllers\TipoSoporteController;
 use App\Http\Controllers\RolesController;
 use App\Http\Controllers\CategoriaIgualaController;
@@ -320,6 +321,12 @@ Route::middleware('auth')->group(function () {
             'update' => 'requerimientos_proyecto.update',
             'destroy' => 'requerimientos_proyecto.destroy',
         ]);
+
+    Route::get('proyectos/requerimientos/{requerimientos_proyecto}/novedades', [NovedadRequerimientoProyectoController::class, 'index'])->name('proyectos.requerimientos.novedades.index');
+    Route::post('proyectos/requerimientos/novedades', [NovedadRequerimientoProyectoController::class, 'store'])->name('proyectos.requerimientos.novedades.store');
+    Route::put('proyectos/requerimientos/novedades/{id}', [NovedadRequerimientoProyectoController::class, 'update'])->name('proyectos.requerimientos.novedades.update');
+    Route::delete('proyectos/requerimientos/novedades/{id}', [NovedadRequerimientoProyectoController::class, 'destroy'])->name('proyectos.requerimientos.novedades.destroy');
+    Route::get('proyectos/requerimientos/novedades/{id}/download', [NovedadRequerimientoProyectoController::class, 'download'])->name('proyectos.requerimientos.novedades.download');
 
     /*
     |--------------------------------------------------------------------------

@@ -21,13 +21,18 @@ class RequerimientoProyectoController extends Controller
         return view('proyectos.show', compact('proyecto', 'requerimientos'));
     }
 
-    public function create(Proyecto $proyecto)
+    public function create(Request $request, Proyecto $proyecto)
     {
         $clientes = ClienteMaestro::orderBy('nombre')->get();
         $tiposSoporte = TipoSoporte::orderBy('nombre')->get();
         $estados = \App\Models\EstadoRequerimiento::all();
 
-        return view('proyectos.requerimientos_create', compact('proyecto', 'clientes', 'tiposSoporte', 'estados'));
+        $parent = null;
+        if ($request->filled('parent_id')) {
+            $parent = RequerimientoProyecto::findOrFail($request->parent_id);
+        }
+
+        return view('proyectos.requerimientos_create', compact('proyecto', 'clientes', 'tiposSoporte', 'estados', 'parent'));
     }
 
     public function store(Request $request, Proyecto $proyecto)
@@ -39,6 +44,7 @@ class RequerimientoProyectoController extends Controller
             'texto_imagen'      => 'required|string|max:2000',
             'foto'              => 'nullable|image|max:5242880',
             'estado_id'         => 'nullable|exists:estado_requerimientos,id',
+            'parent_id'         => 'nullable|exists:requerimiento_proyecto,id',
         ]);
 
         $path = null;
@@ -59,6 +65,7 @@ class RequerimientoProyectoController extends Controller
             'fecha_finalizado'  => null,
             'tiempo_invertido'  => null,
             'facturado'         => 0,
+            'parent_id'         => $request->parent_id ?: null,
         ]);
 
         return redirect()
@@ -136,5 +143,43 @@ class RequerimientoProyectoController extends Controller
         return redirect()
             ->route('proyectos.show', $id_proyecto)
             ->with('success', 'Requerimiento eliminado correctamente.');
+    }
+
+    public function getNotes(RequerimientoProyecto $requerimientos_proyecto)
+    {
+        if ($requerimientos_proyecto->notas_last_user_id && $requerimientos_proyecto->notas_last_user_id !== auth()->id() && !$requerimientos_proyecto->notas_seen) {
+            $requerimientos_proyecto->update(['notas_seen' => true]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'notas_internas' => $requerimientos_proyecto->notas_internas ?? '',
+            'notas_clientes' => $requerimientos_proyecto->notas_clientes ?? '',
+            'last_editor' => $requerimientos_proyecto->notasLastUser ? $requerimientos_proyecto->notasLastUser->name : null,
+            'updated_at' => $requerimientos_proyecto->updated_at ? $requerimientos_proyecto->updated_at->format('d/m/Y H:i') : null,
+        ]);
+    }
+
+    public function saveNotes(Request $request, RequerimientoProyecto $requerimientos_proyecto)
+    {
+        $request->validate([
+            'tipo' => 'required|in:interno,cliente',
+            'nota' => 'nullable|string|max:10000',
+        ]);
+
+        $column = $request->tipo === 'interno' ? 'notas_internas' : 'notas_clientes';
+
+        $requerimientos_proyecto->update([
+            $column => $request->nota,
+            'notas_last_user_id' => auth()->id(),
+            'notas_seen' => false,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Notas guardadas correctamente.',
+            'last_editor' => auth()->user()->name,
+            'updated_at' => now()->format('d/m/Y H:i'),
+        ]);
     }
 }

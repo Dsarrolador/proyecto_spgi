@@ -23,6 +23,11 @@ class RequerimientoProyecto extends Model
         'fecha_finalizado',
         'tiempo_invertido',
         'facturado',
+        'notas_internas',
+        'notas_clientes',
+        'notas_last_user_id',
+        'notas_seen',
+        'parent_id',
     ];
 
     protected $casts = [
@@ -59,6 +64,26 @@ class RequerimientoProyecto extends Model
     public function estadoRequerimiento()
     {
         return $this->belongsTo(EstadoRequerimiento::class, 'estado_id', 'id');
+    }
+
+    public function notasLastUser()
+    {
+        return $this->belongsTo(\App\Models\User::class, 'notas_last_user_id', 'id');
+    }
+
+    public function novedades()
+    {
+        return $this->hasMany(\App\Models\NovedadRequerimientoProyecto::class, 'requerimiento_proyecto_id');
+    }
+
+    public function parent()
+    {
+        return $this->belongsTo(RequerimientoProyecto::class, 'parent_id');
+    }
+
+    public function subRequerimientos()
+    {
+        return $this->hasMany(RequerimientoProyecto::class, 'parent_id')->orderBy('id');
     }
 
     /* ==========================

@@ -92,11 +92,20 @@
           </div>
         @endif
 
+        @if(isset($parent))
+          <div class="alert alert-info rounded-4 mb-4">
+            <i class="bi bi-info-circle-fill me-1"></i> Creando este requerimiento como una sub-tarea del requerimiento: <strong>#{{ $parent->id }} - {{ \Illuminate\Support\Str::limit($parent->texto_imagen ?: $parent->descripcion, 100) }}</strong>
+          </div>
+        @endif
+
         <form id="form-req"
               method="POST"
               action="{{ route('proyectos.requerimientos.store', $proyecto->id) }}"
               enctype="multipart/form-data">
           @csrf
+          @if(isset($parent))
+            <input type="hidden" name="parent_id" value="{{ $parent->id }}">
+          @endif
 
           <div class="row g-3">
 
