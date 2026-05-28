@@ -73,6 +73,21 @@
             </small>
         </div>
 
+        <!-- PRIORIDAD -->
+        <div class="mb-3">
+            <label class="form-label">Prioridad</label>
+            <select name="prioridad" class="form-select">
+                <option value="5" class="fw-bold text-danger">5 - Muy Urgente</option>
+                <option value="4" class="fw-bold text-warning">4 - Urgente</option>
+                <option value="3" selected>3 - Media</option>
+                <option value="2">2 - Baja</option>
+                <option value="1">1 - Muy Baja</option>
+            </select>
+            <small class="text-muted d-block mt-1">
+                Del 1 al 5, siendo 5 la más urgente.
+            </small>
+        </div>
+
         <!-- COLABORATIVO -->
         <div class="mb-3">
             <div class="form-check form-switch p-3 border rounded d-flex flex-column justify-content-center" style="background: rgba(var(--text-main), 0.03); border-color: var(--border-main) !important;">

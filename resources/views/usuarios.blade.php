@@ -158,6 +158,7 @@
                   <th style="width: 35%;">Nombre</th>
                   <th>Correo</th>
                   <th>Rol</th>
+                  <th>Cumpleaños</th>
                   <th class="text-center" style="width: 220px;">Acciones</th>
                 </tr>
               </thead>
@@ -172,6 +173,16 @@
                   </td>
                   <td>
                     <span class="badge bg-secondary text-white">{{ $u->role->nombre ?? 'Sin Rol' }}</span>
+                  </td>
+                  <td>
+                    @if($u->cumpleanos)
+                      <span class="badge bg-warning text-dark">
+                        <i class="bi bi-gift-fill me-1"></i>
+                        {{ \Carbon\Carbon::parse($u->cumpleanos->fecha_nacimiento)->format('d/m/Y') }}
+                      </span>
+                    @else
+                      -
+                    @endif
                   </td>
 
                   <td class="text-center">
@@ -220,6 +231,20 @@
               <div class="user-field">
                 <span class="user-field-label">Correo</span>
                 <div class="user-field-value">{{ $u->email }}</div>
+              </div>
+
+              <div class="user-field">
+                <span class="user-field-label">Cumpleaños</span>
+                <div class="user-field-value">
+                  @if($u->cumpleanos)
+                    <span class="badge bg-warning text-dark">
+                      <i class="bi bi-gift-fill me-1"></i>
+                      {{ \Carbon\Carbon::parse($u->cumpleanos->fecha_nacimiento)->format('d/m/Y') }}
+                    </span>
+                  @else
+                    -
+                  @endif
+                </div>
               </div>
 
               <div class="user-card-actions">
@@ -312,6 +337,10 @@
               @endforeach
             </select>
 
+            <label class="form-label fw-semibold mt-3">Cumpleaños</label>
+            <input type="date" class="form-control" name="fecha_nacimiento" 
+                   value="{{ $u->cumpleanos ? \Carbon\Carbon::parse($u->cumpleanos->fecha_nacimiento)->format('Y-m-d') : '' }}">
+
             <hr>
 
             <div class="alert alert-light border" style="border-radius: 12px;">
@@ -369,6 +398,9 @@
               <option value="{{ $r->id }}">{{ $r->nombre }}</option>
             @endforeach
           </select>
+
+          <label class="form-label fw-semibold mt-3">Cumpleaños</label>
+          <input type="date" class="form-control" name="fecha_nacimiento">
 
           <hr>
 

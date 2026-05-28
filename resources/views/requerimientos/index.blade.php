@@ -366,6 +366,15 @@
           @endforeach
         </select>
 
+        <select name="prioridad" class="form-select" onchange="this.form.submit()">
+          <option value="">Cualquier Prioridad</option>
+          <option value="5" {{ request('prioridad') == '5' ? 'selected' : '' }} style="color: #dc3545; font-weight: bold;">5 - Muy Urgente</option>
+          <option value="4" {{ request('prioridad') == '4' ? 'selected' : '' }} style="color: #ffc107; font-weight: bold;">4 - Urgente</option>
+          <option value="3" {{ request('prioridad') == '3' ? 'selected' : '' }}>3 - Media</option>
+          <option value="2" {{ request('prioridad') == '2' ? 'selected' : '' }}>2 - Baja</option>
+          <option value="1" {{ request('prioridad') == '1' ? 'selected' : '' }}>1 - Muy Baja</option>
+        </select>
+
         <select name="asignado_id" class="form-select" onchange="this.form.submit()">
           <option value="mios" {{ request('asignado_id', 'mios') === 'mios' ? 'selected' : '' }}>Mis requerimientos</option>
           <option value="todos" {{ request('asignado_id') === 'todos' ? 'selected' : '' }}>Todos</option>
@@ -390,7 +399,7 @@
                 <th class="col-asignado">Asignado a</th>
                 <th style="width: 120px;">Fecha</th>
                 <th class="col-estado">Estado</th>
-                @if($esAdmin || $esEncargado)
+                @if(auth()->user()->es_administrativo)
                   <th style="width: 140px;">Facturación</th>
                 @endif
                 <th class="col-acciones">Acciones</th>
@@ -405,8 +414,18 @@
                   </td>
 
                   <td class="td-preview">
-                    <div class="preview-box" title="{{ $req->texto_imagen ?? 'Sin descripción' }}">
-                      {{ $req->texto_imagen ?? 'Sin descripción' }}
+                    <div class="d-flex flex-column">
+                      <div class="mb-1">
+                        @if($req->prioridad == 5) <span class="badge bg-danger mb-1" title="Muy Urgente"><i class="bi bi-exclamation-triangle-fill"></i> Prioridad 5</span>
+                        @elseif($req->prioridad == 4) <span class="badge bg-warning text-dark mb-1" title="Urgente">Prioridad 4</span>
+                        @elseif($req->prioridad == 3) <span class="badge bg-secondary mb-1" title="Media">Prioridad 3</span>
+                        @elseif($req->prioridad == 2) <span class="badge bg-info text-dark mb-1" title="Baja">Prioridad 2</span>
+                        @else <span class="badge bg-light text-dark border mb-1" title="Muy Baja">Prioridad 1</span>
+                        @endif
+                      </div>
+                      <div class="preview-box" title="{{ $req->texto_imagen ?? 'Sin descripción' }}">
+                        {{ $req->texto_imagen ?? 'Sin descripción' }}
+                      </div>
                     </div>
                   </td>
 
@@ -452,7 +471,7 @@
                     @endif
                   </td>
 
-                  @if($esAdmin || $esEncargado)
+                  @if(auth()->user()->es_administrativo)
                   <td class="text-center">
                     @if((int)($req->facturado ?? 0) === 1)
                       <span class="badge bg-success">Facturado</span>
@@ -494,7 +513,7 @@
                 </tr>
               @empty
                 <tr>
-                  <td colspan="{{ ($esAdmin || $esEncargado) ? 7 : 6 }}" class="text-center text-muted p-4">
+                  <td colspan="{{ (auth()->user()->es_administrativo) ? 7 : 6 }}" class="text-center text-muted p-4">
                     No hay requerimientos registrados.
                   </td>
                 </tr>
@@ -532,10 +551,19 @@
                        Con: {{ $req->colaboradores->pluck('name')->implode(', ') }}
                     </div>
                   @endif
+                  
+                  <div class="mt-2">
+                    @if($req->prioridad == 5) <span class="badge bg-danger" title="Muy Urgente"><i class="bi bi-exclamation-triangle-fill"></i> Pri: 5</span>
+                    @elseif($req->prioridad == 4) <span class="badge bg-warning text-dark" title="Urgente">Pri: 4</span>
+                    @elseif($req->prioridad == 3) <span class="badge bg-secondary" title="Media">Pri: 3</span>
+                    @elseif($req->prioridad == 2) <span class="badge bg-info text-dark" title="Baja">Pri: 2</span>
+                    @else <span class="badge bg-light text-dark border" title="Muy Baja">Pri: 1</span>
+                    @endif
+                  </div>
                 </div>
               </div>
 
-              @if($esAdmin || $esEncargado)
+              @if(auth()->user()->es_administrativo)
                 @if((int)($req->facturado ?? 0) === 1)
                   <span class="spgi-badge bg-success text-white">Facturado</span>
                 @else
@@ -644,6 +672,18 @@
                 @endforeach
               </select>
             </div>
+            
+            <div class="col-12 col-md-6">
+              <label class="form-label">Prioridad</label>
+              <select name="prioridad" class="form-select">
+                <option value="">Cualquier Prioridad</option>
+                <option value="5" {{ request('prioridad') == '5' ? 'selected' : '' }} style="color: #dc3545; font-weight: bold;">5 - Muy Urgente</option>
+                <option value="4" {{ request('prioridad') == '4' ? 'selected' : '' }} style="color: #ffc107; font-weight: bold;">4 - Urgente</option>
+                <option value="3" {{ request('prioridad') == '3' ? 'selected' : '' }}>3 - Media</option>
+                <option value="2" {{ request('prioridad') == '2' ? 'selected' : '' }}>2 - Baja</option>
+                <option value="1" {{ request('prioridad') == '1' ? 'selected' : '' }}>1 - Muy Baja</option>
+              </select>
+            </div>
 
             <div class="col-12 col-md-6">
               <label class="form-label">Asignado a</label>
@@ -658,7 +698,7 @@
               </select>
             </div>
 
-            @if($esAdmin || $esEncargado)
+            @if(auth()->user()->es_administrativo)
             <div class="col-12 col-md-6">
               <label class="form-label">Facturación</label>
               <select name="facturado" class="form-select">
@@ -851,7 +891,7 @@
     const modalHistorialList = document.getElementById('modal-historial-list');
     const modalBtnSave = document.getElementById('modal-btn-save');
     const modalForm = document.getElementById('modal-form-novedad-dinamico');
-    const canManageNovedades = {{ (auth()->user()->es_admin || auth()->user()->es_encargado) ? 'true' : 'false' }};
+    const canManageNovedades = {{ auth()->user()->es_administrativo ? 'true' : 'false' }};
     
     window.openNovedadesModal = function(id, title, clientId) {
         // Reset modal state

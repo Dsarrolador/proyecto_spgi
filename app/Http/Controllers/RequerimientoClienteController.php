@@ -23,39 +23,7 @@ class RequerimientoClienteController extends Controller
     private function esAdministracion(): bool
     {
         $u = Auth::user();
-        if (!$u) {
-            return false;
-        }
-
-        $roleName = null;
-
-        if (method_exists($u, 'rol') && optional($u->rol)->nombre) {
-            $roleName = $u->rol->nombre;
-        } elseif (method_exists($u, 'role') && optional($u->role)->nombre) {
-            $roleName = $u->role->nombre;
-        } elseif (isset($u->role_id) && $u->role_id) {
-            $role = \App\Models\Roles::find($u->role_id);
-            $roleName = $role?->nombre;
-        } elseif (isset($u->rol)) {
-            $roleName = $u->rol;
-        } elseif (isset($u->perfil)) {
-            $roleName = $u->perfil;
-        } elseif (isset($u->role_name)) {
-            $roleName = $u->role_name;
-        }
-
-        if (!$roleName) {
-            return false;
-        }
-
-        $norm = (string) Str::of($roleName)->ascii()->lower()->trim();
-
-        return in_array($norm, [
-            'administracion',
-            'administrador',
-            'admin',
-            'administration',
-        ], true);
+        return $u && $u->es_administrativo;
     }
 
     private function col(string $column): bool
@@ -136,6 +104,10 @@ class RequerimientoClienteController extends Controller
             $query->where('requerimiento_cliente.created_at', '<=', Carbon::parse($hasta)->endOfDay());
         }
 
+        if ($request->filled('prioridad')) {
+            $query->where('prioridad', $request->prioridad);
+        }
+
         return $query;
     }
 
@@ -185,12 +157,13 @@ class RequerimientoClienteController extends Controller
             ->get();
 
         return view('requerimientos.index', [
-            'requerimientos'   => $query->orderByDesc('id')->paginate(15)->withQueryString(),
+            'requerimientos'   => $query->orderByDesc('prioridad')->orderByDesc('id')->paginate(15)->withQueryString(),
             'clientes'         => ClienteMaestro::orderBy('nombre')->get(),
             'asignados'        => $asignados,
             'estados'          => EstadoRequerimiento::all(),
             'asignado_id'      => $request->get('asignado_id', $request->get('asignado_user_id', 'mios')),
             'estado'           => $request->get('estado'),
+            'prioridad'        => $request->get('prioridad'),
             'cliente_id'       => $request->get('cliente_id'),
             'categoria_iguala' => $request->get('categoria_iguala'),
             'desde'            => $request->get('desde'),
@@ -279,6 +252,7 @@ class RequerimientoClienteController extends Controller
             'colaboradores_ids' => 'nullable|array',
             'colaboradores_ids.*' => 'exists:users,id',
             'estado_id'        => 'nullable|exists:estado_requerimientos,id',
+            'prioridad'        => 'nullable|integer|min:1|max:5',
         ]);
 
         $rutaFoto = null;
@@ -306,6 +280,7 @@ class RequerimientoClienteController extends Controller
             'frecuencia'       => $request->frecuencia,
             'fecha_inicio_recurrencia' => $request->fecha_inicio_recurrencia,
             'es_colaborativo'  => $request->has('es_colaborativo'),
+            'prioridad'        => $request->filled('prioridad') ? $request->prioridad : 3,
         ];
 
         if ($this->col('facturado')) {
@@ -428,6 +403,7 @@ class RequerimientoClienteController extends Controller
             'es_colaborativo'  => 'nullable|boolean',
             'colaboradores_ids' => 'nullable|array',
             'colaboradores_ids.*' => 'exists:users,id',
+            'prioridad'        => 'nullable|integer|min:1|max:5',
         ];
 
         if ($this->col('fecha_finalizado')) {
@@ -462,6 +438,10 @@ class RequerimientoClienteController extends Controller
 
         if ($request->filled('estado_id')) {
             $req->estado_id = $request->estado_id;
+        }
+
+        if ($request->filled('prioridad')) {
+            $req->prioridad = $request->prioridad;
         }
 
         if ($request->has('asignado_user_id')) {

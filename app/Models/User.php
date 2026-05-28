@@ -48,6 +48,16 @@ class User extends Authenticatable
         return $this->belongsTo(\App\Models\RoleUser::class, 'cod_roleUser');
     }
 
+    public function cumpleanos()
+    {
+        return $this->hasOne(\App\Models\CumpleanosUsuario::class, 'user_id');
+    }
+
+    public function colaboradorProyectos()
+    {
+        return $this->belongsToMany(\App\Models\RequerimientoProyecto::class, 'requerimiento_proyecto_colaboradores', 'user_id', 'requerimiento_proyecto_id');
+    }
+
     public function getEsAdminAttribute()
     {
         if ($this->cod_roleUser == 1) return true;
@@ -58,5 +68,35 @@ class User extends Authenticatable
     {
         if ($this->cod_roleUser == 2) return true;
         return $this->role && strtolower($this->role->nombre) == 'encargado';
+    }
+
+    public function getEsAdministrativoAttribute()
+    {
+        if ($this->cod_roleUser == 1 || $this->cod_roleUser == 2) {
+            return true;
+        }
+
+        $roleName = null;
+        if (method_exists($this, 'role') && $this->role) {
+            $roleName = $this->role->nombre;
+        } elseif (method_exists($this, 'rol') && $this->rol) {
+            $roleName = $this->rol->nombre;
+        } elseif (isset($this->role_id) && $this->role_id) {
+            $role = \App\Models\Roles::find($this->role_id);
+            $roleName = $role?->nombre;
+        } elseif (isset($this->rol)) {
+            $roleName = $this->rol;
+        } elseif (isset($this->perfil)) {
+            $roleName = $this->perfil;
+        } elseif (isset($this->role_name)) {
+            $roleName = $this->role_name;
+        }
+
+        if (!$roleName) {
+            return false;
+        }
+
+        $norm = strtolower(str_replace(['ó', 'á', 'é', 'í', 'ú'], ['o', 'a', 'e', 'i', 'u'], $roleName));
+        return in_array($norm, ['administracion', 'administrador', 'admin', 'supervisor', 'encargado', 'administration']);
     }
 }

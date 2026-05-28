@@ -17,8 +17,8 @@ class CheckAdminOrEncargado
      */
     public function handle(Request $request, Closure $next)
     {
-        // Solo Administracion (1) y Encargado (2) tienen acceso
-        if (Auth::check() && (Auth::user()->es_admin || Auth::user()->es_encargado)) {
+        // Solo Administracion, Administrador, Supervisor y Encargado tienen acceso
+        if (Auth::check() && Auth::user()->es_administrativo) {
             return $next($request);
         }
 

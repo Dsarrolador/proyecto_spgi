@@ -461,7 +461,7 @@ request()->routeIs('mantenimiento.categorias.*');
     </div>
 
     <nav class="nav-sidebar">
-      @if((request()->is('comerciales/*') || request()->is('lead-requirements*') || request()->routeIs('leads.*') || request()->routeIs('lead-requirements.*')) && (Auth::user()->es_admin || Auth::user()->es_encargado))
+      @if((request()->is('comerciales/*') || request()->is('lead-requirements*') || request()->routeIs('leads.*') || request()->routeIs('lead-requirements.*') || request()->routeIs('checklists.*') || request()->is('checklists*') || request()->routeIs('visitas.*') || request()->is('visitas*')) && (Auth::user()->es_admin || Auth::user()->es_encargado))
         <!-- SIDEBAR COMERCIAL -->
         <div class="nav-section-title">Comerciales</div>
         <a class="nav-link {{ request()->routeIs('seleccion') ? 'active' : '' }}" href="{{ route('seleccion') }}">
@@ -479,6 +479,12 @@ request()->routeIs('mantenimiento.categorias.*');
         <a class="nav-link {{ request()->routeIs('leads.reportes') ? 'active' : '' }}" href="{{ route('leads.reportes') }}">
           <i class="bi bi-bar-chart"></i> Reportes
         </a>
+        <a class="nav-link {{ request()->routeIs('checklists.*') ? 'active' : '' }}" href="{{ route('checklists.index') }}">
+          <i class="bi bi-clipboard2-check"></i> Plantillas Cuestionarios
+        </a>
+        <a class="nav-link {{ request()->routeIs('visitas.*') ? 'active' : '' }}" href="{{ route('visitas.index') }}">
+          <i class="bi bi-geo-alt"></i> Visitas
+        </a>
 
         <div class="nav-section-title mt-4">Requerimientos</div>
         <a class="nav-link {{ request()->routeIs('requerimientos.index') ? 'active' : '' }}" href="{{ route('requerimientos.index') }}">
@@ -487,7 +493,16 @@ request()->routeIs('mantenimiento.categorias.*');
         <a class="nav-link" href="{{ route('bienvenido') }}" style="background: rgba(var(--spgi-primary), 0.05); margin-top: 10px;">
           <i class="bi bi-clipboard-check"></i> Requerimientos
         </a>
-      @elseif((request()->is('administracion/*') || request()->routeIs('administracion.*') || request()->routeIs('requerimientos.facturacion') || request()->routeIs('horas-extras.*') || request()->routeIs('estado-cuentas.*')) && (auth()->user()->es_admin || auth()->user()->es_encargado))
+      @elseif((
+          request()->is('administracion/*') ||
+          request()->routeIs('administracion.*') ||
+          request()->routeIs('requerimientos.facturacion') ||
+          request()->routeIs('estado-cuentas.*') ||
+          request()->routeIs('libreta_contacto.*') || request()->is('libreta_contacto*') ||
+          request()->routeIs('proveedores.*') || request()->is('proveedores*') ||
+          request()->routeIs('tarifarios.*') || request()->is('tarifarios*') ||
+          request()->routeIs('rendiciones.*') || request()->is('rendiciones*')
+      ) && (auth()->user()->es_admin || auth()->user()->es_encargado))
         <!-- SIDEBAR ADMINISTRACIÓN -->
         <div class="nav-section-title">Administración</div>
         <a class="nav-link {{ request()->routeIs('seleccion') ? 'active' : '' }}" href="{{ route('seleccion') }}">
@@ -499,14 +514,14 @@ request()->routeIs('mantenimiento.categorias.*');
         <a class="nav-link {{ request()->routeIs('proveedores.*') ? 'active' : '' }}" href="{{ route('proveedores.index') }}">
             <i class="bi bi-truck"></i> Proveedores
         </a>
+        <a class="nav-link {{ request()->routeIs('libreta_contacto.*') ? 'active' : '' }}" href="{{ route('libreta_contacto.index') }}">
+            <i class="bi bi-person-lines-fill"></i> Contactos
+        </a>
         <a class="nav-link {{ request()->routeIs('tarifarios.*') ? 'active' : '' }}" href="{{ route('tarifarios.index') }}">
             <i class="bi bi-currency-dollar"></i> Tarifario
         </a>
         <a class="nav-link {{ request()->routeIs('rendiciones.*') ? 'active' : '' }}" href="{{ route('rendiciones.index') }}">
             <i class="bi bi-receipt"></i> Rendición de Gastos
-        </a>
-        <a class="nav-link {{ request()->routeIs('horas-extras.*') ? 'active' : '' }}" href="{{ route('horas-extras.index') }}">
-            <i class="bi bi-clock-history"></i> Horas Extras
         </a>
         <a class="nav-link {{ request()->routeIs('estado-cuentas.*') ? 'active' : '' }}" href="{{ route('estado-cuentas.index') }}">
             <i class="bi bi-wallet2"></i> Estado de Cuenta
@@ -517,6 +532,32 @@ request()->routeIs('mantenimiento.categorias.*');
         <a class="nav-link" href="{{ route('leads.bienvenido') }}" style="background: rgba(16, 185, 129, 0.05); margin-top: 10px; color: #10b981;">
           <i class="bi bi-briefcase"></i> Comerciales
         </a>
+
+        <div class="nav-section-title mt-4 d-flex justify-content-between align-items-center" style="color: #f59e0b;">
+            <span><i class="bi bi-gift"></i> Próximos Cumpleaños</span>
+            <a href="{{ route('usuarios.index') }}" class="text-warning text-decoration-none" title="Gestionar Cumpleaños / Usuarios">
+                <i class="bi bi-gear-fill" style="font-size: 0.85rem;"></i>
+            </a>
+        </div>
+        <div class="px-3">
+            @if(isset($upcomingBirthdays) && $upcomingBirthdays->count() > 0)
+                @foreach($upcomingBirthdays as $cumple)
+                <div class="d-flex align-items-center mb-2 p-2 rounded" style="background: rgba(255,255,255,0.05);">
+                    <div class="avatar bg-warning text-dark rounded-circle d-flex align-items-center justify-content-center fw-bold me-2" style="width:28px; height:28px; font-size: 10px;">
+                        {{ strtoupper(substr($cumple->nombre, 0, 1)) }}
+                    </div>
+                    <div style="font-size: 0.8rem; line-height: 1.2;">
+                        <div class="text-white text-truncate" style="max-width: 140px;" title="{{ $cumple->nombre }}">{{ $cumple->nombre }}</div>
+                        <div class="text-muted" style="font-size: 0.7rem;">{{ \Carbon\Carbon::parse($cumple->fecha_nacimiento)->format('d M') }}</div>
+                    </div>
+                </div>
+                @endforeach
+            @else
+                <div class="text-muted small p-2 rounded text-center" style="background: rgba(255,255,255,0.02); border: 1px dashed rgba(255,255,255,0.1);">
+                    No hay próximos cumpleaños.
+                </div>
+            @endif
+        </div>
       @else
         <!-- SIDEBAR ESTÁNDAR -->
         <div class="nav-section-title">Principal</div>
@@ -526,7 +567,7 @@ request()->routeIs('mantenimiento.categorias.*');
         <a class="nav-link {{ request()->routeIs('bienvenido') ? 'active' : '' }}" href="{{ route('bienvenido') }}">
           <i class="bi bi-house-door"></i> Acceso Rápido
         </a>
-        @if(Route::has('dashboard') && (Auth::user()->es_admin || Auth::user()->es_encargado))
+        @if(Route::has('dashboard') && Auth::user()->es_administrativo)
         <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
           <i class="bi bi-speedometer2"></i> Dashboard
         </a>
@@ -539,6 +580,9 @@ request()->routeIs('mantenimiento.categorias.*');
         <a class="nav-link {{ (request()->routeIs('requerimientos.index') || request()->routeIs('requerimientos.show')) ? 'active' : '' }}" href="{{ route('requerimientos.index') }}">
           <i class="bi bi-clipboard-check"></i> Requerimientos
         </a>
+        <a class="nav-link {{ request()->routeIs('horas-extras.*') ? 'active' : '' }}" href="{{ route('horas-extras.index') }}">
+            <i class="bi bi-clock-history"></i> Horas Extras
+        </a>
         <a class="nav-link {{ request()->routeIs('proyectos.*') ? 'active' : '' }}" href="{{ route('proyectos.index') }}">
           <i class="bi bi-kanban"></i> Proyectos
         </a>
@@ -549,10 +593,16 @@ request()->routeIs('mantenimiento.categorias.*');
           <i class="bi bi-book"></i> Wiki
         </a>
 
-        @if(Auth::user()->es_admin || Auth::user()->es_encargado)
+        @if(Auth::user()->es_administrativo)
         <div class="nav-section-title">Ventas</div>
-        <a class="nav-link {{ request()->is('comerciales/*') || request()->is('lead-requirements*') ? 'active' : '' }}" href="{{ route('leads.bienvenido') }}">
+        <a class="nav-link {{ (request()->is('comerciales/*') || request()->is('lead-requirements*')) && !request()->routeIs('checklists.*') && !request()->routeIs('visitas.*') ? 'active' : '' }}" href="{{ route('leads.bienvenido') }}">
           <i class="bi bi-briefcase"></i> Comerciales
+        </a>
+        <a class="nav-link {{ request()->routeIs('checklists.*') ? 'active' : '' }}" href="{{ route('checklists.index') }}">
+          <i class="bi bi-clipboard2-check"></i> Plantillas Cuestionarios
+        </a>
+        <a class="nav-link {{ request()->routeIs('visitas.*') ? 'active' : '' }}" href="{{ route('visitas.index') }}">
+          <i class="bi bi-geo-alt"></i> Visitas
         </a>
         @endif
 
@@ -566,7 +616,7 @@ request()->routeIs('mantenimiento.categorias.*');
         </a>
         @endif
 
-        @if(Auth::user()->es_admin || Auth::user()->es_encargado)
+        @if(Auth::user()->es_administrativo)
         <div class="nav-section-title">Configuración</div>
         @if(Auth::user()->es_admin)
         <a class="nav-link {{ request()->routeIs('usuarios.*') ? 'active' : '' }}" href="{{ route('usuarios.index') }}">
@@ -578,6 +628,7 @@ request()->routeIs('mantenimiento.categorias.*');
         </a>
         @endif
 
+        @if(Auth::user()->es_administrativo)
         <div class="dropdown">
           <a class="nav-link dropdown-toggle {{ $mantenimientoActive ? 'active' : '' }}" href="#" data-bs-toggle="dropdown">
             <i class="bi bi-gear"></i> Mantenimiento
@@ -590,6 +641,33 @@ request()->routeIs('mantenimiento.categorias.*');
             <li><a class="dropdown-item" href="{{ route('mantenimiento.categorias.index') }}">Categorías</a></li>
             <li><a class="dropdown-item" href="{{ route('mantenimiento.estados-requerimiento.index') }}">Estados de Req.</a></li>
           </ul>
+        </div>
+        @endif
+
+        <div class="nav-section-title mt-4 d-flex justify-content-between align-items-center" style="color: #f59e0b;">
+            <span><i class="bi bi-gift"></i> Próximos Cumpleaños</span>
+            <a href="{{ route('usuarios.index') }}" class="text-warning text-decoration-none" title="Gestionar Cumpleaños / Usuarios">
+                <i class="bi bi-gear-fill" style="font-size: 0.85rem;"></i>
+            </a>
+        </div>
+        <div class="px-3">
+            @if(isset($upcomingBirthdays) && $upcomingBirthdays->count() > 0)
+                @foreach($upcomingBirthdays as $cumple)
+                <div class="d-flex align-items-center mb-2 p-2 rounded" style="background: rgba(255,255,255,0.05);">
+                    <div class="avatar bg-warning text-dark rounded-circle d-flex align-items-center justify-content-center fw-bold me-2" style="width:28px; height:28px; font-size: 10px;">
+                        {{ strtoupper(substr($cumple->nombre, 0, 1)) }}
+                    </div>
+                    <div style="font-size: 0.8rem; line-height: 1.2;">
+                        <div class="text-white text-truncate" style="max-width: 140px;" title="{{ $cumple->nombre }}">{{ $cumple->nombre }}</div>
+                        <div class="text-muted" style="font-size: 0.7rem;">{{ \Carbon\Carbon::parse($cumple->fecha_nacimiento)->format('d M') }}</div>
+                    </div>
+                </div>
+                @endforeach
+            @else
+                <div class="text-muted small p-2 rounded text-center" style="background: rgba(255,255,255,0.02); border: 1px dashed rgba(255,255,255,0.1);">
+                    No hay próximos cumpleaños.
+                </div>
+            @endif
         </div>
       @endif
 

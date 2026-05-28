@@ -78,76 +78,103 @@
         </div>
     </div>
 
-    {{-- TABLA --}}
-    <div class="spgi-card">
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-spgi align-middle">
-                    <thead>
-                        <tr>
-                            <th style="width: 70px;">ID</th>
-                            <th>Nombre</th>
-                            <th style="width: 160px;">Teléfono</th>
-                            <th>Correo</th>
-                            <th style="width: 160px;">Rol</th>
-                            <th>Nota</th>
-                            <th style="width: 170px;" class="text-center">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($contactos as $c)
+    {{-- TABLA AGRUPADA POR CLIENTES --}}
+    @php
+        $contactosAgrupados = $contactos->groupBy(function($c) {
+            return $c->cliente ? $c->cliente->nombre : 'Contactos Generales / Sin Cliente';
+        });
+    @endphp
+
+    @forelse($contactosAgrupados as $clienteNombre => $grupo)
+        <div class="d-flex align-items-center gap-2 mb-3 mt-4">
+            <i class="bi bi-building text-primary fs-5"></i>
+            <h5 class="mb-0 fw-bold text-white">{{ $clienteNombre }}</h5>
+            <span class="badge rounded-pill px-3 py-1 text-white border-0" style="background: rgba(37, 99, 235, 0.2); font-size: 0.8rem; box-shadow: 0 0 10px rgba(37, 99, 235, 0.1);">
+                {{ $grupo->count() }} {{ $grupo->count() == 1 ? 'contacto' : 'contactos' }}
+            </span>
+        </div>
+
+        <div class="spgi-card mb-4">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-spgi align-middle">
+                        <thead>
                             <tr>
-                                <td class="text-center">{{ $c->id }}</td>
-                                <td class="fw-bold">{{ $c->nombre }}</td>
-                                <td>{{ $c->telefono ?? '-' }}</td>
-                                <td>{{ $c->correo ?? '-' }}</td>
-                                <td>{{ $c->rol->nombre ?? 'Sin rol' }}</td>
-                                <td>{{ $c->nota ?? '-' }}</td>
-                                <td class="text-center">
-                                    <div class="d-flex justify-content-center gap-2 flex-wrap">
+                                <th style="width: 70px;" class="text-center">ID</th>
+                                <th>Nombre</th>
+                                <th style="width: 160px;">Teléfono</th>
+                                <th>Correo</th>
+                                <th style="width: 160px;">Rol</th>
+                                <th style="width: 140px;">Cumpleaños</th>
+                                <th>Nota</th>
+                                <th style="width: 170px;" class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($grupo as $c)
+                                <tr>
+                                    <td class="text-center">{{ $c->id }}</td>
+                                    <td class="fw-bold">{{ $c->nombre }}</td>
+                                    <td>{{ $c->telefono ?? '-' }}</td>
+                                    <td>{{ $c->correo ?? '-' }}</td>
+                                    <td>{{ $c->rol->nombre ?? 'Sin rol' }}</td>
+                                    <td>
+                                        @if($c->fecha_nacimiento)
+                                            <span class="badge bg-warning text-dark">
+                                                <i class="bi bi-gift-fill me-1"></i>
+                                                {{ \Carbon\Carbon::parse($c->fecha_nacimiento)->format('d/m/Y') }}
+                                            </span>
+                                        @else
+                                            -
+                                        @endif
+                                    </td>
+                                    <td>{{ $c->nota ?? '-' }}</td>
+                                    <td class="text-center">
+                                        <div class="d-flex justify-content-center gap-2 flex-wrap">
 
-                                        {{-- EDITAR (modal) --}}
-                                        <button
-                                            type="button"
-                                            class="btn btn-warning btn-sm text-dark"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#modalEditarContacto"
-                                            data-id="{{ $c->id }}"
-                                            data-codigo_cliente_maestro="{{ $c->codigo_cliente_maestro }}"
-                                            data-nombre="{{ $c->nombre }}"
-                                            data-telefono="{{ $c->telefono }}"
-                                            data-correo="{{ $c->correo }}"
-                                            data-nota="{{ $c->nota }}"
-                                            data-codigo_rol="{{ $c->codigo_rol }}"
-                                        >
-                                            <i class="bi bi-pencil-square"></i> Editar
-                                        </button>
-
-                                        {{-- ELIMINAR --}}
-                                        <form action="{{ route('libreta_contacto.destroy', $c->id) }}" method="POST"
-                                              onsubmit="return confirm('¿Seguro que deseas eliminar este contacto?');">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-danger btn-sm">
-                                                <i class="bi bi-trash"></i> Borrar
+                                            {{-- EDITAR (modal) --}}
+                                            <button
+                                                type="button"
+                                                class="btn btn-warning btn-sm text-dark d-flex align-items-center gap-1"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#modalEditarContacto"
+                                                data-id="{{ $c->id }}"
+                                                data-cliente_nombre="{{ $c->cliente->nombre ?? 'General / Sin Cliente' }}"
+                                                data-nombre="{{ $c->nombre }}"
+                                                data-telefono="{{ $c->telefono }}"
+                                                data-correo="{{ $c->correo }}"
+                                                data-fecha_nacimiento="{{ $c->fecha_nacimiento }}"
+                                                data-nota="{{ $c->nota }}"
+                                                data-codigo_rol="{{ $c->codigo_rol }}"
+                                            >
+                                                <i class="bi bi-pencil-square"></i> Editar
                                             </button>
-                                        </form>
 
-                                    </div>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="7" class="text-center py-4 text-muted">
-                                    No hay contactos registrados.
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+                                            {{-- ELIMINAR --}}
+                                            <form action="{{ route('libreta_contacto.destroy', $c->id) }}" method="POST"
+                                                  onsubmit="return confirm('¿Seguro que deseas eliminar este contacto?');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-danger btn-sm d-flex align-items-center gap-1">
+                                                    <i class="bi bi-trash"></i> Borrar
+                                                </button>
+                                            </form>
+
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
-    </div>
+    @empty
+        <div class="spgi-card py-5 text-center text-muted">
+            <i class="bi bi-person-lines-fill fs-1 mb-3 d-block text-secondary"></i>
+            No hay contactos registrados.
+        </div>
+    @endforelse
 
 
     {{-- =========================
@@ -171,10 +198,16 @@
                         <div class="row g-3">
 
                             <div class="col-md-4">
-                                <label class="form-label">Código Cliente Maestro</label>
-                                <input type="number" name="codigo_cliente_maestro" class="form-control"
-                                       value="{{ old('codigo_cliente_maestro') }}" required>
-                                <div class="form-text">Debe ser el ID del cliente (cliente_maestro).</div>
+                                <label class="form-label">Cliente Maestro</label>
+                                <select name="codigo_cliente_maestro" class="form-select" required>
+                                    <option value="">-- Seleccionar --</option>
+                                    @foreach($clientes as $cli)
+                                        <option value="{{ $cli->id }}" {{ old('codigo_cliente_maestro') == $cli->id ? 'selected' : '' }}>
+                                            {{ $cli->nombre }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <div class="form-text">Asigna este contacto a un cliente.</div>
                             </div>
 
                             <div class="col-md-8">
@@ -189,13 +222,19 @@
                                        value="{{ old('telefono') }}" maxlength="20">
                             </div>
 
-                            <div class="col-md-5">
+                            <div class="col-md-4">
                                 <label class="form-label">Correo</label>
                                 <input type="email" name="correo" class="form-control"
                                        value="{{ old('correo') }}" maxlength="100">
                             </div>
 
-                            <div class="col-md-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Cumpleaños</label>
+                                <input type="date" name="fecha_nacimiento" class="form-control"
+                                       value="{{ old('fecha_nacimiento') }}">
+                            </div>
+
+                            <div class="col-md-4">
                                 <label class="form-label">Rol</label>
                                 <select name="codigo_rol" class="form-select">
                                     <option value="">-- Seleccionar --</option>
@@ -254,8 +293,8 @@
                         <div class="row g-3">
 
                             <div class="col-md-4">
-                                <label class="form-label">Código Cliente Maestro</label>
-                                <input type="number" id="edit_codigo_cliente_maestro" class="form-control" disabled>
+                                <label class="form-label">Cliente Asociado</label>
+                                <input type="text" id="edit_cliente_nombre" class="form-control" disabled>
                                 <div class="form-text">Este campo no se edita aquí.</div>
                             </div>
 
@@ -269,12 +308,17 @@
                                 <input type="text" name="telefono" id="edit_telefono" class="form-control" maxlength="20">
                             </div>
 
-                            <div class="col-md-5">
+                            <div class="col-md-4">
                                 <label class="form-label">Correo</label>
                                 <input type="email" name="correo" id="edit_correo" class="form-control" maxlength="100">
                             </div>
 
-                            <div class="col-md-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Cumpleaños</label>
+                                <input type="date" name="fecha_nacimiento" id="edit_fecha_nacimiento" class="form-control">
+                            </div>
+
+                            <div class="col-md-4">
                                 <label class="form-label">Rol</label>
                                 <select name="codigo_rol" id="edit_codigo_rol" class="form-select" required>
                                     @foreach($roles as $r)
@@ -327,10 +371,11 @@ document.addEventListener('DOMContentLoaded', function () {
         formEditar.action = `{{ url('/libreta-contacto') }}/${id}`;
 
         // Inputs
-        document.getElementById('edit_codigo_cliente_maestro').value = btn.getAttribute('data-codigo_cliente_maestro') || '';
+        document.getElementById('edit_cliente_nombre').value = btn.getAttribute('data-cliente_nombre') || 'General / Sin Cliente';
         document.getElementById('edit_nombre').value   = btn.getAttribute('data-nombre') || '';
         document.getElementById('edit_telefono').value = btn.getAttribute('data-telefono') || '';
         document.getElementById('edit_correo').value   = btn.getAttribute('data-correo') || '';
+        document.getElementById('edit_fecha_nacimiento').value = btn.getAttribute('data-fecha_nacimiento') || '';
         document.getElementById('edit_nota').value     = btn.getAttribute('data-nota') || '';
 
         // Rol
