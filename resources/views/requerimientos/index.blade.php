@@ -7,6 +7,54 @@
 <style>
   .spgi-bg{ padding: 12px 0 24px 0; }
 
+  /* Estilos para el indicador de pulso rojo */
+  .pulse-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #dc3545;
+    box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+    animation: pulse-animation 1.5s infinite;
+    margin-left: 5px;
+    vertical-align: middle;
+  }
+
+  .pulse-button {
+    background-color: #dc3545 !important;
+    color: white !important;
+    border-color: #dc3545 !important;
+    box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+    animation: pulse-animation-button 1.5s infinite;
+  }
+
+  @keyframes pulse-animation {
+    0% {
+      transform: scale(0.95);
+      box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+    }
+    70% {
+      transform: scale(1);
+      box-shadow: 0 0 0 6px rgba(220, 53, 69, 0);
+    }
+    100% {
+      transform: scale(0.95);
+      box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
+    }
+  }
+
+  @keyframes pulse-animation-button {
+    0% {
+      box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.4);
+    }
+    70% {
+      box-shadow: 0 0 0 6px rgba(220, 53, 69, 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
+    }
+  }
+
   .btn-spgi{
     background: linear-gradient(135deg, var(--spgi-primary), #2563eb);
     border: 0; color: #fff !important; min-height:46px; border-radius:14px; padding:0 24px;
@@ -408,6 +456,9 @@
 
             <tbody>
               @forelse ($requerimientos as $req)
+                @php
+                  $mostrarAlertaRoja = ($req->user_id === auth()->id() && $req->notas_last_user_id && $req->notas_last_user_id !== auth()->id() && !$req->notas_seen);
+                @endphp
                 <tr>
                   <td class="td-cliente">
                     {{ $req->clienteRelation->nombre ?? 'Sin cliente asignado' }}
@@ -415,12 +466,16 @@
 
                   <td class="td-preview">
                     <div class="d-flex flex-column">
-                      <div class="mb-1">
+                      <div class="mb-1 d-flex align-items-center gap-2">
                         @if($req->prioridad == 5) <span class="badge bg-danger mb-1" title="Muy Urgente"><i class="bi bi-exclamation-triangle-fill"></i> Prioridad 5</span>
                         @elseif($req->prioridad == 4) <span class="badge bg-warning text-dark mb-1" title="Urgente">Prioridad 4</span>
                         @elseif($req->prioridad == 3) <span class="badge bg-secondary mb-1" title="Media">Prioridad 3</span>
                         @elseif($req->prioridad == 2) <span class="badge bg-info text-dark mb-1" title="Baja">Prioridad 2</span>
                         @else <span class="badge bg-light text-dark border mb-1" title="Muy Baja">Prioridad 1</span>
+                        @endif
+
+                        @if($mostrarAlertaRoja)
+                          <span class="pulse-dot" title="Modificado por otro usuario" id="pulse-dot-{{ $req->id }}"></span>
                         @endif
                       </div>
                       <div class="preview-box" title="{{ $req->texto_imagen ?? 'Sin descripción' }}">
@@ -491,9 +546,10 @@
                       </a>
 
                       <button type="button"
-                              class="btn btn-outline-info btn-sm"
+                              class="btn {{ $mostrarAlertaRoja ? 'pulse-button' : 'btn-outline-info' }} btn-sm"
                               onclick="openNovedadesModal({{ $req->id }}, '{{ addslashes($req->clienteRelation->nombre ?? 'Cliente no asignado') }}', {{ $req->cliente_id ?? 'null' }})"
-                              title="Novedades">
+                              title="Novedades"
+                              id="btn-notes-{{ $req->id }}">
                         <i class="bi bi-journal-text"></i>
                       </button>
 
@@ -605,8 +661,9 @@
               </a>
 
               <button type="button"
-                      class="btn btn-outline-info btn-sm"
-                      onclick="openNovedadesModal({{ $req->id }}, '{{ addslashes($req->clienteRelation->nombre ?? 'Cliente no asignado') }}', {{ $req->cliente_id ?? 'null' }})">
+                      class="btn {{ $mostrarAlertaRoja ? 'pulse-button' : 'btn-outline-info' }} btn-sm"
+                      onclick="openNovedadesModal({{ $req->id }}, '{{ addslashes($req->clienteRelation->nombre ?? 'Cliente no asignado') }}', {{ $req->cliente_id ?? 'null' }})"
+                      id="btn-notes-mob-{{ $req->id }}">
                 <i class="bi bi-journal-text me-1"></i> Novedades
               </button>
 
@@ -912,7 +969,17 @@
         .then(res => res.json())
         .then(data => {
             currentNovedadesData = data;
-            // No renderizamos aún, esperamos a que elija categoría
+            // Si hay un dot de notificaciones activo, podemos marcarlo como visto
+            const dot = document.getElementById(`pulse-dot-${id}`);
+            if (dot) dot.remove();
+            const btn = document.getElementById(`btn-notes-${id}`);
+            if (btn) {
+                btn.className = 'btn btn-outline-info btn-sm';
+            }
+            const btnMob = document.getElementById(`btn-notes-mob-${id}`);
+            if (btnMob) {
+                btnMob.className = 'btn btn-outline-info btn-sm';
+            }
         })
         .catch(err => {
             modalHistorialList.innerHTML = '<p class="text-danger p-4">Error al cargar el historial.</p>';

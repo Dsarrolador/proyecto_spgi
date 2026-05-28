@@ -12,6 +12,11 @@ class NovedadRequerimientoController extends Controller
 {
     public function index($requerimientoId)
     {
+        $req = RequerimientoCliente::find($requerimientoId);
+        if ($req && $req->user_id === auth()->id() && $req->notas_last_user_id !== auth()->id() && !$req->notas_seen) {
+            $req->update(['notas_seen' => true]);
+        }
+
         $novedades = NovedadRequerimiento::with('user')
             ->where('requerimiento_id', $requerimientoId)
             ->orderBy('created_at', 'asc')
@@ -66,8 +71,16 @@ class NovedadRequerimientoController extends Controller
         try {
             $novedad = NovedadRequerimiento::create($data);
 
-            // NOTIFICAR SEGUIMIENTOS (Si es colaborativo)
+            // Actualizar el requerimiento padre para alertar/notificar cambios
             $req = RequerimientoCliente::find($request->requerimiento_id);
+            if ($req) {
+                $req->update([
+                    'notas_last_user_id' => auth()->id(),
+                    'notas_seen' => false
+                ]);
+            }
+
+            // NOTIFICAR SEGUIMIENTOS (Si es colaborativo)
             if ($req && $req->es_colaborativo) {
                 $urlDeVista = route('requerimientos.show', $req->id) . '#novedades';
                 $usuarioUpdater = auth()->id();

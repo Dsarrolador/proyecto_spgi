@@ -31,6 +31,10 @@ class RequerimientoCliente extends Model
         'proxima_fecha_ejecucion',
         'fecha_inicio_recurrencia',
         'es_colaborativo',
+        'notas_internas',
+        'notas_clientes',
+        'notas_last_user_id',
+        'notas_seen',
     ];
 
     protected $casts = [

@@ -31,6 +31,10 @@ class RequerimientoProyecto extends Model
         'fecha_inicio_recurrencia',
         'es_colaborativo',
         'prioridad',
+        'notas_internas',
+        'notas_clientes',
+        'notas_last_user_id',
+        'notas_seen',
     ];
 
     protected $casts = [
