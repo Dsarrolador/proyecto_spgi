@@ -10,6 +10,10 @@ class AuthController extends Controller
     // 👉 Muestra el formulario de login
     public function loginForm()
     {
+        if (Auth::check()) {
+            return redirect()->route('seleccion');
+        }
+
         $lockout_until = session('lockout_until');
         $seconds_left = 0;
         if ($lockout_until && $lockout_until > now()->timestamp) {
@@ -35,11 +39,11 @@ class AuthController extends Controller
             return back()->with('error', "Demasiados intentos de acceso. Por favor, intente nuevamente en $minutes minutos.");
         }
 
-        // autenticación usando name
+        // autenticación usando name con persistencia activa (Remember Me)
         if (Auth::attempt([
             'name' => $request->name,
             'password' => $request->password
-        ])) {
+        ], true)) {
             \Illuminate\Support\Facades\RateLimiter::clear($throttleKey);
             // 🔥 Después del login → ir a página de selección
             return redirect()->route('seleccion');

@@ -9,7 +9,8 @@ class NovedadRequerimientoProyecto extends Model
 {
     use HasFactory;
 
-    protected $table = 'novedades_requerimientos_proyectos';
+    // Tabla creada en migracion 2026_05_28_180000_create_novedades_proyectos_table
+    protected $table = 'novedades_proyectos';
 
     protected $fillable = [
         'requerimiento_proyecto_id',
@@ -18,7 +19,7 @@ class NovedadRequerimientoProyecto extends Model
         'novedad',
         'tipo',
         'adjunto',
-        'nombre_original'
+        'nombre_original',
     ];
 
     public function user()
@@ -26,12 +27,19 @@ class NovedadRequerimientoProyecto extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
-    public function requerimiento()
+    /** Alias principal (feature branch) */
+    public function requerimientoProyecto()
     {
         return $this->belongsTo(
             RequerimientoProyecto::class,
             'requerimiento_proyecto_id'
         );
+    }
+
+    /** Alias secundario (master) */
+    public function requerimiento()
+    {
+        return $this->requerimientoProyecto();
     }
 
     public function cliente()

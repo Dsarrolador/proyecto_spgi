@@ -182,7 +182,18 @@
             <tbody>
               @foreach($requerimientos as $r)
                 <tr>
-                  <td class="td-ellipsis">
+                  <td class="td-ellipsis" style="{{ $r->parent_id ? 'padding-left: 36px !important;' : '' }}">
+                    @php
+                      $mostrarAlertaRoja = ($r->user_id === auth()->id() && $r->notas_last_user_id && $r->notas_last_user_id !== auth()->id() && !$r->notas_seen);
+                    @endphp
+                    @if($mostrarAlertaRoja)
+                      <span class="pulse-dot" title="Modificado por otro usuario" id="pulse-dot-{{ $r->id }}"></span>
+                    @endif
+                    @if($r->parent_id)
+                      <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle me-1" style="font-size: 0.65rem;">
+                        <i class="bi bi-arrow-return-right me-1"></i> Sub-tarea (#{{ $r->parent_id }})
+                      </span>
+                    @endif
                     {{ $r->texto_imagen ?? $r->descripcion ?? '—' }}
                   </td>
 
@@ -209,6 +220,18 @@
                          class="btn btn-primary btn-sm" title="Ver">
                         <i class="bi bi-eye"></i>
                       </a>
+
+                      {{-- Novedades / Notas --}}
+                      @php
+                        $mostrarAlertaRoja = ($r->user_id === auth()->id() && $r->notas_last_user_id && $r->notas_last_user_id !== auth()->id() && !$r->notas_seen);
+                      @endphp
+                      <button type="button"
+                              class="btn {{ $mostrarAlertaRoja ? 'pulse-button' : 'btn-outline-info' }} btn-sm"
+                              onclick="openNotesProyectoModal({{ $r->id }}, '{{ addslashes($proyecto->nombre) }}')"
+                              title="Notas / Novedades"
+                              id="btn-notes-{{ $r->id }}">
+                        <i class="bi bi-journal-text"></i>
+                      </button>
 
                       {{-- Editar --}}
                       <a href="{{ route('requerimientos_proyecto.edit', $r->id) }}"
