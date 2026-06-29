@@ -354,6 +354,12 @@
         
         <div class="signature-box">
           <div class="signature-line"></div>
+          <span class="signature-title">Firma Gerente General</span>
+          <span class="text-muted small">Aprobación General</span>
+        </div>
+        
+        <div class="signature-box">
+          <div class="signature-line"></div>
           <span class="signature-title">Firma Aprobatoria</span>
           <span class="text-muted small">Supervisor / Administrador</span>
           <span class="small fw-semibold mt-1">

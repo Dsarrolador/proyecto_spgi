@@ -144,12 +144,12 @@
             width: 100%;
         }
         .signature-cell {
-            width: 40%;
+            width: 33%;
             text-align: center;
             vertical-align: bottom;
         }
         .signature-line {
-            width: 220px;
+            width: 170px;
             border-top: 1px solid #333;
             margin: 0 auto 5px auto;
         }
@@ -272,7 +272,11 @@
                 <span class="signature-title">Firma del Empleado</span><br>
                 <span class="signature-subtitle">Colaborador / Reportante</span>
             </td>
-            <td style="width: 20%;"></td>
+            <td class="signature-cell">
+                <div class="signature-line"></div>
+                <span class="signature-title">Firma Gerente General</span><br>
+                <span class="signature-subtitle">Aprobación General</span>
+            </td>
             <td class="signature-cell">
                 <div class="signature-line"></div>
                 <span class="signature-title">Firma Aprobatoria</span><br>
