@@ -144,6 +144,14 @@
                 <div class="spgi-value">
                   {{ optional($r->cliente)->nombre ?? 'Sin cliente asignado' }}
                 </div>
+                @if($r->requerimientoCliente)
+                  <div class="spgi-label mt-3">Tarea General del Cliente</div>
+                  <div class="spgi-value">
+                    <a href="{{ route('requerimientos.show', $r->requerimiento_cliente_id) }}" class="badge rounded-pill px-3 py-1.5" style="font-size: 0.85rem; background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); text-decoration: none;">
+                      <i class="bi bi-list-task me-1"></i> #{{ $r->requerimiento_cliente_id }} - {{ Str::limit($r->requerimientoCliente->texto_imagen, 40) }}
+                    </a>
+                  </div>
+                @endif
               </div>
             </div>
 

@@ -13,6 +13,7 @@ class Proyecto extends Model
      */
     protected $fillable = [
         'cliente_id',
+        'lead_id',
         'contacto_id',
         'tipo_proyecto',
         'nombre',
@@ -44,6 +45,11 @@ class Proyecto extends Model
     public function cliente()
     {
         return $this->belongsTo(ClienteMaestro::class, 'cliente_id', 'id');
+    }
+
+    public function lead()
+    {
+        return $this->belongsTo(Lead::class, 'lead_id');
     }
 
     /**

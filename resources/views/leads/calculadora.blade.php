@@ -116,7 +116,7 @@
     <div class="container-fluid px-5">
         <div class="row align-items-center">
             <div class="col-md-5">
-                <h1 class="h2 fw-900 mb-0">Cotizador <span class="text-primary">Matrix Pro v2</span></h1>
+                <h1 class="h2 fw-900 mb-0">Cotizador: <span class="text-primary">{{ $lead->nombre }}</span></h1>
             </div>
             <div class="col-md-7 text-end d-flex gap-2 justify-content-end">
                 <button type="button" class="btn btn-success btn-lg rounded-pill px-4 fw-bold" onclick="exportToExcel()">
@@ -156,10 +156,43 @@
                 <label class="item-label">ITBIS Venta %</label>
                 <input type="number" id="global_itbis_ventas" class="m-input-compact" value="18" oninput="updateAll()">
             </div>
-            <div class="col-md-4 text-end">
+            <div class="col-md-4 text-end d-flex justify-content-end gap-2">
+                <button type="button" class="btn btn-info text-white rounded-pill px-4 fw-bold shadow-sm" onclick="showHonorarioModal()">
+                    <i class="bi bi-person-workspace me-2"></i> Añadir Honorario
+                </button>
                 <button type="button" class="btn btn-primary rounded-pill px-4 fw-bold" onclick="addProduct()">
                     <i class="bi bi-plus-circle-fill me-2"></i> Añadir Artículo
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Honorarios Agrupados -->
+    <div id="honorarios-section" class="mb-4" style="display: none;">
+        <h5 class="fw-bold text-info mb-3"><i class="bi bi-person-workspace me-2"></i>Honorarios y Servicios</h5>
+        <div class="card border-info shadow-sm" style="border-radius: 16px; overflow: hidden;">
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-info">
+                        <tr>
+                            <th class="ps-4">Descripción</th>
+                            <th class="text-center" style="width: 120px;">Cant.</th>
+                            <th class="text-center" style="width: 160px;">ITBIS %</th>
+                            <th class="text-end" style="width: 150px;">Valor Fijo</th>
+                            <th class="text-end" style="width: 150px;">Total</th>
+                            <th class="text-center pe-3" style="width: 80px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="honorarios-container">
+                    </tbody>
+                    <tfoot class="table-light">
+                        <tr>
+                            <td colspan="4" class="text-end fw-bold text-uppercase">Total Honorarios:</td>
+                            <td class="text-end fw-900 text-info fs-5" id="honorarios_total_ui">$0.00</td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
             </div>
         </div>
     </div>
@@ -234,12 +267,54 @@
     </div>
 </div>
 
+<!-- Modal Honorario -->
+<div class="modal fade" id="modalHonorario" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-info text-white border-0">
+                <h5 class="modal-title fw-900"><i class="bi bi-person-workspace me-2"></i>Añadir Honorario / Servicio</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="mb-3">
+                    <label class="item-label mb-2">Servicio</label>
+                    <select id="honorario_servicio" class="form-select m-input-compact" onchange="updateHonorarioCategorias()">
+                        <option value="">Seleccione un servicio...</option>
+                        @foreach($tarifarios as $t)
+                            <option value="{{ $t->id }}" 
+                                data-basico-int="{{ $t->basico_int }}"
+                                data-avanzado-int="{{ $t->avanzado_int }}"
+                                data-basico-ext="{{ $t->basico_ext }}"
+                                data-avanzado-ext="{{ $t->avanzado_ext }}"
+                                data-valor="{{ $t->valor }}"
+                                data-desc="{{ $t->descripcion }}">
+                                {{ $t->descripcion }} {{ $t->tipoTarifario ? '('.$t->tipoTarifario->nombre.')' : '' }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="item-label mb-2">Categoría</label>
+                    <select id="honorario_categoria" class="form-select m-input-compact">
+                        <option value="">Seleccione categoría...</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer border-0 bg-light">
+                <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-info text-white rounded-pill px-4 fw-bold shadow-sm" onclick="addHonorarioToQuote()">Agregar a Cotización</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection
 
 @section('scripts')
 <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 <script>
 let productIdx = 0;
+let globalSubtotalVal = 0;
 const calculationId = @json($calculation ? $calculation->id : null);
 const leadData = @json($calculation ? $calculation->calculo_data : $lead->calculo_data);
 
@@ -258,19 +333,54 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function addProduct(data = {}) {
     productIdx++;
-    const container = document.getElementById('products-container');
     const row = document.createElement('div');
     row.className = 'product-row product-item-col';
     row.id = `product_col_${productIdx}`;
     
-    row.innerHTML = `
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <div class="d-flex align-items-center gap-3 w-50">
-                <span class="badge bg-dark rounded-pill">#${productIdx}</span>
-                <input type="text" class="form-control border-0 bg-transparent fw-800 fs-5 p-0 item-nombre" value="${data.nombre_articulo || 'Nuevo Artículo...'}" oninput="updateAll()">
-            </div>
-            <button type="button" class="btn btn-sm btn-outline-danger border-0" onclick="removeProduct(${productIdx})"><i class="bi bi-trash3-fill"></i></button>
-        </div>
+    if (data.is_honorario) {
+        document.getElementById('honorarios-section').style.display = 'block';
+        const hContainer = document.getElementById('honorarios-container');
+        const tr = document.createElement('tr');
+        tr.className = 'product-item-col honorario-row';
+        tr.id = `product_col_${productIdx}`;
+        tr.innerHTML = `
+            <input type="hidden" class="item-is-honorario" value="1">
+            <input type="hidden" class="item-honorario-val" value="${data.honorario_val || 0}">
+            <input type="hidden" class="item-currency" value="DOP">
+            <input type="hidden" class="item-adj" value="${data.adj_price || 0}">
+            <input type="hidden" class="item-costo" value="0">
+            <input type="hidden" class="item-ganancia" value="0">
+            
+            <td class="ps-4">
+                <input type="text" class="form-control border-0 bg-transparent fw-bold p-0 item-nombre" value="${data.nombre_articulo || 'Honorario'}" oninput="updateAll()" readonly>
+            </td>
+            <td class="text-center">
+                <input type="number" class="form-control text-center item-qty" value="${data.qty || 1}" oninput="updateAll()">
+            </td>
+            <td class="text-center">
+                <div class="d-inline-flex align-items-center gap-1 justify-content-center">
+                    <input type="checkbox" class="form-check-input item-has-itbis-c" ${data.has_itbis_c ? 'checked' : ''} onchange="toggleItbisEditable(${productIdx})">
+                    <input type="number" class="form-control text-center item-itbis-compra p-1" style="width: 65px; font-weight: 700; border-radius: 6px;" value="${data.has_itbis_c ? (data.itbis_perc !== undefined ? data.itbis_perc : 18) : 18}" ${data.has_itbis_c ? '' : 'disabled'} oninput="updateAll()">
+                    <span class="small text-muted fw-bold">%</span>
+                </div>
+            </td>
+            <td class="text-end fw-bold text-primary" id="res_precio_f_${productIdx}">
+                $0.00
+            </td>
+            <td class="text-end fw-900 text-info" id="res_valor_t_${productIdx}">
+                $0.00
+            </td>
+            <td class="text-center pe-3">
+                <button type="button" class="btn btn-sm btn-outline-danger border-0" onclick="removeProduct(${productIdx})"><i class="bi bi-trash3-fill"></i></button>
+            </td>
+        `;
+        hContainer.appendChild(tr);
+        updateAll();
+        return;
+    }
+
+    const container = document.getElementById('products-container');
+    let innerContent = `
         <div class="row-grid">
             <div class="item-group">
                 <label class="item-label">Divisa</label>
@@ -328,6 +438,19 @@ function addProduct(data = {}) {
             </div>
         </div>
     `;
+
+    row.innerHTML = `
+        <input type="hidden" class="item-is-honorario" value="0">
+        <input type="hidden" class="item-honorario-val" value="0">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="d-flex align-items-center gap-3 w-50">
+                <span class="badge bg-dark rounded-pill">#${productIdx}</span>
+                <input type="text" class="form-control border-0 bg-transparent fw-800 fs-5 p-0 item-nombre" value="${data.nombre_articulo || 'Nuevo Artículo...'}" oninput="updateAll()">
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-danger border-0" onclick="removeProduct(${productIdx})"><i class="bi bi-trash3-fill"></i></button>
+        </div>
+        ${innerContent}
+    `;
     container.appendChild(row);
     updateAll();
 }
@@ -335,8 +458,92 @@ function addProduct(data = {}) {
 function removeProduct(id) {
     if (document.querySelectorAll('.product-item-col').length > 1) {
         document.getElementById(`product_col_${id}`).remove();
+        
+        if (document.querySelectorAll('.honorario-row').length === 0) {
+            document.getElementById('honorarios-section').style.display = 'none';
+        }
+        
         updateAll();
     }
+}
+
+function toggleItbisEditable(id) {
+    const col = document.getElementById(`product_col_${id}`);
+    if (col) {
+        const checkbox = col.querySelector('.item-has-itbis-c');
+        const itbisInput = col.querySelector('.item-itbis-compra');
+        if (checkbox && itbisInput) {
+            itbisInput.disabled = !checkbox.checked;
+            if (!checkbox.checked) {
+                itbisInput.value = 18;
+            }
+        }
+        updateAll();
+    }
+}
+
+function showHonorarioModal() {
+    document.getElementById('honorario_servicio').value = "";
+    document.getElementById('honorario_categoria').innerHTML = '<option value="">Seleccione categoría...</option>';
+    new bootstrap.Modal(document.getElementById('modalHonorario')).show();
+}
+
+function updateHonorarioCategorias() {
+    const select = document.getElementById('honorario_servicio');
+    const catSelect = document.getElementById('honorario_categoria');
+    catSelect.innerHTML = '<option value="">Seleccione categoría...</option>';
+    
+    if (!select.value) return;
+    
+    const opt = select.options[select.selectedIndex];
+    
+    const addCat = (val, text) => {
+        if (val && val.trim() !== '' && val !== 'null') {
+            catSelect.innerHTML += `<option value="${val}">${text} (${val})</option>`;
+        }
+    };
+    
+    addCat(opt.dataset.basicoInt, 'Básico Interno');
+    addCat(opt.dataset.avanzadoInt, 'Avanzado Interno');
+    addCat(opt.dataset.basicoExt, 'Básico Externo');
+    addCat(opt.dataset.avanzadoExt, 'Avanzado Externo');
+    addCat(opt.dataset.valor, 'Valor Único');
+}
+
+function parseCurrencyText(text) {
+    if (!text) return 0;
+    // Remove RD$, US$, spaces, and commas
+    let val = text.replace(/RD\$|US\$|\s|,/gi, '');
+    return parseFloat(val) || 0;
+}
+
+function addHonorarioToQuote() {
+    const select = document.getElementById('honorario_servicio');
+    const catSelect = document.getElementById('honorario_categoria');
+    
+    if (!select.value || !catSelect.value) {
+        Swal.fire({ icon: 'warning', title: 'Atención', text: 'Debes seleccionar un servicio y una categoría.' });
+        return;
+    }
+    
+    const sName = select.options[select.selectedIndex].dataset.desc;
+    const cName = catSelect.options[catSelect.selectedIndex].text.split(' (')[0];
+    const stringVal = catSelect.value;
+    const numericVal = parseCurrencyText(stringVal);
+    
+    addProduct({
+        nombre_articulo: `Honorario: ${sName} - ${cName}`,
+        moneda: 'DOP',
+        costo: 0,
+        adj_price: numericVal,
+        has_itbis_c: false,
+        itbis_perc: 18,
+        margin_perc: 0,
+        is_honorario: true,
+        honorario_val: numericVal
+    });
+    
+    bootstrap.Modal.getInstance(document.getElementById('modalHonorario')).hide();
 }
 
 function updateAll() {
@@ -344,12 +551,42 @@ function updateAll() {
     const itbis_global = parseFloat(document.getElementById('global_itbis_compra').value) || 0;
     const ganancia_global = parseFloat(document.getElementById('global_ganancia').value) || 0;
     const itbis_v_perc = parseFloat(document.getElementById('global_itbis_ventas').value) || 0;
-    let totalV = 0; let totalM = 0; let totalI = 0; let count = 0;
+    let totalV = 0; let totalM = 0; let totalI = 0; let count = 0; let totalHonorarios = 0;
+    let totalCostoEquipos = 0;
 
     document.querySelectorAll('.product-item-col').forEach(col => {
         count++;
         const id = col.id.split('_')[2];
         const moneda = col.querySelector('.item-currency').value;
+        const adj = col.querySelector('.item-adj') ? parseFloat(col.querySelector('.item-adj').value) || 0 : 0;
+        const qty = parseFloat(col.querySelector('.item-qty').value) || 1;
+        const isHonorario = col.querySelector('.item-is-honorario') && col.querySelector('.item-is-honorario').value === '1';
+
+        const fmt = (v) => '$' + v.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+        if (isHonorario) {
+            const hVal = parseFloat(col.querySelector('.item-honorario-val').value) || 0;
+            const itbisInput = col.querySelector('.item-itbis-compra');
+            const itbis_perc = itbisInput ? (parseFloat(itbisInput.value) || 0) : 18;
+            
+            const p_si = hVal;
+            const p_f = hVal * (1 + itbis_perc / 100);
+            const sell_price_si = adj > 0 ? adj : p_si;
+            
+            const val_t = sell_price_si * qty;
+            const item_itbis = sell_price_si * (itbis_perc / 100) * qty;
+            
+            if(document.getElementById(`res_precio_f_${id}`)) document.getElementById(`res_precio_f_${id}`).innerText = fmt(p_f);
+            if(document.getElementById(`res_valor_t_${id}`)) document.getElementById(`res_valor_t_${id}`).innerText = fmt(val_t);
+            if(document.getElementById(`res_ganancia_u_${id}`)) document.getElementById(`res_ganancia_u_${id}`).innerText = fmt(0);
+            if(document.getElementById(`res_ganancia_f_${id}`)) document.getElementById(`res_ganancia_f_${id}`).innerText = fmt(0);
+
+            totalV += val_t;
+            totalHonorarios += val_t;
+            totalI += item_itbis;
+            return;
+        }
+
         const costoOrig = parseFloat(col.querySelector('.item-costo').value) || 0;
         
         const itbisInput = col.querySelector('.item-itbis-compra');
@@ -359,44 +596,47 @@ function updateAll() {
         const gananciaInput = col.querySelector('.item-ganancia');
         const ganancia_perc = gananciaInput ? (parseFloat(gananciaInput.value) || 0) : ganancia_global;
 
-        const adj = parseFloat(col.querySelector('.item-adj').value) || 0;
-        const qty = parseFloat(col.querySelector('.item-qty').value) || 1;
-
-        // Fórmulas EXACTAS de Excel:
         const costoDOP = moneda === 'USD' ? costoOrig * tasa : costoOrig;
         const itbis_compra = costoDOP * (itbis_c_perc / 100);
-        const costo_total_compra = (costoDOP + itbis_compra) * qty; // Total Compra (de todas las unidades)
+        const costo_total_compra = (costoDOP + itbis_compra) * qty;
         
         const ganancia_u = costoDOP * (ganancia_perc / 100);
         const p_si = costoDOP + ganancia_u;
         const itbis_v = p_si * (itbis_v_perc / 100);
         const p_f = p_si + itbis_v;
         
-        const fP = adj > 0 ? adj : p_f;
-        const val_t = fP * qty; // Valor Total
+        const sell_price_si = adj > 0 ? adj : p_si;
+        const val_t = sell_price_si * qty;
+        const item_itbis = sell_price_si * (itbis_v_perc / 100) * qty;
         
-        // Ganancia T (Según Excel siempre se basa en el markup sugerido)
-        const gan_f = ganancia_u * qty;
-
-        const fmt = (v) => '$' + v.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        const real_gan_u = sell_price_si - costoDOP;
+        const real_gan_t = real_gan_u * qty;
         
         if(document.getElementById(`res_subtotal_c_${id}`)) document.getElementById(`res_subtotal_c_${id}`).innerText = fmt(costo_total_compra);
         if(document.getElementById(`res_p_si_${id}`)) document.getElementById(`res_p_si_${id}`).innerText = fmt(p_si);
         if(document.getElementById(`res_precio_f_${id}`)) document.getElementById(`res_precio_f_${id}`).innerText = fmt(p_f);
-        if(document.getElementById(`res_ganancia_u_${id}`)) document.getElementById(`res_ganancia_u_${id}`).innerText = fmt(ganancia_u);
-        if(document.getElementById(`res_ganancia_f_${id}`)) document.getElementById(`res_ganancia_f_${id}`).innerText = fmt(gan_f);
+        if(document.getElementById(`res_ganancia_u_${id}`)) document.getElementById(`res_ganancia_u_${id}`).innerText = fmt(real_gan_u);
+        if(document.getElementById(`res_ganancia_f_${id}`)) document.getElementById(`res_ganancia_f_${id}`).innerText = fmt(real_gan_t);
         if(document.getElementById(`res_valor_t_${id}`)) document.getElementById(`res_valor_t_${id}`).innerText = fmt(val_t);
 
-        totalV += val_t; totalM += gan_f; totalI += (itbis_compra * qty);
+        totalV += val_t;
+        totalCostoEquipos += costoDOP * qty;
+        totalI += item_itbis;
     });
 
+    totalM = totalV - totalHonorarios - totalCostoEquipos;
+    globalSubtotalVal = totalV;
+
+    document.getElementById('honorarios_total_ui').innerText = '$' + totalHonorarios.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    
     document.getElementById('total-items-count').innerText = count;
     document.getElementById('grand_total_margin').innerText = '$' + totalM.toLocaleString('en-US', {minimumFractionDigits: 2});
     document.getElementById('grand_total_itbis').innerText = '$' + totalI.toLocaleString('en-US', {minimumFractionDigits: 2});
     
-    const totalUSD = totalV / tasa;
+    const totalConITBIS = totalV + totalI;
+    const totalUSD = totalConITBIS / tasa;
     document.getElementById('grand_total_value').innerHTML = `
-        <div class="h3 fw-900 mb-0">$${totalV.toLocaleString('en-US', {minimumFractionDigits: 2})}</div>
+        <div class="h3 fw-900 mb-0">$${totalConITBIS.toLocaleString('en-US', {minimumFractionDigits: 2})}</div>
         <div class="fs-5 text-muted">US$${totalUSD.toLocaleString('en-US', {minimumFractionDigits: 2})}</div>
     `;
 }
@@ -412,27 +652,44 @@ function showMatrixModal() {
 
     body.innerHTML = '';
     let gTotals = { cost: 0, itbis: 0, sub: 0, sug: 0, adj: 0, qty: 0, gan: 0, val: 0 };
+    let totalHonorarios = 0;
 
     document.querySelectorAll('.product-item-col').forEach(col => {
         const moneda = col.querySelector('.item-currency').value;
-        const cOrig = parseFloat(col.querySelector('.item-costo').value) || 0;
-        const hasItbisC = col.querySelector('.item-has-itbis-c').checked;
-        const itbis_c_perc = hasItbisC ? (parseFloat(col.querySelector('.item-itbis-compra').value) || 0) : 0;
-        const ganancia_perc = parseFloat(col.querySelector('.item-ganancia').value) || 0;
         const adj = parseFloat(col.querySelector('.item-adj').value) || 0;
         const qty = parseFloat(col.querySelector('.item-qty').value) || 0;
+        const isHonorario = col.querySelector('.item-is-honorario') && col.querySelector('.item-is-honorario').value === '1';
 
-        const cDOP = moneda === 'USD' ? cOrig * tasa : cOrig;
-        const iC = cDOP * (itbis_c_perc / 100);
-        const sub = (cDOP + iC) * qty;
-        
-        const gan_u = cDOP * (ganancia_perc / 100);
-        const pSi = cDOP + gan_u;
-        const pF = pSi * (1 + (itbis_v_perc/100));
-        
-        const fP = adj > 0 ? adj : pF;
-        const vT = fP * qty;
-        const gF = gan_u * qty;
+        let cOrig, cDOP, iC, sub, pSi, pF, sell_price_si, vT, gF;
+
+        if (isHonorario) {
+            const hVal = parseFloat(col.querySelector('.item-honorario-val').value) || 0;
+            const itbisInput = col.querySelector('.item-itbis-compra');
+            const itbis_perc = itbisInput ? (parseFloat(itbisInput.value) || 0) : 18;
+            const p_f = hVal * (1 + itbis_perc / 100);
+            
+            cOrig = 0; cDOP = 0; iC = 0; sub = 0;
+            pSi = hVal; pF = p_f; sell_price_si = adj > 0 ? adj : pSi;
+            vT = sell_price_si * (1 + itbis_perc / 100) * qty; gF = 0;
+            totalHonorarios += sell_price_si * qty;
+        } else {
+            cOrig = parseFloat(col.querySelector('.item-costo').value) || 0;
+            const hasItbisC = col.querySelector('.item-has-itbis-c').checked;
+            const itbis_c_perc_val = hasItbisC ? (parseFloat(col.querySelector('.item-itbis-compra').value) || 0) : 0;
+            const ganancia_perc_val = parseFloat(col.querySelector('.item-ganancia').value) || 0;
+            
+            cDOP = moneda === 'USD' ? cOrig * tasa : cOrig;
+            iC = cDOP * (itbis_c_perc_val / 100);
+            sub = (cDOP + iC) * qty;
+            
+            const gan_u = cDOP * (ganancia_perc_val / 100);
+            pSi = cDOP + gan_u;
+            pF = pSi * (1 + (itbis_v_perc/100));
+            
+            sell_price_si = adj > 0 ? adj : pSi;
+            vT = sell_price_si * (1 + (itbis_v_perc/100)) * qty;
+            gF = (sell_price_si - cDOP) * qty;
+        }
 
         const fmt = (v) => '$' + v.toLocaleString('en-US', {minimumFractionDigits: 2});
         
@@ -452,10 +709,20 @@ function showMatrixModal() {
                 <td class="text-end pe-4 fw-900">${fmt(vT)}</td>
             </tr>
         `;
-        gTotals.cost += cDOP; gTotals.itbis += iC; gTotals.sub += sub; gTotals.qty += qty; gTotals.gan += gF; gTotals.val += vT;
+        gTotals.cost += cDOP * qty; gTotals.itbis += iC * qty; gTotals.sub += sub; gTotals.qty += qty; gTotals.gan += gF; gTotals.val += vT;
     });
 
     foot.innerHTML = `
+        ${totalHonorarios > 0 ? `
+        <tr class="table-light border-bottom">
+            <td colspan="10" class="ps-4 fw-900 text-info text-end">TOTAL HONORARIOS (DOP)</td>
+            <td colspan="2" class="text-end pe-4 text-info fw-900">$${totalHonorarios.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+        </tr>
+        <tr class="table-light border-bottom">
+            <td colspan="10" class="ps-4 fw-900 text-info text-end opacity-75">TOTAL HONORARIOS (USD)</td>
+            <td colspan="2" class="text-end pe-4 text-info fw-900 opacity-75">US$${(totalHonorarios / tasa).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+        </tr>
+        ` : ''}
         <tr class="table-light">
             <td colspan="2" class="ps-4 fw-900">TOTALES GENERALES (DOP)</td>
             <td class="text-end">$${gTotals.cost.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
@@ -481,31 +748,46 @@ function showMatrixModal() {
 }
 
 function exportToExcel() {
-    const data = [["Artículo", "Divisa", "Costo Orig.", "Costo (S/I)", "ITBIS Compra", "Costo Total (C/I)", "P. Sin ITBIS", "P. Final (C/I)", "P. Ajustado", "Cant.", "Ganancia Total", "Subtotal Item"]];
+    const data = [["Artículo", "Divisa", "Costo Orig.", "Costo (S/I)", "ITBIS Compra", "Costo Total (C/I)", "P. Sin ITBIS", "P. Final (C/I)", "P. Ajustado", "Cant.", "Ganancia Total", "Subtotal Venta"]];
     const tasa = parseFloat(document.getElementById('global_tasa').value) || 1;
     const itbis_v_p = parseFloat(document.getElementById('global_itbis_ventas').value) || 0;
 
     document.querySelectorAll('.product-item-col').forEach(col => {
         const n = col.querySelector('.item-nombre').value;
         const mon = col.querySelector('.item-currency').value;
-        const cO = parseFloat(col.querySelector('.item-costo').value) || 0;
-        const itbis_c_p = parseFloat(col.querySelector('.item-itbis-compra').value) || 0;
-        const hasItbisC = col.querySelector('.item-has-itbis-c').checked;
-        const gan_p = parseFloat(col.querySelector('.item-ganancia').value) || 0;
         const adj = parseFloat(col.querySelector('.item-adj').value) || 0;
         const q = parseFloat(col.querySelector('.item-qty').value) || 0;
-        
-        const cD = mon === 'USD' ? cO * tasa : cO;
-        const iC = hasItbisC ? (cD * (itbis_c_p / 100)) : 0; 
-        const sub = (cD + iC) * q;
-        
-        const gan_u = cD * (gan_p / 100);
-        const pSi = cD + gan_u;
-        const pF = pSi * (1 + (itbis_v_p/100));
-        
-        const fP = adj > 0 ? adj : pF;
-        const vT = fP * q; 
-        const gF = gan_u * q;
+        const isHonorario = col.querySelector('.item-is-honorario') && col.querySelector('.item-is-honorario').value === '1';
+
+        let cO, cD, iC, sub, pSi, pF, sell_price_si, vT, gF;
+
+        if (isHonorario) {
+            const hVal = parseFloat(col.querySelector('.item-honorario-val').value) || 0;
+            const itbisInput = col.querySelector('.item-itbis-compra');
+            const itbis_perc = itbisInput ? (parseFloat(itbisInput.value) || 0) : 18;
+            const p_f = hVal * (1 + itbis_perc / 100);
+            
+            cO = 0; cD = 0; iC = 0; sub = 0;
+            pSi = hVal; pF = p_f; sell_price_si = adj > 0 ? adj : pSi;
+            vT = sell_price_si * (1 + itbis_perc / 100) * q; gF = 0;
+        } else {
+            cO = parseFloat(col.querySelector('.item-costo').value) || 0;
+            const hasItbisC = col.querySelector('.item-has-itbis-c').checked;
+            const itbis_c_p_val = parseFloat(col.querySelector('.item-itbis-compra').value) || 0;
+            const gan_p_val = parseFloat(col.querySelector('.item-ganancia').value) || 0;
+            
+            cD = mon === 'USD' ? cO * tasa : cO;
+            iC = hasItbisC ? (cD * (itbis_c_p_val / 100)) : 0; 
+            sub = (cD + iC) * q;
+            
+            const gan_u = cD * (gan_p_val / 100);
+            pSi = cD + gan_u;
+            pF = pSi * (1 + (itbis_v_p/100));
+            
+            sell_price_si = adj > 0 ? adj : pSi;
+            vT = sell_price_si * (1 + (itbis_v_p/100)) * q; 
+            gF = (sell_price_si - cD) * q;
+        }
         
         data.push([n, mon, cO, cD, iC, sub, pSi, pF, adj, q, gF, vT]);
     });
@@ -546,9 +828,11 @@ async function saveCalculo() {
             margin_perc: parseFloat(col.querySelector('.item-ganancia').value) || 0,
             qty: parseFloat(col.querySelector('.item-qty').value) || 0,
             itbis_sales_perc: parseFloat(document.getElementById('global_itbis_ventas').value) || 18,
+            is_honorario: col.querySelector('.item-is-honorario') && col.querySelector('.item-is-honorario').value === '1',
+            honorario_val: col.querySelector('.item-honorario-val') ? parseFloat(col.querySelector('.item-honorario-val').value) : 0,
         });
     });
-    const total_estimado = parseFloat(document.getElementById('grand_total_value').innerText.replace(/[$,]/g, '')) || 0;
+    const total_estimado = globalSubtotalVal;
     const calculo_data = {
         global_tasa: document.getElementById('global_tasa').value,
         global_itbis_compra: document.getElementById('global_itbis_compra').value,

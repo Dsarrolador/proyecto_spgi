@@ -34,6 +34,22 @@
   .spgi-table tbody td{ border-color: var(--border-main) !important; color: var(--text-main); padding: 12px; text-align:center; }
   .spgi-table tbody td.text-start { text-align:left; }
   .spgi-table tbody tr:hover{ background: rgba(59, 130, 246, 0.05); }
+
+  .status-borrador { background: rgba(245, 158, 11, 0.1) !important; color: #f59e0b !important; }
+  .status-enviado { background: rgba(59, 130, 246, 0.1) !important; color: #3b82f6 !important; }
+  .status-aprobado { background: rgba(16, 185, 129, 0.1) !important; color: #10b981 !important; }
+  .status-rechazado { background: rgba(239, 68, 68, 0.1) !important; color: #ef4444 !important; }
+
+  select.status-select {
+    border: 1px solid transparent !important;
+    cursor: pointer;
+    text-align: center;
+    text-align-last: center;
+    text-transform: uppercase;
+  }
+  select.status-select:focus {
+    box-shadow: 0 0 0 0.25rem rgba(59, 130, 246, 0.25) !important;
+  }
 </style>
 
 <div class="spgi-bg">
@@ -42,11 +58,20 @@
     <div class="d-flex align-items-center justify-content-between mb-4">
         <div>
             <h1 class="h3 mb-1 fw-bold text-gradient">{{ $rendicion->titulo }}</h1>
-            <p class="text-muted mb-0">
-                Rendición de Gastos #{{ $rendicion->id }} • 
-                Estado: <span class="badge bg-warning text-dark px-2.5 py-1.5 rounded-pill">{{ $rendicion->estado }}</span>
+            <p class="text-muted mb-0 d-flex align-items-center flex-wrap gap-2">
+                <span>Rendición de Gastos #{{ $rendicion->id }}</span>
+                <span>• Estado:</span>
+                @php
+                    $statusClass = 'status-' . strtolower(str_replace(' ', '-', $rendicion->estado));
+                @endphp
+                <select class="form-select form-select-sm status-select {{ $statusClass }}" data-rendicion-id="{{ $rendicion->id }}" style="display: inline-block; width: auto; font-size: 0.75rem; padding: 2px 24px 2px 8px; height: 28px; border-radius: 999px; font-weight: 800; text-transform: uppercase;">
+                    <option value="Borrador" {{ $rendicion->estado == 'Borrador' ? 'selected' : '' }}>Borrador</option>
+                    <option value="Enviado" {{ $rendicion->estado == 'Enviado' ? 'selected' : '' }}>Enviado</option>
+                    <option value="Aprobado" {{ $rendicion->estado == 'Aprobado' ? 'selected' : '' }}>Aprobado</option>
+                    <option value="Rechazado" {{ $rendicion->estado == 'Rechazado' ? 'selected' : '' }}>Rechazado</option>
+                </select>
                 @if($rendicion->responsable)
-                    • Encargado: <span class="badge bg-secondary px-2.5 py-1.5 rounded-pill">{{ $rendicion->responsable->name }}</span>
+                    <span>• Encargado: <span class="badge bg-secondary px-2.5 py-1.5 rounded-pill">{{ $rendicion->responsable->name }}</span></span>
                 @endif
             </p>
         </div>
@@ -273,8 +298,53 @@
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        // Status Change Handler
+        document.querySelectorAll('.status-select').forEach(select => {
+            select.addEventListener('change', async function() {
+                const rendicionId = this.dataset.rendicionId;
+                const newStatus = this.value;
+                const selectEl = this;
+                
+                selectEl.className = `form-select form-select-sm status-select status-${newStatus.toLowerCase()}`;
+                
+                try {
+                    const response = await fetch(`/rendiciones/${rendicionId}/update-status`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        },
+                        body: JSON.stringify({ estado: newStatus })
+                    });
+                    
+                    const data = await response.json();
+                    if (data.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Estado Actualizado',
+                            text: `La rendición ahora está en estado: ${newStatus}`,
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 3000,
+                            timerProgressBar: true
+                        });
+                    } else {
+                        throw new Error(data.error || 'Error al actualizar');
+                    }
+                } catch (error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: error.message || 'No se pudo actualizar el estado'
+                    });
+                }
+            });
+        });
+
         const selectElement = document.getElementById('metodo_pago_select');
         const digitsGroup = document.getElementById('card_digits_group');
         const digitsInput = document.getElementById('tarjeta_ultimos_4');

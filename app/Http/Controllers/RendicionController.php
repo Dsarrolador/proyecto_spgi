@@ -140,4 +140,18 @@ class RendicionController extends Controller
             'metodo' => $metodo
         ]);
     }
+
+    public function updateStatus(Request $request, $id)
+    {
+        $request->validate([
+            'estado' => 'required|string|in:Borrador,Enviado,Aprobado,Rechazado',
+        ]);
+
+        $rendicion = Rendicion::findOrFail($id);
+        $rendicion->update([
+            'estado' => $request->estado,
+        ]);
+
+        return response()->json(['success' => true]);
+    }
 }

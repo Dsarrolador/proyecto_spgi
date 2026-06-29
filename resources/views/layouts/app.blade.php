@@ -497,7 +497,9 @@ request()->routeIs('mantenimiento.categorias.*');
           request()->is('administracion/*') ||
           request()->routeIs('administracion.*') ||
           request()->routeIs('requerimientos.facturacion') ||
-          request()->routeIs('estado-cuentas.*') ||
+          request()->routeIs('requerimientos-administrativos.*') ||
+          request()->routeIs('administracion.bitacora-clientes.*') ||
+          request()->routeIs('administracion.rentabilidad.*') ||
           request()->routeIs('libreta_contacto.*') || request()->is('libreta_contacto*') ||
           request()->routeIs('proveedores.*') || request()->is('proveedores*') ||
           request()->routeIs('tarifarios.*') || request()->is('tarifarios*') ||
@@ -523,8 +525,17 @@ request()->routeIs('mantenimiento.categorias.*');
         <a class="nav-link {{ request()->routeIs('rendiciones.*') ? 'active' : '' }}" href="{{ route('rendiciones.index') }}">
             <i class="bi bi-receipt"></i> Rendición de Gastos
         </a>
-        <a class="nav-link {{ request()->routeIs('estado-cuentas.*') ? 'active' : '' }}" href="{{ route('estado-cuentas.index') }}">
-            <i class="bi bi-wallet2"></i> Estado de Cuenta
+        <a class="nav-link {{ request()->routeIs('requerimientos-administrativos.*') ? 'active' : '' }}" href="{{ route('requerimientos-administrativos.index') }}">
+            <i class="bi bi-folder-check"></i> Req. Administrativos
+        </a>
+        <a class="nav-link {{ request()->routeIs('administracion.bitacora-clientes.*') ? 'active' : '' }}" href="{{ route('administracion.bitacora-clientes.index') }}">
+            <i class="bi bi-book-half"></i> Bitácora de Clientes
+        </a>
+        <a class="nav-link {{ request()->routeIs('administracion.rentabilidad.*') && !request()->routeIs('administracion.comisiones.leads') ? 'active' : '' }}" href="{{ route('administracion.rentabilidad.index') }}">
+            <i class="bi bi-graph-up-arrow"></i> Rentabilidad Proyectos
+        </a>
+        <a class="nav-link {{ request()->routeIs('administracion.comisiones.leads') ? 'active' : '' }}" href="{{ route('administracion.comisiones.leads') }}">
+            <i class="bi bi-percent"></i> Comisiones Equipos (Leads)
         </a>
         <a class="nav-link {{ request()->routeIs('requerimientos.facturacion') ? 'active' : '' }}" href="{{ route('requerimientos.facturacion') }}">
             <i class="bi bi-receipt-cutoff"></i> Facturación

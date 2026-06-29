@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use App\Models\RequerimientoCliente;
+use App\Models\RequerimientoAdministrativo;
 use App\Models\NotificacionSistema;
 use Carbon\Carbon;
 
@@ -33,19 +34,15 @@ class CheckRecurrence extends Command
         $now = now();
         $this->info("Iniciando chequeo de recurrencia: " . $now);
 
-        $recurrentes = RequerimientoCliente::where('es_recurrente', true)
+        // 1. REQUERIMIENTOS DE CLIENTES
+        $recurrentesCliente = RequerimientoCliente::where('es_recurrente', true)
             ->where('proxima_fecha_ejecucion', '<=', $now)
             ->get();
 
-        if ($recurrentes->isEmpty()) {
-            $this->info("No hay requerimientos recurrentes para procesar.");
-            return 0;
-        }
+        foreach ($recurrentesCliente as $master) {
+            $this->info("Procesando master Cliente ID: {$master->id} - Frecuencia: {$master->frecuencia}");
 
-        foreach ($recurrentes as $master) {
-            $this->info("Procesando master ID: {$master->id} - Frecuencia: {$master->frecuencia}");
-
-            // 1. Crear la nueva instancia (clon)
+            // Crear la nueva instancia (clon)
             $nuevo = RequerimientoCliente::create([
                 'cliente_id'       => $master->cliente_id,
                 'contacto_id'      => $master->contacto_id,
@@ -56,27 +53,60 @@ class CheckRecurrence extends Command
                 'user_id'          => $master->user_id,
                 'creador_user_id'  => $master->creador_user_id,
                 'asignado_user_id' => $master->asignado_user_id,
-                'es_recurrente'    => false, // La instancia no es master (opcional)
+                'es_recurrente'    => false,
                 'facturado'        => 0,
             ]);
 
-            // 2. Notificar al encargado si existe
             if ($nuevo->asignado_user_id) {
                 NotificacionSistema::create([
                     'user_id'   => $nuevo->asignado_user_id,
-                    'sender_id' => null, // Sistema
+                    'sender_id' => null,
                     'mensaje'   => "Se ha generado automáticamente un requerimiento recurrente para el cliente: " . optional($master->clienteRelation)->nombre,
                 ]);
             }
 
-            // 3. Actualizar la fecha de la próxima ejecución en el master
-            // Calculamos la siguiente fecha basándonos en la fecha que tocaba (proxima_fecha_ejecucion)
-            // para no perder precisión si el comando corre tarde.
             $master->update([
                 'proxima_fecha_ejecucion' => $master->calcularProximaFecha($master->proxima_fecha_ejecucion)
             ]);
 
-            $this->info("Instancia creada ID: {$nuevo->id}. Próxima ejecución master: {$master->proxima_fecha_ejecucion}");
+            $this->info("Instancia Cliente creada ID: {$nuevo->id}. Próxima ejecución master: {$master->proxima_fecha_ejecucion}");
+        }
+
+        // 2. REQUERIMIENTOS ADMINISTRATIVOS
+        $recurrentesAdmin = RequerimientoAdministrativo::where('es_recurrente', true)
+            ->where('proxima_fecha_ejecucion', '<=', $now)
+            ->get();
+
+        foreach ($recurrentesAdmin as $masterAdmin) {
+            $this->info("Procesando master Admin ID: {$masterAdmin->id} - Frecuencia: {$masterAdmin->frecuencia}");
+
+            // Crear la nueva instancia (clon)
+            $nuevoAdmin = RequerimientoAdministrativo::create([
+                'titulo'           => "[RECURRENTE] " . $masterAdmin->titulo,
+                'descripcion'      => $masterAdmin->descripcion,
+                'prioridad'        => $masterAdmin->prioridad,
+                'estado'           => 'Pendiente', // Nuevo
+                'user_id'          => $masterAdmin->user_id,
+                'asignado_user_id' => $masterAdmin->asignado_user_id,
+                'es_recurrente'    => false,
+                'fecha_limite'     => $masterAdmin->fecha_limite ? now()->addDays($masterAdmin->created_at->diffInDays($masterAdmin->fecha_limite)) : null,
+            ]);
+
+            if ($nuevoAdmin->asignado_user_id) {
+                NotificacionSistema::create([
+                    'user_id'   => $nuevoAdmin->asignado_user_id,
+                    'sender_id' => null,
+                    'titulo'    => 'Requerimiento Administrativo Recurrente',
+                    'mensaje'   => "Se ha generado automáticamente un requerimiento administrativo recurrente: " . $masterAdmin->titulo,
+                    'url'       => route('requerimientos-administrativos.index'),
+                ]);
+            }
+
+            $masterAdmin->update([
+                'proxima_fecha_ejecucion' => $masterAdmin->calcularProximaFecha($masterAdmin->proxima_fecha_ejecucion)
+            ]);
+
+            $this->info("Instancia Admin creada ID: {$nuevoAdmin->id}. Próxima ejecución master: {$masterAdmin->proxima_fecha_ejecucion}");
         }
 
         $this->info("Proceso completado.");

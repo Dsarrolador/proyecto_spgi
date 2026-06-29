@@ -146,8 +146,9 @@
               </div>
 
               <div class="col-md-6">
-                <label for="fecha_vencimiento" class="form-label">Fecha Vencimiento <span class="text-danger">*</span></label>
-                <input type="date" name="fecha_vencimiento" id="fecha_vencimiento" value="{{ old('fecha_vencimiento', $record->fecha_vencimiento ? $record->fecha_vencimiento->format('Y-m-d') : '') }}" class="form-control form-control-spgi" required>
+                <label for="fecha_vencimiento" class="form-label">Fecha Vencimiento</label>
+                <input type="date" name="fecha_vencimiento" id="fecha_vencimiento" value="{{ old('fecha_vencimiento', $record->fecha_vencimiento ? $record->fecha_vencimiento->format('Y-m-d') : '') }}" class="form-control form-control-spgi">
+                <div class="form-text small text-muted">Se asignará automáticamente a 30 días si se deja en blanco.</div>
               </div>
 
               <div class="col-md-12">
@@ -312,6 +313,26 @@
         }
       }
     });
+
+    const inputFechaEmision = document.getElementById('fecha');
+    const inputFechaVencimiento = document.getElementById('fecha_vencimiento');
+
+    function setExpirationDefault() {
+      if (inputFechaEmision.value && !inputFechaVencimiento.value) {
+        const emissionDate = new Date(inputFechaEmision.value + 'T00:00:00');
+        if (!isNaN(emissionDate.getTime())) {
+          emissionDate.setDate(emissionDate.getDate() + 30);
+          
+          const year = emissionDate.getFullYear();
+          const month = String(emissionDate.getMonth() + 1).padStart(2, '0');
+          const day = String(emissionDate.getDate()).padStart(2, '0');
+          
+          inputFechaVencimiento.value = `${year}-${month}-${day}`;
+        }
+      }
+    }
+
+    inputFechaEmision.addEventListener('change', setExpirationDefault);
   });
 </script>
 @endsection

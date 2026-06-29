@@ -12,6 +12,7 @@ class RequerimientoProyecto extends Model
 
     protected $fillable = [
         'id_proyecto',
+        'requerimiento_cliente_id',
         'cliente_id',
         'contacto_id',
         'tipo_soporte_id',
@@ -52,6 +53,11 @@ class RequerimientoProyecto extends Model
     /* ==========================
        RELACIONES
     ========================== */
+
+    public function requerimientoCliente()
+    {
+        return $this->belongsTo(RequerimientoCliente::class, 'requerimiento_cliente_id');
+    }
 
     public function proyecto()
     {
@@ -133,5 +139,10 @@ class RequerimientoProyecto extends Model
         }
         
         return collect($files);
+    }
+
+    public function tareas()
+    {
+        return $this->hasMany(\App\Models\RequerimientoProyectoTarea::class, 'requerimiento_proyecto_id');
     }
 }

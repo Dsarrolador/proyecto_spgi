@@ -13,6 +13,7 @@ class RequerimientoCliente extends Model
 
     protected $fillable = [
         'cliente_id',
+        'proyecto_id',
         'contacto_id',
         'tipo_soporte_id',
         'texto_imagen',
@@ -21,6 +22,7 @@ class RequerimientoCliente extends Model
         'prioridad',
         'tiempo_transcurrido',
         'user_id',              // ✅ CREADO POR
+        'creador_user_id',
         'asignado_user_id',     // ✅ ASIGNADO A
         'fecha_finalizado',
         'tiempo_invertido',
@@ -46,6 +48,16 @@ class RequerimientoCliente extends Model
         'es_colaborativo' => 'boolean',
         'prioridad' => 'integer',
     ];
+
+    public function proyecto()
+    {
+        return $this->belongsTo(\App\Models\Proyecto::class, 'proyecto_id');
+    }
+
+    public function requerimientosProyecto()
+    {
+        return $this->hasMany(\App\Models\RequerimientoProyecto::class, 'requerimiento_cliente_id');
+    }
 
     public function clienteRelation()
     {
@@ -97,6 +109,16 @@ class RequerimientoCliente extends Model
     public function estadoRequerimiento()
     {
         return $this->belongsTo(EstadoRequerimiento::class, 'estado_id', 'id');
+    }
+
+    public function tareas()
+    {
+        return $this->hasMany(\App\Models\RequerimientoClienteTarea::class, 'requerimiento_cliente_id');
+    }
+
+    public function conduces()
+    {
+        return $this->hasMany(\App\Models\Conduce::class, 'requerimiento_id');
     }
 
     /**

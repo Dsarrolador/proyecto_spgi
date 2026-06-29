@@ -212,6 +212,14 @@
                 <div class="spgi-value">
                   {{ optional($requerimiento->clienteRelation)->nombre ?? 'Sin cliente' }}
                 </div>
+                @if($requerimiento->proyecto)
+                  <div class="spgi-label mt-3">Proyecto Vinculado</div>
+                  <div class="spgi-value">
+                    <span class="badge rounded-pill px-3 py-1.5" style="font-size: 0.85rem; background: rgba(59, 130, 246, 0.15); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3);">
+                      <i class="bi bi-folder-fill me-1"></i>{{ $requerimiento->proyecto->nombre }}
+                    </span>
+                  </div>
+                @endif
               </div>
             </div>
 
@@ -387,6 +395,183 @@
           </div>
         </form>
 
+      </div>
+    </div>
+
+    <!-- SECCIÓN DE REQUERIMIENTOS TÉCNICOS (PROYECTO) -->
+    @if($requerimiento->proyecto)
+      <div class="spgi-card mt-4 mb-4">
+        <div class="spgi-card-body p-4">
+          <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-3">
+            <h5 class="fw-bold mb-0" style="color: var(--text-main);">
+              <i class="bi bi-gear-wide-connected me-2 text-primary"></i> Requerimientos Técnicos / Interacciones del Proyecto
+            </h5>
+            <a href="{{ route('proyectos.requerimientos.create', ['proyecto' => $requerimiento->proyecto->id, 'requerimiento_cliente_id' => $requerimiento->id]) }}" class="btn btn-sm btn-primary rounded-pill px-3 d-flex align-items-center gap-1">
+              <i class="bi bi-plus-lg"></i> Agregar Interacción Técnica
+            </a>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table align-middle text-center mb-0">
+              <thead class="table-dark small">
+                <tr>
+                  <th class="text-start ps-3" style="min-width: 250px;">Descripción Técnica</th>
+                  <th>Estado</th>
+                  <th>Prioridad</th>
+                  <th>Asignado A</th>
+                  <th>Creado el</th>
+                  <th style="width: 100px;">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                @forelse($requerimiento->requerimientosProyecto as $reqProj)
+                  <tr>
+                    <td class="text-start ps-3 fw-bold">
+                      <div class="text-white">{{ $reqProj->texto_imagen }}</div>
+                    </td>
+                    <td>
+                      @php
+                        $_color = $reqProj->estado_id == 6 ? 'bg-danger' : (optional($reqProj->estadoRequerimiento)->color ?? 'bg-secondary');
+                        $_nombre = $reqProj->estado_id == 6 ? 'Eliminado' : (optional($reqProj->estadoRequerimiento)->nombre ?? 'Pendiente');
+                      @endphp
+                      @if(\Illuminate\Support\Str::startsWith($_color, '#'))
+                        <span class="badge" style="background-color: {{ $_color }}; color: #fff;">{{ $_nombre }}</span>
+                      @else
+                        <span class="badge {{ $_color }}">{{ $_nombre }}</span>
+                      @endif
+                    </td>
+                    <td>
+                      @if($reqProj->prioridad == 5) <span class="badge bg-danger" title="Muy Urgente">5 - Muy Urgente</span>
+                      @elseif($reqProj->prioridad == 4) <span class="badge bg-warning text-dark" title="Urgente">4 - Urgente</span>
+                      @elseif($reqProj->prioridad == 3) <span class="badge bg-secondary" title="Media">3 - Media</span>
+                      @elseif($reqProj->prioridad == 2) <span class="badge bg-info text-dark" title="Baja">2 - Baja</span>
+                      @else <span class="badge bg-light text-dark border" title="Muy Baja">1 - Muy Baja</span>
+                      @endif
+                    </td>
+                    <td>{{ $reqProj->asignado->name ?? 'Sin asignar' }}</td>
+                    <td>{{ optional($reqProj->created_at)->format('d/m/Y') }}</td>
+                    <td>
+                      <a href="{{ route('requerimientos_proyecto.show', $reqProj->id) }}" class="btn btn-sm btn-primary" title="Ver Detalles">
+                        <i class="bi bi-eye"></i>
+                      </a>
+                    </td>
+                  </tr>
+                @empty
+                  <tr>
+                    <td colspan="6" class="text-muted py-4">
+                      <i class="bi bi-gear-wide opacity-50 fs-4 d-block mb-2"></i>
+                      No hay requerimientos técnicos (interacciones) vinculados a esta tarea.
+                    </td>
+                  </tr>
+                @endforelse
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    @endif
+
+    <!-- SECCIÓN DE CONDUCES GENERADOS -->
+    <div class="spgi-card mt-4 mb-4">
+      <div class="spgi-card-body p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-3">
+          <h5 class="fw-bold mb-0" style="color: var(--text-main);">
+            <i class="bi bi-truck me-2 text-primary"></i> Conduces Generados
+          </h5>
+          @if($requerimiento->estado_id != 6)
+            <div class="dropdown d-inline-block">
+              <button class="btn btn-sm btn-primary dropdown-toggle rounded-pill px-3" type="button" id="dropdownConduceSection" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-plus-lg me-1"></i> Generar Conduce
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-3" aria-labelledby="dropdownConduceSection" style="min-width: 220px;">
+                <li>
+                  <a class="dropdown-item rounded-3 py-2" href="#" data-bs-toggle="modal" data-bs-target="#modalConduce">
+                    <div class="d-flex align-items-center">
+                      <div class="bg-primary bg-opacity-10 text-primary rounded-circle p-2 me-3">
+                        <i class="bi bi-tools"></i>
+                      </div>
+                      <div>
+                        <span class="d-block fw-bold">Conduce de Trabajo</span>
+                        <small class="text-muted">Entrega de productos/servicios</small>
+                      </div>
+                    </div>
+                  </a>
+                </li>
+                <li><hr class="dropdown-divider opacity-50"></li>
+                <li>
+                  <a class="dropdown-item rounded-3 py-2" href="#" data-bs-toggle="modal" data-bs-target="#modalConduceHora">
+                    <div class="d-flex align-items-center">
+                      <div class="bg-success bg-opacity-10 text-success rounded-circle p-2 me-3">
+                        <i class="bi bi-clock-history"></i>
+                      </div>
+                      <div>
+                        <span class="d-block fw-bold">Conduce por Hora</span>
+                        <small class="text-muted">Registro de horas trabajadas</small>
+                      </div>
+                    </div>
+                  </a>
+                </li>
+              </ul>
+            </div>
+          @endif
+        </div>
+
+        <div class="table-responsive">
+          <table class="table align-middle text-center mb-0">
+            <thead class="table-dark small">
+              <tr>
+                <th>No. Conduce</th>
+                <th>Tipo</th>
+                <th>Fecha</th>
+                <th>Contacto</th>
+                <th>Trabajo / Observaciones</th>
+                <th>Total Horas</th>
+                <th style="width: 100px;">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @forelse($requerimiento->conduces as $cond)
+                <tr>
+                  <td>
+                    <span class="fw-bold text-white">#{{ $cond->id }}</span>
+                  </td>
+                  <td>
+                    <span class="badge {{ $cond->tipo === 'hora' ? 'bg-success' : 'bg-primary' }}">
+                      {{ $cond->tipo === 'hora' ? 'Por Hora' : 'De Trabajo' }}
+                    </span>
+                  </td>
+                  <td>{{ $cond->fecha ? \Carbon\Carbon::parse($cond->fecha)->format('d/m/Y') : '---' }}</td>
+                  <td>{{ $cond->contacto_nombre ?? '---' }}</td>
+                  <td class="text-start">
+                    <div class="text-truncate" style="max-width: 250px;" title="{{ $cond->trabajo_realizar }}">
+                      {{ $cond->trabajo_realizar }}
+                    </div>
+                    @if($cond->observaciones)
+                      <small class="text-muted d-block text-truncate" style="max-width: 250px;" title="{{ $cond->observaciones }}">
+                        Obs: {{ $cond->observaciones }}
+                      </small>
+                    @endif
+                  </td>
+                  <td>
+                    {{ $cond->tipo === 'hora' ? ($cond->cantidad_horas . ' Hrs') : '---' }}
+                  </td>
+                  <td>
+                    <a href="{{ route('conduces.pdf', $cond->id) }}" target="_blank" class="btn btn-sm btn-danger" title="Descargar PDF">
+                      <i class="bi bi-file-earmark-pdf"></i> PDF
+                    </a>
+                  </td>
+                </tr>
+              @empty
+                <tr>
+                  <td colspan="7" class="text-muted py-4">
+                    <i class="bi bi-truck opacity-50 fs-4 d-block mb-2"></i>
+                    No hay conduces generados para este requerimiento.
+                  </td>
+                </tr>
+              @endforelse
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 

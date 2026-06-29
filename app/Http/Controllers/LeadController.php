@@ -220,7 +220,9 @@ class LeadController extends Controller
             $calculation = \App\Models\LeadCalculation::where('lead_id', $id)->findOrFail($request->calculation_id);
         }
         
-        return view('leads.calculadora', compact('lead', 'calculation'));
+        $tarifarios = \App\Models\Tarifario::with('tipoTarifario')->get();
+        
+        return view('leads.calculadora', compact('lead', 'calculation', 'tarifarios'));
     }
 
     public function saveCalculo(Request $request, $id)
@@ -268,6 +270,7 @@ class LeadController extends Controller
         $lead->update([
             'total_estimado' => $nuevo_total,
             'calculo_data' => $calculo_data, // Mantenemos el último para compatibilidad visual
+            'status' => 'Pendiente', // Vuelve a pendiente al agregar o modificar cotización
         ]);
 
         return response()->json(['success' => true, 'total_estimado' => $nuevo_total, 'calculation_id' => $calculation->id]);
@@ -360,10 +363,20 @@ class LeadController extends Controller
     public function serveFile(Request $request)
     {
         $path = $request->query('path');
-        if (!$path || !Storage::disk('public')->exists($path)) {
+        if (!$path) {
             abort(404);
         }
-        return Storage::disk('public')->response($path);
+        
+        // Limpiar el path si inicia con 'storage/' o '/storage/'
+        $cleanPath = ltrim($path, '/');
+        if (strpos($cleanPath, 'storage/') === 0) {
+            $cleanPath = substr($cleanPath, 8);
+        }
+
+        if (!Storage::disk('public')->exists($cleanPath)) {
+            abort(404);
+        }
+        return Storage::disk('public')->response($cleanPath);
     }
 
     public function deleteFile($file_id)
@@ -487,6 +500,194 @@ class LeadController extends Controller
         // Recalcular total del lead tras eliminar
         $nuevo_total = \App\Models\LeadCalculation::where('lead_id', $lead_id)->sum('total_estimado');
         Lead::where('id', $lead_id)->update(['total_estimado' => $nuevo_total]);
+
+        return response()->json(['success' => true]);
+    }
+
+    public function updateStatus(Request $request, $id)
+    {
+        if (!$this->esAdminOEncargado()) return response()->json(['error' => 'No autorizado'], 403);
+
+        $request->validate([
+            'status' => 'required|string|in:Pendiente,Seguimiento,Ganado,Perdido',
+        ]);
+
+        $lead = Lead::findOrFail($id);
+        $lead->status = $request->status;
+        $lead->save();
+
+        return response()->json(['success' => true]);
+    }
+
+    public function convertirAGanado($id)
+    {
+        if (!$this->esAdminOEncargado()) return response()->json(['error' => 'No autorizado'], 403);
+
+        try {
+            return DB::transaction(function() use ($id) {
+                $lead = Lead::findOrFail($id);
+                $lead->status = 'Ganado';
+                $lead->save();
+
+                // 1. Crear o buscar ClienteMaestro
+                $cliente = \App\Models\ClienteMaestro::where('nombre', $lead->nombre)->first();
+                if (!$cliente) {
+                    $cliente = \App\Models\ClienteMaestro::create([
+                        'nombre' => $lead->nombre,
+                        'telefono_principal' => $lead->contacto,
+                        'direccion_escrita' => $lead->direccion,
+                        'notas' => 'Creado automáticamente desde Lead Ganado.',
+                    ]);
+                }
+
+                // 1.5 Crear contacto si existe persona_contacto
+                $contactoId = null;
+                if ($lead->persona_contacto) {
+                    $contacto = \App\Models\LibretaContacto::where('codigo_cliente_maestro', $cliente->id)
+                        ->where('nombre', $lead->persona_contacto)
+                        ->first();
+                    if (!$contacto) {
+                        $contacto = \App\Models\LibretaContacto::create([
+                            'codigo_cliente_maestro' => $cliente->id,
+                            'nombre' => $lead->persona_contacto,
+                            'telefono' => $lead->contacto,
+                            'correo' => $lead->correo,
+                        ]);
+                    }
+                    $contactoId = $contacto->id;
+                }
+
+                // 2. Crear Proyecto
+                $proyecto = \App\Models\Proyecto::create([
+                    'cliente_id' => $cliente->id,
+                    'lead_id' => $lead->id,
+                    'contacto_id' => $contactoId,
+                    'nombre' => $lead->nombre,
+                    'descripcion' => $lead->observaciones ?? 'Proyecto creado automáticamente desde Lead Ganado.',
+                    'tipo_proyecto' => 'Industrial',
+                    'fecha_inicio' => now(),
+                    'estado' => 'Activo',
+                    'activo' => true,
+                ]);
+
+                // 2.5 Crear Requerimiento de Implementación en la sección de requerimientos
+                $reqTexto = $lead->observaciones;
+                if (empty($reqTexto)) {
+                    $reqTexto = "Implementación del Lead Ganado: " . $lead->nombre;
+                }
+
+                $tipoSoporteId = \App\Models\TipoSoporte::where('activo', 1)->value('id') ?: 1;
+
+                \App\Models\RequerimientoCliente::create([
+                    'cliente_id'       => $cliente->id,
+                    'proyecto_id'      => $proyecto->id,
+                    'contacto_id'      => $contactoId,
+                    'tipo_soporte_id'  => $tipoSoporteId,
+                    'texto_imagen'     => $reqTexto,
+                    'estado_id'        => 1, // Pendiente
+                    'user_id'          => $lead->user_id ?: auth()->id(),
+                    'creador_user_id'  => auth()->id(),
+                    'prioridad'        => 3, // Media
+                ]);
+
+                // 3. Crear ProyectoRentabilidad
+                $rentabilidad = \App\Models\ProyectoRentabilidad::create([
+                    'proyecto_id' => $proyecto->id,
+                    'fecha_analisis' => now(),
+                    'comision_porcentaje' => 10.00,
+                    'comision_user_id' => $lead->user_id,
+                ]);
+
+                // 4. Si el lead tiene cálculo, intentar extraer el detalle de Equipos y Honorarios de calculations
+                $equiposDOP = 0;
+                $honorariosDOP = 0;
+                
+                foreach ($lead->calculations as $calc) {
+                    $c = $calc->calculo_data;
+                    if ($c) {
+                        $items = $c['items'] ?? [];
+                        if (empty($items) && isset($c['costo'])) {
+                            $items = [$c];
+                        }
+                        
+                        $tasa = floatval($c['global_tasa'] ?? 63.23);
+                        
+                        foreach ($items as $item) {
+                            $is_honorario = !empty($item['is_honorario']);
+                            $qty = floatval($item['qty'] ?? 1);
+                            $adj_price = floatval($item['adj_price'] ?? 0);
+                            
+                            if ($is_honorario) {
+                                $hVal = floatval($item['honorario_val'] ?? 0);
+                                $sell_price = $adj_price > 0 ? $adj_price : $hVal;
+                                $honorariosDOP += $sell_price * $qty;
+                            } else {
+                                $costo = floatval($item['costo'] ?? 0);
+                                $moneda = $item['moneda'] ?? 'DOP';
+                                $costoDOP = $moneda === 'USD' ? $costo * $tasa : $costo;
+                                
+                                $margin_perc = floatval($item['margin_perc'] ?? 0);
+                                $gan_u = $costoDOP * ($margin_perc / 100);
+                                $p_si = $costoDOP + $gan_u;
+                                $price_si = $adj_price > 0 ? $adj_price : $p_si;
+                                $equiposDOP += $price_si * $qty;
+                            }
+                        }
+                    }
+                }
+
+                // Si no hay cálculos pero hay un total_estimado
+                if ($equiposDOP == 0 && $honorariosDOP == 0 && $lead->total_estimado > 0) {
+                    $equiposDOP = floatval($lead->total_estimado);
+                }
+
+                // Crear fila de proyección con datos iniciales
+                if ($equiposDOP > 0 || $honorariosDOP > 0) {
+                    $itbis = ($equiposDOP + $honorariosDOP) * 0.18;
+                    $totalFacturado = $equiposDOP + $honorariosDOP + $itbis;
+
+                    \App\Models\ProyectoRentabilidadProyeccion::create([
+                        'proyecto_rentabilidad_id' => $rentabilidad->id,
+                        'cotizacion_no' => 'INI',
+                        'referencia' => 'Datos iniciales de Lead Ganado',
+                        'abono' => 0.00,
+                        'equipos_materiales' => $equiposDOP,
+                        'honorarios' => $honorariosDOP,
+                        'itbis' => $itbis,
+                        'total_facturado' => $totalFacturado,
+                        'total_adeudado' => $totalFacturado,
+                        'fecha_pago' => null,
+                    ]);
+                }
+
+                // Notificar al Comercial
+                if ($lead->user_id) {
+                    NotificacionSistema::create([
+                        'user_id' => $lead->user_id,
+                        'sender_id' => Auth::id(),
+                        'titulo' => 'Lead Ganado y Convertido',
+                        'mensaje' => "El lead {$lead->nombre} ha sido marcado como GANADO. Se creó el proyecto correspondiente.",
+                        'url' => route('proyectos.index'),
+                    ]);
+                }
+
+                return response()->json([
+                    'success' => true,
+                    'redirect_url' => route('administracion.rentabilidad.show', $proyecto->id)
+                ]);
+            });
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function marcarPerdido($id)
+    {
+        if (!$this->esAdminOEncargado()) return response()->json(['error' => 'No autorizado'], 403);
+
+        $lead = Lead::findOrFail($id);
+        $lead->status = 'Perdido';
+        $lead->save();
 
         return response()->json(['success' => true]);
     }

@@ -65,6 +65,27 @@
   .status-ganado { background: rgba(16, 185, 129, 0.1); color: #10b981; }
   .status-perdido { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
 
+  select.status-select {
+    border: 1px solid transparent !important;
+    cursor: pointer;
+    text-align: center;
+    text-align-last: center;
+    padding: 6px 28px 6px 12px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    width: auto;
+    margin: 0 auto;
+  }
+  select.status-select:focus {
+    box-shadow: 0 0 0 0.25rem rgba(16, 185, 129, 0.25) !important;
+  }
+  select.status-select.status-pendiente { background-color: rgba(245, 158, 11, 0.1) !important; color: #f59e0b !important; }
+  select.status-select.status-seguimiento { background-color: rgba(59, 130, 246, 0.1) !important; color: #3b82f6 !important; }
+  select.status-select.status-ganado { background-color: rgba(16, 185, 129, 0.1) !important; color: #10b981 !important; }
+  select.status-select.status-perdido { background-color: rgba(239, 68, 68, 0.1) !important; color: #ef4444 !important; }
+
   @media (max-width: 767.98px) {
     .spgi-table-desktop { display: none; }
   }
@@ -136,12 +157,23 @@
                             @php
                                 $statusClass = 'status-' . strtolower(str_replace(' ', '-', $lead->status));
                             @endphp
-                            <span class="status-badge {{ $statusClass }}">
-                                {{ $lead->status }}
-                            </span>
+                            <select class="form-select form-select-sm status-select {{ $statusClass }}" data-lead-id="{{ $lead->id }}">
+                                <option value="Pendiente" {{ $lead->status == 'Pendiente' ? 'selected' : '' }}>Pendiente</option>
+                                <option value="Seguimiento" {{ $lead->status == 'Seguimiento' ? 'selected' : '' }}>Seguimiento</option>
+                                <option value="Ganado" {{ $lead->status == 'Ganado' ? 'selected' : '' }}>Ganado</option>
+                                <option value="Perdido" {{ $lead->status == 'Perdido' ? 'selected' : '' }}>Perdido</option>
+                            </select>
                         </td>
                         <td>
                             <div class="d-flex justify-content-center gap-2 acciones">
+                                @if($lead->status !== 'Ganado' && $lead->status !== 'Perdido')
+                                <button type="button" class="btn btn-success btn-ganar" data-lead-id="{{ $lead->id }}" data-lead-nombre="{{ $lead->nombre }}" title="Aprobar / Ganado">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                </button>
+                                <button type="button" class="btn btn-danger btn-perder" data-lead-id="{{ $lead->id }}" data-lead-nombre="{{ $lead->nombre }}" title="Marcar como Perdido">
+                                    <i class="bi bi-x-circle-fill"></i>
+                                </button>
+                                @endif
                                 <a href="{{ route('leads.show', $lead->id) }}" class="btn btn-primary" title="Ver detalle">
                                     <i class="bi bi-eye"></i>
                                 </a>
@@ -181,4 +213,168 @@
   </div>
 </div>
 
+@endsection
+
+@section('scripts')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.status-select').forEach(select => {
+        select.addEventListener('change', async function() {
+            const leadId = this.dataset.leadId;
+            const newStatus = this.value;
+            const selectEl = this;
+            
+            const originalClass = selectEl.className;
+            
+            // Cambiar la clase dinámicamente de inmediato para dar feedback visual rápido
+            selectEl.className = `form-select form-select-sm status-select status-${newStatus.toLowerCase().replace(' ', '-')}`;
+            
+            try {
+                const response = await fetch(`/leads/${leadId}/update-status`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({ status: newStatus })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Estado Actualizado',
+                        text: `El lead ahora está en estado: ${newStatus}`,
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true
+                    });
+                } else {
+                    throw new Error(data.error || 'Error al actualizar');
+                }
+            } catch (error) {
+                console.error(error);
+                // Revertir clase y valor en caso de error
+                selectEl.className = originalClass;
+                const match = originalClass.match(/status-(\w+)/);
+                if (match) {
+                    const oldStatus = match[1];
+                    selectEl.value = oldStatus.charAt(0).toUpperCase() + oldStatus.slice(1);
+                }
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'No se pudo actualizar el estado del lead.'
+                });
+            }
+        });
+    });
+
+    document.querySelectorAll('.btn-ganar').forEach(btn => {
+        btn.addEventListener('click', async function() {
+            const leadId = this.dataset.leadId;
+            const leadNombre = this.dataset.leadNombre;
+            
+            const result = await Swal.fire({
+                title: '¿Confirmar Lead como GANADO?',
+                text: `El lead "${leadNombre}" será marcado como Ganado. Se creará automáticamente el cliente y proyecto respectivo y pasarás al módulo de rentabilidad.`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, ganar y cotizar',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#10b981'
+            });
+            
+            if (result.isConfirmed) {
+                Swal.fire({
+                    title: 'Procesando...',
+                    text: 'Creando cliente y proyecto en administración...',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+                
+                try {
+                    const response = await fetch(`/leads/${leadId}/convertir-ganado`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        }
+                    });
+                    
+                    const data = await response.json();
+                    if (data.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: '¡Conversión Exitosa!',
+                            text: 'El cliente y el proyecto han sido creados.',
+                            timer: 2000,
+                            showConfirmButton: false
+                        }).then(() => {
+                            window.location.href = data.redirect_url;
+                        });
+                    } else {
+                        throw new Error(data.error || 'Error al convertir');
+                    }
+                } catch (error) {
+                    console.error(error);
+                    Swal.fire('Error', error.message || 'Ocurrió un error al convertir el lead a proyecto.', 'error');
+                }
+            }
+        });
+    });
+
+    document.querySelectorAll('.btn-perder').forEach(btn => {
+        btn.addEventListener('click', async function() {
+            const leadId = this.dataset.leadId;
+            const leadNombre = this.dataset.leadNombre;
+            
+            const result = await Swal.fire({
+                title: '¿Marcar Lead como PERDIDO?',
+                text: `El lead "${leadNombre}" pasará al estado de Perdido.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, marcar perdido',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#ef4444'
+            });
+            
+            if (result.isConfirmed) {
+                try {
+                    const response = await fetch(`/leads/${leadId}/marcar-perdido`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        }
+                    });
+                    
+                    const data = await response.json();
+                    if (data.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Lead Perdido',
+                            text: 'El estado del lead ha sido actualizado.',
+                            timer: 1500,
+                            showConfirmButton: false
+                        }).then(() => {
+                            window.location.reload();
+                        });
+                    } else {
+                        throw new Error(data.error || 'Error al actualizar');
+                    }
+                } catch (error) {
+                    console.error(error);
+                    Swal.fire('Error', 'No se pudo actualizar el estado del lead.', 'error');
+                }
+            }
+        });
+    });
+});
+</script>
 @endsection

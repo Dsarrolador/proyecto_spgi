@@ -13,7 +13,7 @@ class RequerimientoProyectoController extends Controller
 {
     public function index(Proyecto $proyecto)
     {
-        $query = RequerimientoProyecto::with(['cliente', 'contacto', 'user', 'estadoRequerimiento', 'colaboradores'])
+        $query = RequerimientoProyecto::with(['cliente', 'contacto', 'user', 'estadoRequerimiento', 'colaboradores', 'tareas', 'requerimientoCliente'])
             ->deProyecto($proyecto->id);
 
         if (request('estado')) {
@@ -58,14 +58,18 @@ class RequerimientoProyectoController extends Controller
         $tiposSoporte = TipoSoporte::orderBy('nombre')->get();
         $estados = \App\Models\EstadoRequerimiento::all();
         $usuarios = \App\Models\User::orderBy('name')->get();
+        
+        $tareas = \App\Models\RequerimientoCliente::where('proyecto_id', $proyecto->id)->get();
+        $selected_tarea_id = $request->query('requerimiento_cliente_id');
 
-        return view('proyectos.requerimientos_create', compact('proyecto', 'clientes', 'tiposSoporte', 'estados', 'usuarios'));
+        return view('proyectos.requerimientos_create', compact('proyecto', 'clientes', 'tiposSoporte', 'estados', 'usuarios', 'tareas', 'selected_tarea_id'));
     }
 
     public function store(Request $request, Proyecto $proyecto)
     {
         $request->validate([
             'cliente_id'        => 'nullable|exists:cliente_maestro,id',
+            'requerimiento_cliente_id' => 'nullable|exists:requerimiento_cliente,id',
             'contacto_id'       => 'nullable|exists:libreta_contacto,id',
             'tipo_soporte_id'   => 'nullable|exists:tipo_soporte,id',
             'texto_imagen'      => 'required|string|max:2000',
@@ -81,6 +85,7 @@ class RequerimientoProyectoController extends Controller
 
         $req = RequerimientoProyecto::create([
             'id_proyecto'       => $proyecto->id,
+            'requerimiento_cliente_id' => $request->requerimiento_cliente_id ?: null,
             'cliente_id'        => $request->cliente_id ?: $proyecto->cliente_id,
             'contacto_id'       => $request->contacto_id ?: $proyecto->contacto_id,
             'tipo_soporte_id'   => $request->tipo_soporte_id ?: 1,
@@ -126,6 +131,8 @@ class RequerimientoProyectoController extends Controller
         $tiposSoporte = TipoSoporte::orderBy('nombre')->get();
         $estados = \App\Models\EstadoRequerimiento::all();
         $usuarios = \App\Models\User::orderBy('name')->get();
+        
+        $tareas = \App\Models\RequerimientoCliente::where('proyecto_id', $proyecto->id)->get();
 
         return view('proyectos.requerimientos_edit', [
             'r' => $requerimientos_proyecto,
@@ -133,7 +140,8 @@ class RequerimientoProyectoController extends Controller
             'clientes' => $clientes,
             'tiposSoporte' => $tiposSoporte,
             'estados' => $estados,
-            'usuarios' => $usuarios
+            'usuarios' => $usuarios,
+            'tareas' => $tareas,
         ]);
     }
 
@@ -141,6 +149,7 @@ class RequerimientoProyectoController extends Controller
     {
         $request->validate([
             'cliente_id'      => 'nullable|exists:cliente_maestro,id',
+            'requerimiento_cliente_id' => 'nullable|exists:requerimiento_cliente,id',
             'contacto_id'     => 'nullable|exists:libreta_contacto,id',
             'tipo_soporte_id' => 'nullable|exists:tipo_soporte,id',
             'texto_imagen'    => 'required|string|max:2000',
@@ -150,6 +159,7 @@ class RequerimientoProyectoController extends Controller
 
         $data = [
             'cliente_id'      => $request->cliente_id,
+            'requerimiento_cliente_id' => $request->requerimiento_cliente_id ?: null,
             'contacto_id'     => $request->contacto_id,
             'tipo_soporte_id' => $request->tipo_soporte_id,
             'texto_imagen'    => $request->texto_imagen,
@@ -237,6 +247,46 @@ class RequerimientoProyectoController extends Controller
             'message' => 'Notas guardadas correctamente.',
             'last_editor' => auth()->user()->name,
             'updated_at' => now()->format('d/m/Y H:i'),
+        ]);
+    }
+
+    public function storeTarea(Request $request, RequerimientoProyecto $requerimientos_proyecto)
+    {
+        $request->validate([
+            'nombre' => 'required|string|max:255',
+        ]);
+
+        $tarea = $requerimientos_proyecto->tareas()->create([
+            'nombre' => $request->nombre,
+            'completada' => false,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'tarea' => $tarea
+        ]);
+    }
+
+    public function toggleTarea(Request $request, $id)
+    {
+        $tarea = \App\Models\RequerimientoProyectoTarea::findOrFail($id);
+        $tarea->update([
+            'completada' => !$tarea->completada
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'tarea' => $tarea
+        ]);
+    }
+
+    public function destroyTarea($id)
+    {
+        $tarea = \App\Models\RequerimientoProyectoTarea::findOrFail($id);
+        $tarea->delete();
+
+        return response()->json([
+            'success' => true
         ]);
     }
 }

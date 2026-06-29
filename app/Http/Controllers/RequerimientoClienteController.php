@@ -63,14 +63,27 @@ class RequerimientoClienteController extends Controller
             }
         }
 
+        $descartadoId = \App\Models\EstadoRequerimiento::where('nombre', 'Descartado')->value('id');
+        $eliminadoIds = \App\Models\EstadoRequerimiento::where('nombre', 'Eliminado')->pluck('id')->toArray();
+        if (empty($eliminadoIds)) {
+            $eliminadoIds = [6];
+        }
+
         if (!$estado) {
-            $query->whereNotIn('estado_id', [6, 3]); // 6 = Eliminado
-        } elseif ($estado === 'Eliminados' || (string)$estado === '6') {
-            $query->where('estado_id', 6);
+            $exclude = array_merge($eliminadoIds, [3]);
+            if ($descartadoId) {
+                $exclude[] = $descartadoId;
+            }
+            $query->whereNotIn('estado_id', $exclude);
+        } elseif ($estado === 'Eliminados' || in_array((int)$estado, $eliminadoIds)) {
+            $query->whereIn('estado_id', $eliminadoIds);
         } elseif ($estado !== 'Todos') {
             $query->where('estado_id', (int) $estado);
         } else {
-            $query->where('estado_id', '!=', 6);
+            $query->whereNotIn('estado_id', $eliminadoIds);
+            if ($descartadoId) {
+                $query->where('estado_id', '!=', $descartadoId);
+            }
         }
 
         if ($cliente_id) {
@@ -115,49 +128,120 @@ class RequerimientoClienteController extends Controller
     {
         $usuario = Auth::user();
 
-        // 1. Obtener asignados para el combo del filtro
+        // 1. Obtener asignados para el combo del filtro (de cliente y de proyecto)
         $asignados = User::query()
             ->whereIn('id', function ($q) {
                 $q->select('asignado_user_id')
                     ->from('requerimiento_cliente')
                     ->whereNotNull('asignado_user_id')
-                    ->groupBy('asignado_user_id');
+                    ->union(
+                        \DB::table('requerimiento_proyecto')
+                            ->select('asignado_user_id')
+                            ->whereNotNull('asignado_user_id')
+                    );
             })
             ->orderBy('name')
             ->get(['id', 'name', 'email']);
 
-        // 2. Query principal con filtros aplicados
-        $query = RequerimientoCliente::with([
+        // 2. Query de RequerimientoCliente con filtros
+        $queryCliente = RequerimientoCliente::with([
             'novedades.user',
             'clienteRelation',
             'user',
             'asignado',
             'colaboradores',
+            'proyecto',
+            'requerimientosProyecto.estadoRequerimiento',
+            'requerimientosProyecto.asignado',
+            'tareas',
         ]);
+        $queryCliente = $this->applyFilters($request, $queryCliente);
 
-        $query = $this->applyFilters($request, $query);
+        // 3. Query de RequerimientoProyecto con filtros
+        $queryProyecto = \App\Models\RequerimientoProyecto::with([
+            'novedades.user',
+            'cliente',
+            'user',
+            'asignado',
+            'colaboradores',
+            'proyecto',
+            'estadoRequerimiento',
+            'tareas',
+        ]);
+        $queryProyecto = $this->applyFiltersProyecto($request, $queryProyecto);
 
-        // 3. Clonar la query para las gráficas (sin paginación)
-        $chartDataQuery = clone $query;
+        // 4. Obtener colecciones y marcar tipo
+        $reqClientes = $queryCliente->get();
+        foreach ($reqClientes as $item) {
+            $item->is_proyecto = false;
+        }
 
-        // Gráfica de Clientes
-        $chartClientes = (clone $chartDataQuery)
-            ->selectRaw('count(*) as total, cliente_id')
-            ->join('cliente_maestro', 'requerimiento_cliente.cliente_id', '=', 'cliente_maestro.id')
-            ->selectRaw('cliente_maestro.nombre as label')
-            ->groupBy('cliente_id', 'cliente_maestro.nombre')
-            ->get();
+        $reqProyectos = $queryProyecto->get();
+        foreach ($reqProyectos as $item) {
+            $item->is_proyecto = true;
+        }
 
-        // Gráfica de Encargados
-        $chartEncargados = (clone $chartDataQuery)
-            ->selectRaw('count(*) as total, asignado_user_id')
-            ->leftJoin('users', 'requerimiento_cliente.asignado_user_id', '=', 'users.id')
-            ->selectRaw('COALESCE(users.name, "Sin asignar") as label')
-            ->groupBy('asignado_user_id', 'users.name')
-            ->get();
+        // 5. Combinar
+        $combined = $reqClientes->concat($reqProyectos);
+
+        // 6. Ordenar por prioridad desc, luego created_at desc, luego id desc
+        $sorted = $combined->sort(function ($a, $b) {
+            $priA = $a->prioridad ?? 0;
+            $priB = $b->prioridad ?? 0;
+            if ($priA !== $priB) {
+                return $priB <=> $priA;
+            }
+            $timeA = $a->created_at ? $a->created_at->timestamp : 0;
+            $timeB = $b->created_at ? $b->created_at->timestamp : 0;
+            if ($timeA !== $timeB) {
+                return $timeB <=> $timeA;
+            }
+            return $b->id <=> $a->id;
+        });
+
+        // 7. Paginar manualmente
+        $page = (int) $request->get('page', 1);
+        $perPage = 15;
+        $paginated = new \Illuminate\Pagination\LengthAwarePaginator(
+            $sorted->forPage($page, $perPage)->values(),
+            $sorted->count(),
+            $perPage,
+            $page,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
+
+        // 8. Gráficas de Clientes y Encargados basadas en la colección combinada
+        $chartClientes = $combined->groupBy(function($item) {
+            return $item->cliente_id ?? 0;
+        })->map(function($group) {
+            $first = $group->first();
+            $label = 'Sin cliente asignado';
+            if ($first->is_proyecto) {
+                $label = $first->cliente->nombre ?? 'Sin cliente asignado';
+            } else {
+                $label = $first->clienteRelation->nombre ?? 'Sin cliente asignado';
+            }
+            return (object) [
+                'total' => $group->count(),
+                'label' => $label,
+                'cliente_id' => $first->cliente_id,
+            ];
+        })->values();
+
+        $chartEncargados = $combined->groupBy(function($item) {
+            return $item->asignado_user_id ?? 0;
+        })->map(function($group) {
+            $first = $group->first();
+            $label = $first->asignado->name ?? 'Sin asignar';
+            return (object) [
+                'total' => $group->count(),
+                'label' => $label,
+                'asignado_user_id' => $first->asignado_user_id,
+            ];
+        })->values();
 
         return view('requerimientos.index', [
-            'requerimientos'   => $query->orderByDesc('prioridad')->orderByDesc('id')->paginate(15)->withQueryString(),
+            'requerimientos'   => $paginated,
             'clientes'         => ClienteMaestro::orderBy('nombre')->get(),
             'asignados'        => $asignados,
             'estados'          => EstadoRequerimiento::all(),
@@ -174,6 +258,137 @@ class RequerimientoClienteController extends Controller
             'categoriasIguala' => CategoriaIguala::orderBy('nombre')->get(),
             'esAdmin'          => $this->esAdministracion(),
             'esEncargado'      => $this->esRol('encargado'),
+        ]);
+    }
+
+    private function applyFiltersProyecto(Request $request, $query)
+    {
+        $usuario = Auth::user();
+
+        $estado           = $request->get('estado');
+        $cliente_id       = $request->get('cliente_id');
+        $categoria_iguala = $request->get('categoria_iguala');
+        $desde            = $request->get('desde');
+        $hasta            = $request->get('hasta');
+        $facturado        = $request->get('facturado');
+        $asignado_id      = $request->get('asignado_id', $request->get('asignado_user_id', 'mios'));
+
+        if ($asignado_id === 'mios' || $asignado_id === null || $asignado_id === '') {
+            if ($usuario) {
+                $query->where(function($q) use ($usuario) {
+                    $q->where('asignado_user_id', $usuario->id)
+                      ->orWhere('user_id', $usuario->id)
+                      ->orWhereHas('colaboradores', function($sq) use ($usuario) {
+                          $sq->where('users.id', $usuario->id);
+                      });
+                });
+            }
+        } elseif ($asignado_id === 'todos') {
+            // sin filtro
+        } elseif (is_numeric($asignado_id)) {
+            $query->where('asignado_user_id', (int) $asignado_id);
+        } else {
+            if ($usuario) {
+                $query->where('asignado_user_id', $usuario->id);
+            }
+        }
+
+        $descartadoId = \App\Models\EstadoRequerimiento::where('nombre', 'Descartado')->value('id');
+        $eliminadoIds = \App\Models\EstadoRequerimiento::where('nombre', 'Eliminado')->pluck('id')->toArray();
+        if (empty($eliminadoIds)) {
+            $eliminadoIds = [6];
+        }
+
+        if (!$estado) {
+            $exclude = array_merge($eliminadoIds, [3]);
+            if ($descartadoId) {
+                $exclude[] = $descartadoId;
+            }
+            $query->whereNotIn('estado_id', $exclude);
+        } elseif ($estado === 'Eliminados' || in_array((int)$estado, $eliminadoIds)) {
+            $query->whereIn('estado_id', $eliminadoIds);
+        } elseif ($estado !== 'Todos') {
+            $query->where('estado_id', (int) $estado);
+        } else {
+            $query->whereNotIn('estado_id', $eliminadoIds);
+            if ($descartadoId) {
+                $query->where('estado_id', '!=', $descartadoId);
+            }
+        }
+
+        if ($cliente_id) {
+            $query->where('cliente_id', $cliente_id);
+        }
+
+        if ($facturado !== null && $facturado !== '') {
+            $query->where('facturado', (int) $facturado);
+        }
+
+        if (!empty($categoria_iguala)) {
+            $query->whereHas('cliente', function ($q) use ($categoria_iguala) {
+                if (is_numeric($categoria_iguala)) {
+                    $q->where('categoria_iguala_id', (int) $categoria_iguala);
+                } else {
+                    $q->where('categoria_iguala', $categoria_iguala);
+                }
+            });
+        }
+
+        if (!empty($desde) && !empty($hasta)) {
+            $query->whereBetween('requerimiento_proyecto.created_at', [
+                Carbon::parse($desde)->startOfDay(),
+                Carbon::parse($hasta)->endOfDay(),
+            ]);
+        } elseif (!empty($desde)) {
+            $query->where('requerimiento_proyecto.created_at', '>=', Carbon::parse($desde)->startOfDay());
+        } elseif (!empty($hasta)) {
+            $query->where('requerimiento_proyecto.created_at', '<=', Carbon::parse($hasta)->endOfDay());
+        }
+
+        if ($request->filled('prioridad')) {
+            $query->where('prioridad', $request->prioridad);
+        }
+
+        return $query;
+    }
+
+    public function storeTarea(Request $request, RequerimientoCliente $requerimiento_cliente)
+    {
+        $request->validate([
+            'nombre' => 'required|string|max:255',
+        ]);
+
+        $tarea = $requerimiento_cliente->tareas()->create([
+            'nombre' => $request->nombre,
+            'completada' => false,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'tarea' => $tarea
+        ]);
+    }
+
+    public function toggleTarea(Request $request, $id)
+    {
+        $tarea = \App\Models\RequerimientoClienteTarea::findOrFail($id);
+        $tarea->update([
+            'completada' => !$tarea->completada
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'tarea' => $tarea
+        ]);
+    }
+
+    public function destroyTarea($id)
+    {
+        $tarea = \App\Models\RequerimientoClienteTarea::findOrFail($id);
+        $tarea->delete();
+
+        return response()->json([
+            'success' => true
         ]);
     }
 
@@ -212,6 +427,7 @@ class RequerimientoClienteController extends Controller
         'estadoRequerimiento',
         'imagenes',
         'novedades.user',
+        'conduces',
     ])->findOrFail($id);
 
     $estados = EstadoRequerimiento::orderBy('nombre')->get();
@@ -225,6 +441,7 @@ class RequerimientoClienteController extends Controller
 
         return view('requerimientos.create', [
             'clientes'     => ClienteMaestro::all(),
+            'proyectos'    => \App\Models\Proyecto::orderBy('nombre')->get(['id', 'nombre', 'cliente_id']),
             'tiposSoporte' => TipoSoporte::where('activo', 1)->orderBy('nombre')->get(),
             'usuarios'     => User::orderBy('name')->get(['id', 'name', 'email']),
             'estados'      => EstadoRequerimiento::all(),
@@ -238,6 +455,7 @@ class RequerimientoClienteController extends Controller
 
         $request->validate([
             'cliente_id'       => 'required|exists:cliente_maestro,id',
+            'proyecto_id'      => 'nullable|exists:proyectos,id',
             'contacto_id'      => 'nullable|exists:libreta_contacto,id',
             'tipo_soporte_id'  => 'required|exists:tipo_soporte,id',
             'texto_imagen'     => 'required|string|max:2000',
@@ -268,6 +486,7 @@ class RequerimientoClienteController extends Controller
 
         $data = [
             'cliente_id'       => $request->cliente_id,
+            'proyecto_id'      => $request->proyecto_id ?: null,
             'contacto_id'      => $request->contacto_id ?: null,
             'tipo_soporte_id'  => $request->tipo_soporte_id,
             'texto_imagen'     => $request->texto_imagen,
@@ -370,6 +589,7 @@ class RequerimientoClienteController extends Controller
         return view('requerimientos.edit', [
             'requerimiento' => $requerimiento,
             'clientes'      => ClienteMaestro::orderBy('nombre')->get(),
+            'proyectos'     => \App\Models\Proyecto::orderBy('nombre')->get(['id', 'nombre', 'cliente_id']),
             'tiposSoporte'  => TipoSoporte::where('activo', 1)->orderBy('nombre')->get(),
             'contactos'     => LibretaContacto::orderBy('nombre')->get(),
             'estados'       => EstadoRequerimiento::all(),
@@ -388,6 +608,7 @@ class RequerimientoClienteController extends Controller
 
         $rules = [
             'cliente_id'       => 'nullable|exists:cliente_maestro,id',
+            'proyecto_id'      => 'nullable|exists:proyectos,id',
             'contacto_id'      => 'nullable|exists:libreta_contacto,id',
             'tipo_soporte_id'  => 'nullable|exists:tipo_soporte,id',
             'texto_imagen'     => 'nullable|string|max:2000',
@@ -422,6 +643,10 @@ class RequerimientoClienteController extends Controller
 
         if ($request->filled('cliente_id')) {
             $req->cliente_id = $request->cliente_id;
+        }
+
+        if ($request->has('proyecto_id')) {
+            $req->proyecto_id = $request->proyecto_id ?: null;
         }
 
         if ($request->has('contacto_id')) {

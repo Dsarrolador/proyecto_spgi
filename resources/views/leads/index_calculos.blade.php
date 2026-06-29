@@ -283,17 +283,43 @@ function viewMatrix(name, data) {
 
     let gT = { cost: 0, itbis: 0, sub: 0, qty: 0, gan: 0, val: 0 };
     const items = data.items || [];
+    let totalHonorarios = 0;
 
     items.forEach(item => {
         const mon = item.moneda || 'DOP';
-        const cO = parseFloat(item.costo) || 0;
         const adj = parseFloat(item.adj_price) || 0;
         const qty = parseFloat(item.qty) || 0;
-        const cD = mon === 'USD' ? cO * tasa : cO;
-        const iC = cD * (itbis_c_p / 100); const sub = cD + iC;
-        const pSi = gan_p < 100 ? (sub / (1 - (gan_p / 100))) : 0;
-        const pF = pSi * (1 + (itbis_v_p/100));
-        const vT = (adj > 0 ? adj : pF) * qty; const gF = adj > 0 ? (adj - sub) * qty : 0;
+        const isHonorario = item.is_honorario || false;
+
+        let cO, cD, iC, sub, pSi, pF, sell_price_si, vT, gF;
+
+        if (isHonorario) {
+            cO = 0; cD = 0; iC = 0; sub = 0;
+            const hVal = parseFloat(item.honorario_val) || adj || 0;
+            pSi = hVal; pF = hVal * (1 + (parseFloat(item.itbis_perc) || 18) / 100);
+            sell_price_si = adj > 0 ? adj : pSi;
+            vT = sell_price_si * (1 + (parseFloat(item.itbis_perc) || 18) / 100) * qty;
+            gF = 0;
+            totalHonorarios += sell_price_si * qty;
+        } else {
+            cO = parseFloat(item.costo) || 0;
+            cD = mon === 'USD' ? cO * tasa : cO;
+            
+            const has_itbis_c = item.has_itbis_c !== false;
+            const itbis_perc = has_itbis_c ? (parseFloat(item.itbis_perc) || itbis_c_p) : 0;
+            iC = cD * (itbis_perc / 100);
+            sub = (cD + iC) * qty;
+            
+            const item_gan_p = parseFloat(item.margin_perc) !== undefined ? parseFloat(item.margin_perc) : gan_p;
+            const gan_u = cD * (item_gan_p / 100);
+            pSi = cD + gan_u;
+            pF = pSi * (1 + (itbis_v_p/100));
+            
+            sell_price_si = adj > 0 ? adj : pSi;
+            vT = sell_price_si * (1 + (itbis_v_p/100)) * qty;
+            gF = (sell_price_si - cD) * qty;
+        }
+
         const fmt = (v) => '$' + v.toLocaleString('en-US', {minimumFractionDigits: 2});
         
         body.innerHTML += `
@@ -312,16 +338,23 @@ function viewMatrix(name, data) {
                 <td class="text-end pe-4 text-primary fw-900 fs-6">${fmt(vT)}</td>
             </tr>
         `;
-        gT.cost += cD; gT.itbis += iC; gT.sub += sub; gT.qty += qty; gT.gan += gF; gT.val += vT;
+        gT.cost += cD * qty; gT.itbis += iC * qty; gT.sub += sub; gT.qty += qty; gT.gan += gF; gT.val += vT;
     });
 
     foot.innerHTML = `
+        ${totalHonorarios > 0 ? `
+        <tr class="bg-surface border-bottom">
+            <td colspan="10" class="ps-4 fw-900 text-info text-end">TOTAL HONORARIOS (DOP)</td>
+            <td colspan="2" class="text-end pe-4 text-info fw-900">$${totalHonorarios.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+        </tr>
+        ` : ''}
         <tr class="bg-surface">
             <td colspan="2" class="ps-4 fw-900 text-main">TOTALES GENERALES (DOP)</td>
+            <td class="text-end text-main">-</td>
             <td class="text-end text-main">$${gT.cost.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
             <td class="text-end text-main">$${gT.itbis.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
             <td class="text-end text-main">$${gT.sub.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
-            <td colspan="4"></td>
+            <td colspan="3"></td>
             <td class="text-center text-main">${gT.qty}</td>
             <td class="text-end text-success">$${gT.gan.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
             <td class="text-end pe-4 text-primary">$${gT.val.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
@@ -339,14 +372,36 @@ function exportMatrixToExcel(name, data) {
     const itbis_v_p = parseFloat(data.global_itbis_ventas) || 18;
     (data.items || []).forEach(item => {
         const mon = item.moneda || 'DOP';
-        const cO = parseFloat(item.costo) || 0;
         const adj = parseFloat(item.adj_price) || 0;
         const q = parseFloat(item.qty) || 0;
-        const cD = mon === 'USD' ? cO * tasa : cO;
-        const iC = cD * (itbis_c_p / 100); const sub = cD + iC;
-        const pSi = gan_p < 100 ? (sub / (1 - (gan_p / 100))) : 0;
-        const pF = pSi * (1 + (itbis_v_p/100));
-        const vT = (adj > 0 ? adj : pF) * q; const gF = adj > 0 ? (adj - sub) * q : 0;
+        const isHonorario = item.is_honorario || false;
+
+        let cO, cD, iC, sub, pSi, pF, sell_price_si, vT, gF;
+
+        if (isHonorario) {
+            cO = 0; cD = 0; iC = 0; sub = 0;
+            const hVal = parseFloat(item.honorario_val) || adj || 0;
+            pSi = hVal; pF = hVal * (1 + (parseFloat(item.itbis_perc) || 18) / 100);
+            sell_price_si = adj > 0 ? adj : pSi;
+            vT = sell_price_si * (1 + (parseFloat(item.itbis_perc) || 18) / 100) * q; gF = 0;
+        } else {
+            cO = parseFloat(item.costo) || 0;
+            cD = mon === 'USD' ? cO * tasa : cO;
+            
+            const has_itbis_c = item.has_itbis_c !== false;
+            const itbis_perc = has_itbis_c ? (parseFloat(item.itbis_perc) || itbis_c_p) : 0;
+            iC = cD * (itbis_perc / 100);
+            sub = (cD + iC) * q;
+            
+            const item_gan_p = parseFloat(item.margin_perc) !== undefined ? parseFloat(item.margin_perc) : gan_p;
+            const gan_u = cD * (item_gan_p / 100);
+            pSi = cD + gan_u;
+            pF = pSi * (1 + (itbis_v_p/100));
+            
+            sell_price_si = adj > 0 ? adj : pSi;
+            vT = sell_price_si * (1 + (itbis_v_p/100)) * q; 
+            gF = (sell_price_si - cD) * q;
+        }
         tableData.push([item.nombre_articulo, mon, cO, cD, iC, sub, pSi, pF, adj, q, gF, vT]);
     });
     const ws = XLSX.utils.aoa_to_sheet(tableData);

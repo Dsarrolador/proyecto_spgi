@@ -108,8 +108,9 @@
           </div>
 
           <div class="col-md-6">
-            <label for="fecha_vencimiento" class="form-label">Fecha de Vencimiento <span class="text-danger">*</span></label>
-            <input type="date" name="fecha_vencimiento" id="fecha_vencimiento" value="{{ old('fecha_vencimiento') }}" class="form-control form-control-spgi" required>
+            <label for="fecha_vencimiento" class="form-label">Fecha de Vencimiento</label>
+            <input type="date" name="fecha_vencimiento" id="fecha_vencimiento" value="{{ old('fecha_vencimiento') }}" class="form-control form-control-spgi">
+            <div class="form-text small text-muted">Se asignará automáticamente a 30 días si se deja en blanco.</div>
           </div>
 
           <div class="col-md-12">

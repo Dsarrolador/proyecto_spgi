@@ -81,11 +81,11 @@
             border-bottom: 2px solid #9ca3af;
         }
         .footer {
-            margin-top: 50px;
+            margin-top: 90px;
             width: 100%;
         }
         .signature-box {
-            width: 30%;
+            width: 100%;
             text-align: center;
             border-top: 1px solid #9ca3af;
             padding-top: 8px;
@@ -220,15 +220,21 @@
 
     <table class="footer" style="width: 100%;">
         <tr>
-            <td style="width: 35%;">
-                <div class="signature-box" style="width: 100%;">
+            <td style="width: 30%;">
+                <div class="signature-box">
                     Firma Responsable
                 </div>
             </td>
-            <td style="width: 30%;"></td>
-            <td style="width: 35%;">
-                <div class="signature-box" style="width: 100%;">
+            <td style="width: 5%;"></td>
+            <td style="width: 30%;">
+                <div class="signature-box">
                     Firma Aprobada
+                </div>
+            </td>
+            <td style="width: 5%;"></td>
+            <td style="width: 30%;">
+                <div class="signature-box">
+                    Firma Gerente General
                 </div>
             </td>
         </tr>

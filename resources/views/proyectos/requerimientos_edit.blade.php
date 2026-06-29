@@ -49,6 +49,22 @@
             </select>
         </div>
 
+        <!-- TAREA / REQUERIMIENTO GENERAL (OPCIONAL) -->
+        <div class="mb-3">
+            <label class="form-label">Tarea del Proyecto (Requerimiento Cliente)</label>
+            <select name="requerimiento_cliente_id" id="requerimiento_cliente_id" class="form-select">
+                <option value="">-- No vincular a una tarea (Requerimiento Cliente) --</option>
+                @foreach($tareas as $t)
+                    <option value="{{ $t->id }}" {{ $t->id == old('requerimiento_cliente_id', $r->requerimiento_cliente_id) ? 'selected' : '' }}>
+                        #{{ $t->id }} - {{ \Illuminate\Support\Str::limit($t->texto_imagen, 80) }}
+                    </option>
+                @endforeach
+            </select>
+            <small class="text-muted d-block mt-1">
+                Vincule esta interacción técnica a una tarea / requerimiento general del cliente.
+            </small>
+        </div>
+
         <!-- CONTACTO -->
         <div class="mb-3">
             <label class="form-label">Contacto</label>

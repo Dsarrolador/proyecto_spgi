@@ -32,6 +32,28 @@
   .spgi-table tbody td.text-start { text-align:left; }
   .spgi-table tbody tr:hover{ background: rgba(59, 130, 246, 0.05); }
   .acciones .btn{ width: 38px; height: 38px; display: inline-flex; align-items: center; justify-content: center; padding: 0; border-radius: 10px; }
+
+  .status-borrador { background: rgba(245, 158, 11, 0.1) !important; color: #f59e0b !important; }
+  .status-enviado { background: rgba(59, 130, 246, 0.1) !important; color: #3b82f6 !important; }
+  .status-aprobado { background: rgba(16, 185, 129, 0.1) !important; color: #10b981 !important; }
+  .status-rechazado { background: rgba(239, 68, 68, 0.1) !important; color: #ef4444 !important; }
+
+  select.status-select {
+    border: 1px solid transparent !important;
+    cursor: pointer;
+    text-align: center;
+    text-align-last: center;
+    padding: 6px 28px 6px 12px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    width: auto;
+    margin: 0 auto;
+  }
+  select.status-select:focus {
+    box-shadow: 0 0 0 0.25rem rgba(59, 130, 246, 0.25) !important;
+  }
 </style>
 
 <div class="spgi-bg">
@@ -91,11 +113,15 @@
                 @endif
               </td>
               <td>
-                @if($r->estado == 'Borrador')
-                  <span class="badge bg-warning text-dark px-3 py-2 rounded-pill">Borrador</span>
-                @else
-                  <span class="badge bg-success px-3 py-2 rounded-pill">{{ $r->estado }}</span>
-                @endif
+                @php
+                  $statusClass = 'status-' . strtolower(str_replace(' ', '-', $r->estado));
+                @endphp
+                <select class="form-select form-select-sm status-select {{ $statusClass }}" data-rendicion-id="{{ $r->id }}">
+                  <option value="Borrador" {{ $r->estado == 'Borrador' ? 'selected' : '' }}>Borrador</option>
+                  <option value="Enviado" {{ $r->estado == 'Enviado' ? 'selected' : '' }}>Enviado</option>
+                  <option value="Aprobado" {{ $r->estado == 'Aprobado' ? 'selected' : '' }}>Aprobado</option>
+                  <option value="Rechazado" {{ $r->estado == 'Rechazado' ? 'selected' : '' }}>Rechazado</option>
+                </select>
               </td>
               <td class="fw-bold">RD$ {{ number_format($r->total, 2) }}</td>
               <td>{{ $r->created_at->format('d/m/Y h:i A') }}</td>
@@ -116,7 +142,7 @@
             </tr>
             @empty
             <tr>
-              <td colspan="6" class="text-center py-5">
+              <td colspan="7" class="text-center py-5">
                 <i class="bi bi-receipt display-4 text-muted mb-3 d-block"></i>
                 <p class="text-muted">No se encontraron rendiciones registradas.</p>
               </td>
@@ -128,4 +154,55 @@
     </div>
   </div>
 </div>
+@endsection
+
+@section('scripts')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.status-select').forEach(select => {
+        select.addEventListener('change', async function() {
+            const rendicionId = this.dataset.rendicionId;
+            const newStatus = this.value;
+            const selectEl = this;
+            
+            // Cambiar la clase dinámicamente de inmediato para dar feedback visual rápido
+            selectEl.className = `form-select form-select-sm status-select status-${newStatus.toLowerCase()}`;
+            
+            try {
+                const response = await fetch(`/rendiciones/${rendicionId}/update-status`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({ estado: newStatus })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Estado Actualizado',
+                        text: `La rendición ahora está en estado: ${newStatus}`,
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true
+                    });
+                } else {
+                    throw new Error(data.error || 'Error al actualizar');
+                }
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: error.message || 'No se pudo actualizar el estado'
+                });
+            }
+        });
+    });
+});
+</script>
 @endsection

@@ -89,12 +89,25 @@ class DashboardController extends Controller
             $estado = 'Todos';
         }
 
+        $descartadoId = \App\Models\EstadoRequerimiento::where('nombre', 'Descartado')->value('id');
+        $eliminadoIds = \App\Models\EstadoRequerimiento::where('nombre', 'Eliminado')->pluck('id')->toArray();
+        if (empty($eliminadoIds)) {
+            $eliminadoIds = [6];
+        }
+
         if ($estado === 'Solo_Pendientes') {
-            $query->whereNotIn('estado_id', [6, 3]);
+            $exclude = array_merge($eliminadoIds, [3]);
+            if ($descartadoId) {
+                $exclude[] = $descartadoId;
+            }
+            $query->whereNotIn('estado_id', $exclude);
         } elseif ($estado !== 'Todos') {
             $query->where('estado_id', (int) $estado);
         } else {
-            $query->where('estado_id', '!=', 6);
+            $query->whereNotIn('estado_id', $eliminadoIds);
+            if ($descartadoId) {
+                $query->where('estado_id', '!=', $descartadoId);
+            }
         }
 
         if ($cliente_id) {

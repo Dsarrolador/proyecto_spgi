@@ -95,11 +95,16 @@ Route::middleware('auth')->group(function () {
         Route::get('/leads/{lead}/calculations/{calc_id}', [LeadController::class, 'getCalculationDetails'])->name('leads.getCalculationDetails');
         Route::post('/leads/calculations/{id}/validar', [LeadController::class, 'validarCalculation'])->name('leads.validarCalculation');
         Route::delete('/leads/calculations/{calc_id}', [LeadController::class, 'deleteCalculation'])->name('leads.deleteCalculation');
+        Route::post('/leads/{id}/update-status', [LeadController::class, 'updateStatus'])->name('leads.updateStatus');
+        Route::post('/leads/{id}/convertir-ganado', [LeadController::class, 'convertirAGanado'])->name('leads.convertirGanado');
+        Route::post('/leads/{id}/marcar-perdido', [LeadController::class, 'marcarPerdido'])->name('leads.marcarPerdido');
 
         // Administración Dashboard y Facturación
         Route::get('/administracion/bienvenido', function () {
             return view('administracion.bienvenido');
         })->name('administracion.bienvenido');
+
+        Route::get('/administracion/comisiones-leads', [\App\Http\Controllers\ProyectoRentabilidadController::class, 'comisionesLeads'])->name('administracion.comisiones.leads');
 
         Route::get('/requerimientos/facturacion', [RequerimientoClienteController::class, 'facturacion'])
             ->name('requerimientos.facturacion');
@@ -116,6 +121,7 @@ Route::middleware('auth')->group(function () {
         // Rendición de Gastos
         Route::resource('rendiciones', \App\Http\Controllers\RendicionController::class)->except(['edit', 'update']);
         Route::put('rendiciones/{id}/general-info', [\App\Http\Controllers\RendicionController::class, 'updateGeneralInfo'])->name('rendiciones.general-info');
+        Route::post('rendiciones/{id}/update-status', [\App\Http\Controllers\RendicionController::class, 'updateStatus'])->name('rendiciones.updateStatus');
         Route::post('rendiciones/metodo-pago/ajax', [\App\Http\Controllers\RendicionController::class, 'storeMetodoPago'])->name('rendiciones.metodo-pago.ajax');
         Route::post('rendiciones/{id}/gastos', [\App\Http\Controllers\RendicionController::class, 'storeGasto'])->name('rendiciones.gastos.store');
         Route::delete('rendiciones/{id}/gastos/{gasto_id}', [\App\Http\Controllers\RendicionController::class, 'deleteGasto'])->name('rendiciones.gastos.destroy');
@@ -129,11 +135,36 @@ Route::middleware('auth')->group(function () {
         Route::put('horas-extras/{id}/general', [\App\Http\Controllers\HoraExtraController::class, 'updateGeneral'])->name('horas-extras.general.update');
         Route::post('horas-extras/{id}/aprobar', [\App\Http\Controllers\HoraExtraController::class, 'aprobarPlanilla'])->name('horas-extras.aprobar');
 
-        // Estado de Cuenta
-        Route::get('estado-cuentas/pdf', [\App\Http\Controllers\EstadoCuentaController::class, 'generarPdf'])->name('estado-cuentas.pdf');
-        Route::resource('estado-cuentas', \App\Http\Controllers\EstadoCuentaController::class)->parameters([
-            'estado-cuentas' => 'id'
-        ]);
+        // Requerimientos Administrativos
+        Route::resource('requerimientos-administrativos', \App\Http\Controllers\RequerimientoAdministrativoController::class);
+
+        // Bitácora Administrativa de Clientes
+        Route::prefix('administracion/bitacora-clientes')->name('administracion.bitacora-clientes.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\ClienteBitacoraAdminController::class, 'index'])->name('index');
+            Route::get('/{cliente}', [\App\Http\Controllers\ClienteBitacoraAdminController::class, 'show'])->name('show');
+            Route::post('/{cliente}/documentos', [\App\Http\Controllers\ClienteBitacoraAdminController::class, 'storeDocumento'])->name('documentos.store');
+            Route::delete('/{cliente}/documentos/{id}', [\App\Http\Controllers\ClienteBitacoraAdminController::class, 'destroyDocumento'])->name('documentos.destroy');
+            Route::get('/documentos/{id}/download', [\App\Http\Controllers\ClienteBitacoraAdminController::class, 'downloadDocumento'])->name('documentos.download');
+            Route::post('/{cliente}/contactos', [\App\Http\Controllers\ClienteBitacoraAdminController::class, 'storeContacto'])->name('contactos.store');
+            Route::delete('/{cliente}/contactos/{id}', [\App\Http\Controllers\ClienteBitacoraAdminController::class, 'destroyContacto'])->name('contactos.destroy');
+        });
+
+        // Análisis de Rentabilidad de Proyectos
+        Route::prefix('administracion/rentabilidad')->name('administracion.rentabilidad.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\ProyectoRentabilidadController::class, 'index'])->name('index');
+            Route::get('/{proyecto}', [\App\Http\Controllers\ProyectoRentabilidadController::class, 'show'])->name('show');
+            Route::post('/{proyecto}/update-comision', [\App\Http\Controllers\ProyectoRentabilidadController::class, 'updateComision'])->name('update-comision');
+            
+            // Rutas para filas
+            Route::post('/{proyecto}/proyecciones', [\App\Http\Controllers\ProyectoRentabilidadController::class, 'storeProyeccion'])->name('proyecciones.store');
+            Route::delete('/proyecciones/{id}', [\App\Http\Controllers\ProyectoRentabilidadController::class, 'destroyProyeccion'])->name('proyecciones.destroy');
+            
+            Route::post('/{proyecto}/gastos', [\App\Http\Controllers\ProyectoRentabilidadController::class, 'storeGasto'])->name('gastos.store');
+            Route::delete('/gastos/{id}', [\App\Http\Controllers\ProyectoRentabilidadController::class, 'destroyGasto'])->name('gastos.destroy');
+            
+            Route::post('/{proyecto}/horas-extras', [\App\Http\Controllers\ProyectoRentabilidadController::class, 'storeHoraExtra'])->name('horas-extras.store');
+            Route::delete('/horas-extras/{id}', [\App\Http\Controllers\ProyectoRentabilidadController::class, 'destroyHoraExtra'])->name('horas-extras.destroy');
+        });
     });
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -363,6 +394,14 @@ Route::middleware('auth')->group(function () {
             'update' => 'requerimientos_proyecto.update',
             'destroy' => 'requerimientos_proyecto.destroy',
         ]);
+
+    Route::post('requerimientos-proyecto/{requerimientos_proyecto}/tareas', [\App\Http\Controllers\RequerimientoProyectoController::class, 'storeTarea'])->name('requerimientos-proyecto.tareas.store');
+    Route::post('requerimientos-proyecto-tareas/{id}/toggle', [\App\Http\Controllers\RequerimientoProyectoController::class, 'toggleTarea'])->name('requerimientos-proyecto-tareas.toggle');
+    Route::delete('requerimientos-proyecto-tareas/{id}', [\App\Http\Controllers\RequerimientoProyectoController::class, 'destroyTarea'])->name('requerimientos-proyecto-tareas.destroy');
+
+    Route::post('requerimientos-cliente/{requerimiento_cliente}/tareas', [RequerimientoClienteController::class, 'storeTarea'])->name('requerimientos-cliente.tareas.store');
+    Route::post('requerimientos-cliente-tareas/{id}/toggle', [RequerimientoClienteController::class, 'toggleTarea'])->name('requerimientos-cliente-tareas.toggle');
+    Route::delete('requerimientos-cliente-tareas/{id}', [RequerimientoClienteController::class, 'destroyTarea'])->name('requerimientos-cliente-tareas.destroy');
 
     Route::get('proyectos/requerimientos/{requerimientos_proyecto}/novedades', [NovedadRequerimientoProyectoController::class, 'index'])->name('proyectos.requerimientos.novedades.index');
     Route::post('proyectos/requerimientos/novedades', [NovedadRequerimientoProyectoController::class, 'store'])->name('proyectos.requerimientos.novedades.store');

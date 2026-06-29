@@ -128,14 +128,27 @@ class ProyectoController extends Controller
             ->where('id_proyecto', $proyecto->id);
 
         $estado = request('estado');
+        $descartadoId = \App\Models\EstadoRequerimiento::where('nombre', 'Descartado')->value('id');
+        $eliminadoIds = \App\Models\EstadoRequerimiento::where('nombre', 'Eliminado')->pluck('id')->toArray();
+        if (empty($eliminadoIds)) {
+            $eliminadoIds = [6];
+        }
+
         if (!$estado) {
-            $query->whereNotIn('estado_id', [6, 3]); // 6 = Eliminado, 3 = Completado
-        } elseif ($estado === 'Eliminados' || (string)$estado === '6') {
-            $query->where('estado_id', 6);
+            $exclude = array_merge($eliminadoIds, [3]);
+            if ($descartadoId) {
+                $exclude[] = $descartadoId;
+            }
+            $query->whereNotIn('estado_id', $exclude);
+        } elseif ($estado === 'Eliminados' || in_array((int)$estado, $eliminadoIds)) {
+            $query->whereIn('estado_id', $eliminadoIds);
         } elseif ($estado !== 'Todos') {
             $query->where('estado_id', (int) $estado);
         } else {
-            $query->where('estado_id', '!=', 6);
+            $query->whereNotIn('estado_id', $eliminadoIds);
+            if ($descartadoId) {
+                $query->where('estado_id', '!=', $descartadoId);
+            }
         }
 
         $asignado_id = request('asignado_id', 'todos'); // Default a todos para que cualquier usuario los vea por defecto

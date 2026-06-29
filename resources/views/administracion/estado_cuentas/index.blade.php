@@ -240,7 +240,7 @@
       <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
         <div class="d-flex align-items-center gap-2">
           <span class="badge bg-dark px-3 py-2 rounded-3 text-uppercase font-monospace small">
-            FECHA DE HOY: {{ \Carbon\Carbon::today()->format('d/m/Y') }}
+            FECHA DE HOY: {{ \Carbon\Carbon::today()->format('m/d/Y') }}
           </span>
         </div>
         <div class="d-flex gap-2">
@@ -329,8 +329,8 @@
                 <tr class="{{ $rowClass }}">
                   <td class="fw-bold font-monospace">{{ $f->factura_no }}</td>
                   <td class="font-monospace text-muted">{{ $f->nfc ?? 'N/A' }}</td>
-                  <td>{{ $f->fecha ? $f->fecha->format('d/m/Y') : '' }}</td>
-                  <td>{{ $f->fecha_vencimiento ? $f->fecha_vencimiento->format('d/m/Y') : '' }}</td>
+                  <td>{{ $f->fecha ? $f->fecha->format('m/d/Y') : '' }}</td>
+                  <td>{{ $f->fecha_vencimiento ? $f->fecha_vencimiento->format('m/d/Y') : '' }}</td>
                   <td class="text-start text-truncate" style="max-width: 180px;">{{ $f->producto }}</td>
                   <td class="text-end fw-bold font-monospace">
                     {{ number_format($f->balance, 2) }}
@@ -345,14 +345,14 @@
                   </td>
                   <td>
                     @if($f->fecha_pago)
-                      {{ $f->fecha_pago->format('d/m/Y') }}
+                      {{ $f->fecha_pago->format('m/d/Y') }}
                     @else
                       <span class="text-muted small">-</span>
                     @endif
                   </td>
                   <td>
                     @if($f->fecha_aplicado)
-                      {{ $f->fecha_aplicado->format('d/m/Y') }}
+                      {{ $f->fecha_aplicado->format('m/d/Y') }}
                     @else
                       <span class="text-muted small">-</span>
                     @endif
@@ -379,7 +379,19 @@
                       <span class="dias-green font-monospace" title="{{ $f->dias }} días para vencer">{{ $f->dias }}</span>
                     @endif
                   </td>
-                  <td class="acciones text-center">
+                  <td class="acciones text-center" style="min-width: 140px;">
+                    @if($f->comprobante_pago_path)
+                        <a href="{{ Storage::url($f->comprobante_pago_path) }}" target="_blank" class="btn btn-outline-success" title="Ver Comprobante de Pago">
+                            <i class="bi bi-file-earmark-check"></i>
+                        </a>
+                        <button type="button" class="btn btn-outline-secondary" title="Reemplazar Comprobante" onclick="openSubirComprobanteModal({{ $f->id }}, '{{ $f->factura_no }}')">
+                            <i class="bi bi-upload"></i>
+                        </button>
+                    @else
+                        <button type="button" class="btn btn-outline-info" title="Subir Comprobante de Pago" onclick="openSubirComprobanteModal({{ $f->id }}, '{{ $f->factura_no }}')">
+                            <i class="bi bi-cloud-upload"></i>
+                        </button>
+                    @endif
                     <a href="{{ route('estado-cuentas.edit', $f->id) }}" class="btn btn-outline-primary" title="Editar / Conciliar Pago">
                       <i class="bi bi-pencil-square"></i>
                     </a>
@@ -460,4 +472,52 @@
 
   </div>
 </div>
+
+<!-- Modal Subir Comprobante -->
+<div class="modal fade" id="modalSubirComprobante" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+      <div class="modal-header bg-primary text-white border-0 py-3">
+        <h5 class="modal-title fw-bold">
+          <i class="bi bi-cloud-upload me-2"></i> Subir Comprobante de Pago
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="formSubirComprobante" method="POST" action="" enctype="multipart/form-data">
+        @csrf
+        <div class="modal-body p-4">
+          <input type="hidden" name="factura_id" id="sc_factura_id">
+          <p class="mb-3 text-muted small">
+            Adjuntar voucher / transferencia para la factura: <strong id="sc_factura_no" class="text-dark"></strong>
+          </p>
+          
+          <div class="mb-4">
+            <label class="form-label fw-bold">Seleccionar Archivo (PDF, JPG, PNG)</label>
+            <input type="file" name="comprobante_archivo" id="comprobante_archivo" class="form-control" accept=".pdf,.jpg,.jpeg,.png" required>
+            <div class="form-text mt-2 text-muted">
+                Tamaño máximo: 5 MB.
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer border-0 bg-light">
+          <button type="button" class="btn btn-outline-secondary rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">Subir Archivo</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+function openSubirComprobanteModal(id, facturaNo) {
+  document.getElementById('sc_factura_id').value = id;
+  document.getElementById('sc_factura_no').innerText = facturaNo;
+  document.getElementById('comprobante_archivo').value = '';
+  
+  const form = document.getElementById('formSubirComprobante');
+  form.action = `/estado-cuentas/${id}/comprobante`;
+  
+  new bootstrap.Modal(document.getElementById('modalSubirComprobante')).show();
+}
+</script>
 @endsection

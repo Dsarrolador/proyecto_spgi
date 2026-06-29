@@ -47,6 +47,22 @@
             </small>
         </div>
 
+        <!-- PROYECTO (OPCIONAL) -->
+        <div class="mb-3">
+            <label class="form-label">Proyecto (Opcional)</label>
+            <select name="proyecto_id" id="proyecto_id" class="form-select">
+                <option value="" data-cliente-id="">-- No vincular a un proyecto --</option>
+                @foreach($proyectos as $p)
+                    <option value="{{ $p->id }}" data-cliente-id="{{ $p->cliente_id }}" {{ old('proyecto_id') == $p->id ? 'selected' : '' }}>
+                        {{ $p->nombre }}
+                    </option>
+                @endforeach
+            </select>
+            <small class="text-muted d-block mt-1">
+                Vincula esta tarea a un proyecto para fines de organización y seguimiento.
+            </small>
+        </div>
+
         <!-- TIPO DE SOPORTE -->
         <div class="mb-3">
             <label class="form-label">Tipo de soporte</label>
@@ -386,6 +402,26 @@ document.addEventListener('DOMContentLoaded', () => {
     const clienteSelect  = document.getElementById('cliente_id');
     const contactoSelect = document.getElementById('contacto_id');
     const helpText       = document.getElementById('contacto_help');
+    const proyectoSelect = document.getElementById('proyecto_id');
+
+    const filterProjects = (clienteId) => {
+        if (!proyectoSelect) return;
+        Array.from(proyectoSelect.options).forEach(opt => {
+            if (opt.value === "") {
+                opt.style.display = "";
+                return;
+            }
+            const optClienteId = opt.getAttribute('data-cliente-id');
+            if (!clienteId || optClienteId === clienteId) {
+                opt.style.display = "";
+            } else {
+                opt.style.display = "none";
+                if (proyectoSelect.value === opt.value) {
+                    proyectoSelect.value = "";
+                }
+            }
+        });
+    };
 
     actualizarContadorTexto();
     const ta = document.getElementById('texto_imagen');
@@ -403,6 +439,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     clienteSelect.addEventListener('change', async () => {
         const clienteId = clienteSelect.value;
+        filterProjects(clienteId);
 
         if (!clienteId) {
             resetContactos('Seleccione un contacto');
@@ -526,6 +563,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 container.classList.add('d-none');
             }
         });
+    }
+
+    if (clienteSelect && clienteSelect.value) {
+        filterProjects(clienteSelect.value);
     }
 });
 </script>

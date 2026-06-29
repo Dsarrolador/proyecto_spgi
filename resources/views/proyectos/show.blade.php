@@ -242,7 +242,14 @@
                         <i class="bi bi-arrow-return-right me-1"></i> Sub-tarea (#{{ $r->parent_id }})
                       </span>
                     @endif
-                    {{ $r->texto_imagen ?? $r->descripcion ?? '—' }}
+                    <div>{{ $r->texto_imagen ?? $r->descripcion ?? '—' }}</div>
+                    @if($r->requerimientoCliente)
+                      <div class="mt-1">
+                        <a href="{{ route('requerimientos.show', $r->requerimiento_cliente_id) }}" class="badge rounded-pill px-2 py-0.5 small text-decoration-none" style="font-size: 0.7rem; background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3);" title="Tarea General del Cliente">
+                          <i class="bi bi-list-task me-1"></i> Tarea: {{ Str::limit($r->requerimientoCliente->texto_imagen, 40) }}
+                        </a>
+                      </div>
+                    @endif
                   </td>
 
                   <td class="text-center">
@@ -281,6 +288,17 @@
                         <i class="bi bi-journal-text"></i>
                       </button>
 
+                      {{-- Tareas toggle --}}
+                      @if(!$r->parent_id)
+                      <button type="button"
+                              class="btn btn-outline-secondary btn-sm btn-toggle-tareas"
+                              data-req-id="{{ $r->id }}"
+                              title="Tareas del Requerimiento">
+                        <i class="bi bi-list-check"></i>
+                        <span class="badge bg-secondary rounded-pill ms-1 task-counter-{{ $r->id }}">{{ $r->tareas->count() }}</span>
+                      </button>
+                      @endif
+
                       {{-- Editar --}}
                       <a href="{{ route('requerimientos_proyecto.edit', $r->id) }}"
                          class="btn btn-warning btn-sm" title="Editar">
@@ -300,6 +318,47 @@
                     </div>
                   </td>
                 </tr>
+
+                {{-- Fila desplegable de tareas --}}
+                @if(!$r->parent_id)
+                <tr id="tareas-row-{{ $r->id }}" class="d-none bg-light bg-opacity-25 animate__animated animate__fadeIn">
+                  <td colspan="4" class="p-3">
+                    <div class="glass-card-premium p-3 border-0 shadow-sm" style="background: rgba(var(--bg-surface-rgb), 0.5); border-radius: 14px;">
+                      <h6 class="fw-bold mb-3" style="color: var(--text-main);"><i class="bi bi-check2-square text-primary me-2"></i>Tareas del Requerimiento</h6>
+                      
+                      <!-- Formulario para agregar tarea -->
+                      <form class="form-add-tarea mb-3" data-req-id="{{ $r->id }}">
+                        <div class="input-group">
+                          <input type="text" class="form-control form-control-sm input-tarea-nombre" placeholder="Escribe el nombre de la tarea..." required style="height: 38px; border-radius: 8px 0 0 8px; border: 1px solid var(--border-main); background: var(--bg-surface); color: var(--text-main);">
+                          <button type="submit" class="btn btn-primary btn-sm px-3" style="border-radius: 0 8px 8px 0;"><i class="bi bi-plus-lg me-1"></i>Agregar</button>
+                        </div>
+                      </form>
+                      
+                      <!-- Lista de tareas -->
+                      <div class="list-group list-group-flush list-tareas-{{ $r->id }}" style="border-radius: 10px; border: 1px solid var(--border-main); background: var(--bg-surface); overflow: hidden;">
+                        @forelse($r->tareas as $t)
+                          <div class="list-group-item bg-transparent d-flex justify-content-between align-items-center p-3 border-0 border-bottom border-light novelty-card" style="border-color: var(--border-main) !important;">
+                            <div class="form-check m-0">
+                              <input class="form-check-input check-tarea-completar" type="checkbox" data-tarea-id="{{ $t->id }}" id="check-tarea-{{ $t->id }}" {{ $t->completada ? 'checked' : '' }}>
+                              <label class="form-check-label {{ $t->completada ? 'text-decoration-line-through text-muted fw-normal' : 'fw-semibold text-main' }} small" for="check-tarea-{{ $t->id }}">
+                                {{ $t->nombre }}
+                              </label>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-danger border-0 rounded-circle btn-delete-tarea" data-tarea-id="{{ $t->id }}" title="Eliminar tarea" style="width: 28px; height: 28px; padding:0; display: inline-flex; align-items: center; justify-content: center;">
+                              <i class="bi bi-trash"></i>
+                            </button>
+                          </div>
+                        @empty
+                          <div class="text-muted small text-center py-4 no-tasks-alert-{{ $r->id }}">
+                            <i class="bi bi-check2-all fs-4 d-block mb-2 text-success opacity-50"></i>
+                            No hay tareas registradas para este requerimiento. ¡Comienza agregando una!
+                          </div>
+                        @endforelse
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+                @endif
               @endforeach
             </tbody>
           </table>
@@ -724,6 +783,172 @@
             }
         });
     }
+
+    // --- MANEJO DE CHECKLIST DE TAREAS ---
+    document.querySelectorAll('.btn-toggle-tareas').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const reqId = this.dataset.reqId;
+            const row = document.getElementById(`tareas-row-${reqId}`);
+            if (row) {
+                row.classList.toggle('d-none');
+                this.classList.toggle('active');
+                this.classList.toggle('btn-secondary');
+                this.classList.toggle('btn-outline-secondary');
+            }
+        });
+    });
+
+    document.querySelectorAll('.form-add-tarea').forEach(form => {
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const reqId = this.dataset.reqId;
+            const input = this.querySelector('.input-tarea-nombre');
+            const nombre = input.value.trim();
+            if (!nombre) return;
+
+            const btn = this.querySelector('button[type="submit"]');
+            btn.disabled = true;
+            const originalBtnHtml = btn.innerHTML;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+            try {
+                const response = await fetch(`/requerimientos-proyecto/${reqId}/tareas`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({ nombre })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    input.value = '';
+                    
+                    // Remove "No hay tareas" alert if exists
+                    const emptyAlert = document.querySelector(`.no-tasks-alert-${reqId}`);
+                    if (emptyAlert) emptyAlert.remove();
+
+                    // Append new task to list
+                    const list = document.querySelector(`.list-tareas-${reqId}`);
+                    const item = document.createElement('div');
+                    item.className = 'list-group-item bg-transparent d-flex justify-content-between align-items-center p-3 border-0 border-bottom border-light novelty-card';
+                    item.style.borderColor = 'var(--border-main)';
+                    item.innerHTML = `
+                        <div class="form-check m-0">
+                            <input class="form-check-input check-tarea-completar" type="checkbox" data-tarea-id="${data.tarea.id}" id="check-tarea-${data.tarea.id}">
+                            <label class="form-check-label fw-semibold text-main small" for="check-tarea-${data.tarea.id}">
+                                ${data.tarea.nombre}
+                            </label>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-danger border-0 rounded-circle btn-delete-tarea" data-tarea-id="${data.tarea.id}" title="Eliminar tarea" style="width: 28px; height: 28px; padding:0; display: inline-flex; align-items: center; justify-content: center;">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    `;
+                    list.appendChild(item);
+
+                    // Bind event listeners to new task elements
+                    bindTaskEvents(item, reqId);
+
+                    // Update counter
+                    updateTaskCount(reqId, 1);
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Error al agregar la tarea');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalBtnHtml;
+            }
+        });
+    });
+
+    function bindTaskEvents(item, reqId) {
+        const checkbox = item.querySelector('.check-tarea-completar');
+        const deleteBtn = item.querySelector('.btn-delete-tarea');
+        const label = item.querySelector('label');
+
+        if (checkbox) {
+            checkbox.addEventListener('change', async function() {
+                const tareaId = this.dataset.tareaId;
+                try {
+                    const response = await fetch(`/requerimientos-proyecto-tareas/${tareaId}/toggle`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        if (data.tarea.completada) {
+                            label.classList.add('text-decoration-line-through', 'text-muted');
+                            label.classList.remove('fw-semibold', 'text-main');
+                        } else {
+                            label.classList.remove('text-decoration-line-through', 'text-muted');
+                            label.classList.add('fw-semibold', 'text-main');
+                        }
+                    }
+                } catch (err) {
+                    console.error(err);
+                    this.checked = !this.checked; // Revert checkbox state on error
+                    alert('Error al actualizar el estado de la tarea');
+                }
+            });
+        }
+
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', async function() {
+                if (!confirm('¿Seguro que deseas eliminar esta tarea?')) return;
+                const tareaId = this.dataset.tareaId;
+                try {
+                    const response = await fetch(`/requerimientos-proyecto-tareas/${tareaId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        item.remove();
+                        updateTaskCount(reqId, -1);
+
+                        // If list is empty, show empty message
+                        const list = document.querySelector(`.list-tareas-${reqId}`);
+                        if (list && list.querySelectorAll('.list-group-item').length === 0) {
+                            list.innerHTML = `
+                                <div class="text-muted small text-center py-4 no-tasks-alert-${reqId}">
+                                    <i class="bi bi-check2-all fs-4 d-block mb-2 text-success opacity-50"></i>
+                                    No hay tareas registradas para este requerimiento. ¡Comienza agregando una!
+                                </div>`;
+                        }
+                    }
+                } catch (err) {
+                    console.error(err);
+                    alert('Error al eliminar la tarea');
+                }
+            });
+        }
+    }
+
+    function updateTaskCount(reqId, diff) {
+        const counterSpan = document.querySelector(`.task-counter-${reqId}`);
+        if (counterSpan) {
+            const current = parseInt(counterSpan.textContent) || 0;
+            counterSpan.textContent = current + diff;
+        }
+    }
+
+    // Initial binding for existing tasks
+    document.querySelectorAll('[id^="tareas-row-"]').forEach(row => {
+        const reqId = row.id.split('-').pop();
+        row.querySelectorAll('.list-group-item').forEach(item => {
+            bindTaskEvents(item, reqId);
+        });
+    });
 </script>
 @endpush
 

@@ -131,11 +131,21 @@
 
           <div class="col-md-6">
             <div class="text-muted small">Cliente</div>
-            <select name="cliente_id" class="form-select">
+            <select name="cliente_id" id="cliente_id" class="form-select">
               <option value="">Seleccione</option>
               @foreach(($clientes ?? collect()) as $c)
                 <option value="{{ $c->id }}" {{ old('cliente_id', $requerimiento->cliente_id) == $c->id ? 'selected' : '' }}>
                   {{ $c->nombre }}
+                </option>
+              @endforeach
+            </select>
+
+            <div class="text-muted small mt-3">Proyecto (Opcional)</div>
+            <select name="proyecto_id" id="proyecto_id" class="form-select">
+              <option value="" data-cliente-id="">-- No vincular a un proyecto --</option>
+              @foreach(($proyectos ?? collect()) as $p)
+                <option value="{{ $p->id }}" data-cliente-id="{{ $p->cliente_id }}" {{ old('proyecto_id', $requerimiento->proyecto_id) == $p->id ? 'selected' : '' }}>
+                  {{ $p->nombre }}
                 </option>
               @endforeach
             </select>
@@ -604,6 +614,34 @@
     window.abrirModalImagen = abrirModalImagen;
 
     document.addEventListener('DOMContentLoaded', () => {
+      const clienteSelect  = document.getElementById('cliente_id');
+      const proyectoSelect = document.getElementById('proyecto_id');
+
+      const filterProjects = (clienteId) => {
+        if (!proyectoSelect) return;
+        Array.from(proyectoSelect.options).forEach(opt => {
+            if (opt.value === "") {
+                opt.style.display = "";
+                return;
+            }
+            const optClienteId = opt.getAttribute('data-cliente-id');
+            if (!clienteId || optClienteId === clienteId) {
+                opt.style.display = "";
+            } else {
+                opt.style.display = "none";
+                if (proyectoSelect.value === opt.value) {
+                    proyectoSelect.value = "";
+                }
+            }
+        });
+      };
+
+      if (clienteSelect) {
+        clienteSelect.addEventListener('change', () => {
+          filterProjects(clienteSelect.value);
+        });
+      }
+
       actualizarContadorTexto();
 
       const ta = document.getElementById('texto_imagen');
@@ -638,6 +676,10 @@
                   container.classList.add('d-none');
               }
           });
+      }
+
+      if (clienteSelect && clienteSelect.value) {
+          filterProjects(clienteSelect.value);
       }
     });
 

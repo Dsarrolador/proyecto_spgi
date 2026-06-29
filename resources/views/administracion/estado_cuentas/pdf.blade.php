@@ -269,8 +269,8 @@
                     <tr class="{{ $rowClass }}">
                         <td style="font-weight: bold;">{{ $f->factura_no }}</td>
                         <td style="color: #4b5563;">{{ $f->nfc ?? 'N/A' }}</td>
-                        <td>{{ $f->fecha ? $f->fecha->format('d/m/Y') : '' }}</td>
-                        <td>{{ $f->fecha_vencimiento ? $f->fecha_vencimiento->format('d/m/Y') : '' }}</td>
+                        <td>{{ $f->fecha ? $f->fecha->format('m/d/Y') : '' }}</td>
+                        <td>{{ $f->fecha_vencimiento ? $f->fecha_vencimiento->format('m/d/Y') : '' }}</td>
                         <td class="text-start">{{ $f->producto }}</td>
                         <td class="text-end" style="font-weight: bold;">
                             {{ number_format($f->balance, 2) }}
@@ -284,10 +284,10 @@
                             {{ $f->tasa_cambio ? number_format($f->tasa_cambio, 2) : '-' }}
                         </td>
                         <td>
-                            {{ $f->fecha_pago ? $f->fecha_pago->format('d/m/Y') : '-' }}
+                            {{ $f->fecha_pago ? $f->fecha_pago->format('m/d/Y') : '-' }}
                         </td>
                         <td>
-                            {{ $f->fecha_aplicado ? $f->fecha_aplicado->format('d/m/Y') : '-' }}
+                            {{ $f->fecha_aplicado ? $f->fecha_aplicado->format('m/d/Y') : '-' }}
                         </td>
                         <td>{{ $f->recibo_no ?? '-' }}</td>
                         <td class="text-end" style="font-weight: bold; color: #15803d;">

@@ -461,17 +461,33 @@
                 @endphp
                 <tr>
                   <td class="td-cliente">
-                    {{ $req->clienteRelation->nombre ?? 'Sin cliente asignado' }}
+                    @if($req->is_proyecto)
+                      <div class="fw-bold">{{ $req->cliente->nombre ?? 'Sin cliente asignado' }}</div>
+                    @else
+                      <div class="fw-bold">{{ $req->clienteRelation->nombre ?? 'Sin cliente asignado' }}</div>
+                    @endif
                   </td>
 
                   <td class="td-preview">
                     <div class="d-flex flex-column">
-                      <div class="mb-1 d-flex align-items-center gap-2">
-                        @if($req->prioridad == 5) <span class="badge bg-danger mb-1" title="Muy Urgente"><i class="bi bi-exclamation-triangle-fill"></i> Prioridad 5</span>
-                        @elseif($req->prioridad == 4) <span class="badge bg-warning text-dark mb-1" title="Urgente">Prioridad 4</span>
-                        @elseif($req->prioridad == 3) <span class="badge bg-secondary mb-1" title="Media">Prioridad 3</span>
-                        @elseif($req->prioridad == 2) <span class="badge bg-info text-dark mb-1" title="Baja">Prioridad 2</span>
-                        @else <span class="badge bg-light text-dark border mb-1" title="Muy Baja">Prioridad 1</span>
+                      <div class="mb-1 d-flex align-items-center gap-2 flex-wrap">
+                        @if($req->proyecto)
+                          @if($req->is_proyecto)
+                            <span class="badge rounded px-2 py-1 mb-1 small text-start" style="font-size: 0.75rem; background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3);" title="Proyecto Técnico">
+                              <i class="bi bi-folder-fill me-1"></i>{{ $req->proyecto->nombre }} (Proyecto)
+                            </span>
+                          @else
+                            <span class="badge rounded px-2 py-1 mb-1 small text-start" style="font-size: 0.75rem; background: rgba(59, 130, 246, 0.15); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3);" title="Proyecto">
+                              <i class="bi bi-folder-fill me-1"></i>{{ $req->proyecto->nombre }}
+                            </span>
+                          @endif
+                        @endif
+
+                        @if($req->prioridad == 5) <span class="badge bg-danger mb-1 py-1" title="Muy Urgente"><i class="bi bi-exclamation-triangle-fill"></i> Prioridad 5</span>
+                        @elseif($req->prioridad == 4) <span class="badge bg-warning text-dark mb-1 py-1" title="Urgente">Prioridad 4</span>
+                        @elseif($req->prioridad == 3) <span class="badge bg-secondary mb-1 py-1" title="Media">Prioridad 3</span>
+                        @elseif($req->prioridad == 2) <span class="badge bg-info text-dark mb-1 py-1" title="Baja">Prioridad 2</span>
+                        @else <span class="badge bg-light text-dark border mb-1 py-1" title="Muy Baja">Prioridad 1</span>
                         @endif
 
                         @if($mostrarAlertaRoja)
@@ -539,21 +555,43 @@
                   <td>
                     <div class="d-flex justify-content-center gap-2 acciones flex-nowrap">
 
-                      <a href="{{ route('requerimientos.show', $req->id) }}"
+                      <a href="{{ $req->is_proyecto ? route('requerimientos_proyecto.show', $req->id) : route('requerimientos.show', $req->id) }}"
                          class="btn btn-primary btn-sm"
                          title="Ver requerimiento">
                         <i class="bi bi-eye"></i>
                       </a>
 
+                      {{-- Botón Checklist de Tareas --}}
                       <button type="button"
-                              class="btn {{ $mostrarAlertaRoja ? 'pulse-button' : 'btn-outline-info' }} btn-sm"
-                              onclick="openNovedadesModal({{ $req->id }}, '{{ addslashes($req->clienteRelation->nombre ?? 'Cliente no asignado') }}', {{ $req->cliente_id ?? 'null' }})"
-                              title="Novedades"
-                              id="btn-notes-{{ $req->id }}">
-                        <i class="bi bi-journal-text"></i>
+                              class="btn btn-outline-secondary btn-sm btn-toggle-tareas"
+                              data-req-id="{{ $req->id }}"
+                              data-is-proyecto="{{ $req->is_proyecto ? 'true' : 'false' }}"
+                              title="Tareas del Requerimiento">
+                        <i class="bi bi-list-check"></i>
+                        <span class="badge bg-secondary rounded-pill ms-1 task-counter-{{ $req->is_proyecto ? 'proj' : 'cli' }}-{{ $req->id }}">{{ $req->tareas->count() }}</span>
                       </button>
 
-                      <form action="{{ route('requerimientos.destroy', $req->id) }}" method="POST">
+                      @if(!$req->is_proyecto && $req->proyecto && $req->requerimientosProyecto->count() > 0)
+                        <button type="button"
+                                class="btn btn-outline-secondary btn-sm btn-toggle-req-tecnicos"
+                                data-req-id="{{ $req->id }}"
+                                title="Requerimientos Técnicos">
+                          <i class="bi bi-gear-wide-connected"></i>
+                          <span class="badge bg-secondary rounded-pill ms-1">{{ $req->requerimientosProyecto->count() }}</span>
+                        </button>
+                      @endif
+
+                      @if(!$req->is_proyecto)
+                        <button type="button"
+                                class="btn {{ $mostrarAlertaRoja ? 'pulse-button' : 'btn-outline-info' }} btn-sm"
+                                onclick="openNovedadesModal({{ $req->id }}, '{{ addslashes($req->clienteRelation->nombre ?? 'Cliente no asignado') }}', {{ $req->cliente_id ?? 'null' }})"
+                                title="Novedades"
+                                id="btn-notes-{{ $req->id }}">
+                          <i class="bi bi-journal-text"></i>
+                        </button>
+                      @endif
+
+                      <form action="{{ $req->is_proyecto ? route('requerimientos_proyecto.destroy', $req->id) : route('requerimientos.destroy', $req->id) }}" method="POST">
                         @csrf
                         @method('DELETE')
                         <button type="submit"
@@ -567,6 +605,83 @@
                     </div>
                   </td>
                 </tr>
+
+                {{-- Fila de tareas (Checklist) --}}
+                <tr id="tareas-row-{{ $req->is_proyecto ? 'proj' : 'cli' }}-{{ $req->id }}" class="d-none bg-light bg-opacity-25 animate__animated animate__fadeIn">
+                  <td colspan="{{ (auth()->user()->es_administrativo) ? 7 : 6 }}" class="p-3">
+                    <div class="glass-card-premium p-3 border-0 shadow-sm" style="background: rgba(var(--bg-surface-rgb), 0.5); border-radius: 14px; border: 1px solid var(--border-main) !important;">
+                      <h6 class="fw-bold mb-3" style="color: var(--text-main);"><i class="bi bi-check2-square text-primary me-2"></i>Tareas del Requerimiento</h6>
+                      
+                      <!-- Formulario para agregar tarea -->
+                      <form class="form-add-tarea mb-3" data-req-id="{{ $req->id }}" data-is-proyecto="{{ $req->is_proyecto ? 'true' : 'false' }}">
+                        <div class="input-group">
+                          <input type="text" class="form-control form-control-sm input-tarea-nombre" placeholder="Escribe el nombre de la tarea..." required style="height: 38px; border-radius: 8px 0 0 8px; border: 1px solid var(--border-main); background: var(--bg-surface); color: var(--text-main);">
+                          <button type="submit" class="btn btn-primary btn-sm px-3" style="border-radius: 0 8px 8px 0;"><i class="bi bi-plus-lg me-1"></i>Agregar</button>
+                        </div>
+                      </form>
+                      
+                      <!-- Lista de tareas -->
+                      <div class="list-group list-group-flush list-tareas-{{ $req->is_proyecto ? 'proj' : 'cli' }}-{{ $req->id }}" style="border-radius: 10px; border: 1px solid var(--border-main); background: var(--bg-surface); overflow: hidden;">
+                        @forelse($req->tareas as $t)
+                          <div class="list-group-item bg-transparent d-flex justify-content-between align-items-center p-3 border-0 border-bottom border-light novelty-card" style="border-color: var(--border-main) !important;">
+                            <div class="form-check m-0">
+                              <input class="form-check-input check-tarea-completar" type="checkbox" data-tarea-id="{{ $t->id }}" data-is-proyecto="{{ $req->is_proyecto ? 'true' : 'false' }}" id="check-tarea-{{ $req->is_proyecto ? 'proj' : 'cli' }}-{{ $t->id }}" {{ $t->completada ? 'checked' : '' }}>
+                              <label class="form-check-label {{ $t->completada ? 'text-decoration-line-through text-muted fw-normal' : 'fw-semibold text-main' }} small" for="check-tarea-{{ $req->is_proyecto ? 'proj' : 'cli' }}-{{ $t->id }}">
+                                {{ $t->nombre }}
+                              </label>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-danger border-0 rounded-circle btn-delete-tarea" data-tarea-id="{{ $t->id }}" data-is-proyecto="{{ $req->is_proyecto ? 'true' : 'false' }}" data-req-id="{{ $req->id }}" title="Eliminar tarea" style="width: 28px; height: 28px; padding:0; display: inline-flex; align-items: center; justify-content: center;">
+                              <i class="bi bi-trash"></i>
+                            </button>
+                          </div>
+                        @empty
+                          <div class="text-muted small text-center py-4 no-tasks-alert-{{ $req->is_proyecto ? 'proj' : 'cli' }}-{{ $req->id }}">
+                            <i class="bi bi-check2-all fs-4 d-block mb-2 text-success opacity-50"></i>
+                            No hay tareas registradas para este requerimiento. ¡Comienza agregando una!
+                          </div>
+                        @endforelse
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+
+                {{-- Fila de Requerimientos Técnicos vinculados --}}
+                @if(!$req->is_proyecto && $req->proyecto && $req->requerimientosProyecto->count() > 0)
+                <tr id="req-tecnicos-row-{{ $req->id }}" class="d-none bg-light bg-opacity-25 animate__animated animate__fadeIn">
+                  <td colspan="{{ (auth()->user()->es_administrativo) ? 7 : 6 }}" class="p-3">
+                    <div class="glass-card-premium p-3 border-0 shadow-sm" style="background: rgba(var(--bg-surface-rgb), 0.5); border-radius: 14px; border: 1px solid var(--border-main) !important;">
+                      <h6 class="fw-bold mb-3" style="color: var(--text-main);"><i class="bi bi-gear-wide-connected text-primary me-2"></i>Requerimientos Técnicos (Interacciones de Tareas Técnicas)</h6>
+                      
+                      <!-- Lista de requerimientos técnicos -->
+                      <div class="list-group list-group-flush" style="border-radius: 10px; border: 1px solid var(--border-main); background: var(--bg-surface); overflow: hidden;">
+                        @foreach($req->requerimientosProyecto as $reqProj)
+                          <div class="list-group-item bg-transparent d-flex justify-content-between align-items-center p-3 border-0 border-bottom border-light" style="border-color: var(--border-main) !important;">
+                            <div>
+                              <span class="fw-semibold text-white small">#{{ $reqProj->id }} - {{ $reqProj->texto_imagen }}</span>
+                              <div class="mt-1 small text-muted">
+                                Asignado a: {{ $reqProj->asignado->name ?? 'Sin asignar' }}
+                                | Estado: 
+                                @php
+                                  $_color = $reqProj->estado_id == 6 ? 'bg-danger' : (optional($reqProj->estadoRequerimiento)->color ?? 'bg-secondary');
+                                  $_nombre = $reqProj->estado_id == 6 ? 'Eliminado' : (optional($reqProj->estadoRequerimiento)->nombre ?? 'Pendiente');
+                                @endphp
+                                @if(\Illuminate\Support\Str::startsWith($_color, '#'))
+                                  <span class="badge" style="background-color: {{ $_color }}; color: #fff;">{{ $_nombre }}</span>
+                                @else
+                                  <span class="badge {{ $_color }}">{{ $_nombre }}</span>
+                                @endif
+                              </div>
+                            </div>
+                            <a href="{{ route('requerimientos_proyecto.show', $reqProj->id) }}" class="btn btn-sm btn-primary rounded-pill px-3" style="font-size: 0.8rem;">
+                              <i class="bi bi-eye me-1"></i> Ver Detalles
+                            </a>
+                          </div>
+                        @endforeach
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+                @endif
               @empty
                 <tr>
                   <td colspan="{{ (auth()->user()->es_administrativo) ? 7 : 6 }}" class="text-center text-muted p-4">
@@ -585,7 +700,11 @@
             <div class="spgi-req-head">
               <div>
                 <h5 class="spgi-req-title">
-                  {{ $req->clienteRelation->nombre ?? 'Sin cliente asignado' }}
+                  @if($req->is_proyecto)
+                    {{ $req->cliente->nombre ?? 'Sin cliente asignado' }}
+                  @else
+                    {{ $req->clienteRelation->nombre ?? 'Sin cliente asignado' }}
+                  @endif
                 </h5>
                 <div class="spgi-req-subtitle">
                   Asignado a: {{ $req->asignado?->name ?? 'Sin asignar' }}
@@ -608,12 +727,24 @@
                     </div>
                   @endif
                   
-                  <div class="mt-2">
-                    @if($req->prioridad == 5) <span class="badge bg-danger" title="Muy Urgente"><i class="bi bi-exclamation-triangle-fill"></i> Pri: 5</span>
-                    @elseif($req->prioridad == 4) <span class="badge bg-warning text-dark" title="Urgente">Pri: 4</span>
-                    @elseif($req->prioridad == 3) <span class="badge bg-secondary" title="Media">Pri: 3</span>
-                    @elseif($req->prioridad == 2) <span class="badge bg-info text-dark" title="Baja">Pri: 2</span>
-                    @else <span class="badge bg-light text-dark border" title="Muy Baja">Pri: 1</span>
+                  <div class="mt-2 d-flex flex-wrap gap-2 align-items-center">
+                    @if($req->proyecto)
+                      @if($req->is_proyecto)
+                        <span class="badge rounded px-2 py-1 small" style="font-size: 0.7rem; background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3);">
+                          <i class="bi bi-folder-fill me-1"></i>{{ $req->proyecto->nombre }} (Proyecto)
+                        </span>
+                      @else
+                        <span class="badge rounded px-2 py-1 small" style="font-size: 0.7rem; background: rgba(59, 130, 246, 0.15); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3);">
+                          <i class="bi bi-folder-fill me-1"></i>{{ $req->proyecto->nombre }}
+                        </span>
+                      @endif
+                    @endif
+
+                    @if($req->prioridad == 5) <span class="badge bg-danger py-1" title="Muy Urgente"><i class="bi bi-exclamation-triangle-fill"></i> Pri: 5</span>
+                    @elseif($req->prioridad == 4) <span class="badge bg-warning text-dark py-1" title="Urgente">Pri: 4</span>
+                    @elseif($req->prioridad == 3) <span class="badge bg-secondary py-1" title="Media">Pri: 3</span>
+                    @elseif($req->prioridad == 2) <span class="badge bg-info text-dark py-1" title="Baja">Pri: 2</span>
+                    @else <span class="badge bg-light text-dark border py-1" title="Muy Baja">Pri: 1</span>
                     @endif
                   </div>
                 </div>
@@ -656,18 +787,36 @@
             </div>
 
             <div class="spgi-card-actions">
-              <a href="{{ route('requerimientos.show', $req->id) }}" class="btn btn-primary btn-sm">
+              <a href="{{ $req->is_proyecto ? route('requerimientos_proyecto.show', $req->id) : route('requerimientos.show', $req->id) }}" class="btn btn-primary btn-sm">
                 <i class="bi bi-eye me-1"></i> Ver
               </a>
 
+              {{-- Botón Checklist de Tareas Móvil --}}
               <button type="button"
-                      class="btn {{ $mostrarAlertaRoja ? 'pulse-button' : 'btn-outline-info' }} btn-sm"
-                      onclick="openNovedadesModal({{ $req->id }}, '{{ addslashes($req->clienteRelation->nombre ?? 'Cliente no asignado') }}', {{ $req->cliente_id ?? 'null' }})"
-                      id="btn-notes-mob-{{ $req->id }}">
-                <i class="bi bi-journal-text me-1"></i> Novedades
+                      class="btn btn-outline-secondary btn-sm btn-toggle-tareas"
+                      data-req-id="{{ $req->id }}"
+                      data-is-proyecto="{{ $req->is_proyecto ? 'true' : 'false' }}">
+                <i class="bi bi-list-check me-1"></i> Tareas (<span class="task-counter-{{ $req->is_proyecto ? 'proj' : 'cli' }}-{{ $req->id }}">{{ $req->tareas->count() }}</span>)
               </button>
 
-              <form action="{{ route('requerimientos.destroy', $req->id) }}" method="POST" class="w-100">
+              @if(!$req->is_proyecto && $req->proyecto && $req->requerimientosProyecto->count() > 0)
+                <button type="button"
+                        class="btn btn-outline-secondary btn-sm btn-toggle-req-tecnicos"
+                        data-req-id="{{ $req->id }}">
+                  <i class="bi bi-gear-wide-connected me-1"></i> Req. Técnicos ({{ $req->requerimientosProyecto->count() }})
+                </button>
+              @endif
+
+              @if(!$req->is_proyecto)
+                <button type="button"
+                        class="btn {{ $mostrarAlertaRoja ? 'pulse-button' : 'btn-outline-info' }} btn-sm"
+                        onclick="openNovedadesModal({{ $req->id }}, '{{ addslashes($req->clienteRelation->nombre ?? 'Cliente no asignado') }}', {{ $req->cliente_id ?? 'null' }})"
+                        id="btn-notes-mob-{{ $req->id }}">
+                  <i class="bi bi-journal-text me-1"></i> Novedades
+                </button>
+              @endif
+
+              <form action="{{ $req->is_proyecto ? route('requerimientos_proyecto.destroy', $req->id) : route('requerimientos.destroy', $req->id) }}" method="POST" class="w-100">
                 @csrf
                 @method('DELETE')
                 <button type="submit"
@@ -677,6 +826,61 @@
                 </button>
               </form>
             </div>
+
+            {{-- Checklist de Tareas Móvil colapsable --}}
+            <div id="tareas-card-{{ $req->is_proyecto ? 'proj' : 'cli' }}-{{ $req->id }}" class="d-none mt-3 p-3 rounded text-start" style="background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-main);">
+              <h6 class="fw-bold mb-2 small text-uppercase text-muted"><i class="bi bi-check2-square text-primary me-2"></i>Tareas</h6>
+              
+              <!-- Formulario para agregar tarea móvil -->
+              <form class="form-add-tarea mb-3" data-req-id="{{ $req->id }}" data-is-proyecto="{{ $req->is_proyecto ? 'true' : 'false' }}">
+                <div class="input-group">
+                  <input type="text" class="form-control form-control-sm input-tarea-nombre" placeholder="Escribe el nombre de la tarea..." required style="height: 38px; border-radius: 8px 0 0 8px; border: 1px solid var(--border-main); background: var(--bg-surface); color: var(--text-main);">
+                  <button type="submit" class="btn btn-primary btn-sm px-3" style="border-radius: 0 8px 8px 0;"><i class="bi bi-plus-lg me-1"></i>Agregar</button>
+                </div>
+              </form>
+              
+              <!-- Lista de tareas móvil -->
+              <div class="list-group list-group-flush list-tareas-{{ $req->is_proyecto ? 'proj' : 'cli' }}-{{ $req->id }}">
+                @forelse($req->tareas as $t)
+                  <div class="list-group-item bg-transparent d-flex justify-content-between align-items-center py-2 px-0 border-0 border-bottom border-light" style="border-color: var(--border-main) !important;">
+                    <div class="form-check m-0">
+                      <input class="form-check-input check-tarea-completar" type="checkbox" data-tarea-id="{{ $t->id }}" data-is-proyecto="{{ $req->is_proyecto ? 'true' : 'false' }}" id="check-tarea-mob-{{ $req->is_proyecto ? 'proj' : 'cli' }}-{{ $t->id }}" {{ $t->completada ? 'checked' : '' }}>
+                      <label class="form-check-label {{ $t->completada ? 'text-decoration-line-through text-muted fw-normal' : 'fw-semibold text-main' }} small" for="check-tarea-mob-{{ $req->is_proyecto ? 'proj' : 'cli' }}-{{ $t->id }}">
+                        {{ $t->nombre }}
+                      </label>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-danger border-0 rounded-circle btn-delete-tarea" data-tarea-id="{{ $t->id }}" data-is-proyecto="{{ $req->is_proyecto ? 'true' : 'false' }}" data-req-id="{{ $req->id }}" title="Eliminar tarea" style="width: 28px; height: 28px; padding:0; display: inline-flex; align-items: center; justify-content: center;">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                @empty
+                  <div class="text-muted small text-center py-3 no-tasks-alert-{{ $req->is_proyecto ? 'proj' : 'cli' }}-{{ $req->id }}">
+                    No hay tareas.
+                  </div>
+                @endforelse
+              </div>
+            </div>
+
+            @if(!$req->is_proyecto && $req->proyecto && $req->requerimientosProyecto->count() > 0)
+              <div id="req-tecnicos-card-{{ $req->id }}" class="d-none mt-3 p-3 rounded text-start" style="background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-main);">
+                <h6 class="fw-bold mb-2 small text-uppercase text-muted"><i class="bi bi-gear-wide-connected text-primary me-2"></i>Req. Técnicos</h6>
+                <div class="list-group list-group-flush">
+                  @foreach($req->requerimientosProyecto as $reqProj)
+                    <div class="py-2 border-bottom border-light d-flex justify-content-between align-items-center" style="border-color: var(--border-main) !important;">
+                      <div class="pe-2">
+                        <div class="small fw-bold text-white">#{{ $reqProj->id }} - {{ $reqProj->texto_imagen }}</div>
+                        <div class="small text-muted" style="font-size: 0.75rem;">
+                          Asignado: {{ $reqProj->asignado->name ?? 'Sin asignar' }}
+                        </div>
+                      </div>
+                      <a href="{{ route('requerimientos_proyecto.show', $reqProj->id) }}" class="btn btn-sm btn-outline-primary p-0 rounded-circle d-flex align-items-center justify-content-center" style="width: 28px; height: 28px; flex-shrink: 0;">
+                        <i class="bi bi-eye" style="font-size: 0.85rem;"></i>
+                      </a>
+                    </div>
+                  @endforeach
+                </div>
+              </div>
+            @endif
           </div>
         @empty
           <div class="spgi-empty">
@@ -1194,6 +1398,213 @@
         
         document.querySelectorAll('.preview-box').forEach(box => {
             box.addEventListener('click', function() { this.classList.toggle('expanded'); });
+        });
+
+        // Toggle para requerimientos técnicos
+        document.querySelectorAll('.btn-toggle-req-tecnicos').forEach(button => {
+            button.addEventListener('click', function() {
+                const reqId = this.getAttribute('data-req-id');
+                const row = document.getElementById(`req-tecnicos-row-${reqId}`);
+                const card = document.getElementById(`req-tecnicos-card-${reqId}`);
+                
+                if (row) {
+                    row.classList.toggle('d-none');
+                }
+                if (card) {
+                    card.classList.toggle('d-none');
+                }
+            });
+        });
+
+        // --- MANEJO DE CHECKLIST DE TAREAS ---
+        document.querySelectorAll('.btn-toggle-tareas').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const reqId = this.dataset.reqId;
+                const isProj = this.dataset.isProyecto === 'true';
+                const prefix = isProj ? 'proj' : 'cli';
+                const row = document.getElementById(`tareas-row-${prefix}-${reqId}`);
+                if (row) {
+                    row.classList.toggle('d-none');
+                }
+                const card = document.getElementById(`tareas-card-${prefix}-${reqId}`);
+                if (card) {
+                    card.classList.toggle('d-none');
+                }
+                this.classList.toggle('active');
+                this.classList.toggle('btn-secondary');
+                this.classList.toggle('btn-outline-secondary');
+            });
+        });
+
+        document.querySelectorAll('.form-add-tarea').forEach(form => {
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const reqId = this.dataset.reqId;
+                const isProj = this.dataset.isProyecto === 'true';
+                const prefix = isProj ? 'proj' : 'cli';
+                const input = this.querySelector('.input-tarea-nombre');
+                const nombre = input.value.trim();
+                if (!nombre) return;
+
+                const btn = this.querySelector('button[type="submit"]');
+                btn.disabled = true;
+                const originalBtnHtml = btn.innerHTML;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+                const url = isProj 
+                    ? `/requerimientos-proyecto/${reqId}/tareas` 
+                    : `/requerimientos-cliente/${reqId}/tareas`;
+
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify({ nombre })
+                    });
+
+                    const data = await response.json();
+                    if (data.success) {
+                        input.value = '';
+                        
+                        // Remove "No hay tareas" alerts if they exist
+                        const emptyAlert = document.querySelector(`.no-tasks-alert-${prefix}-${reqId}`);
+                        if (emptyAlert) emptyAlert.remove();
+
+                        // Append new task to list
+                        const list = document.querySelector(`.list-tareas-${prefix}-${reqId}`);
+                        const item = document.createElement('div');
+                        item.className = 'list-group-item bg-transparent d-flex justify-content-between align-items-center p-3 border-0 border-bottom border-light novelty-card';
+                        item.style.borderColor = 'var(--border-main)';
+                        item.innerHTML = `
+                            <div class="form-check m-0">
+                                <input class="form-check-input check-tarea-completar" type="checkbox" data-tarea-id="${data.tarea.id}" data-is-proyecto="${isProj}" id="check-tarea-${prefix}-${data.tarea.id}">
+                                <label class="form-check-label fw-semibold text-main small" for="check-tarea-${prefix}-${data.tarea.id}">
+                                    ${data.tarea.nombre}
+                                </label>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-danger border-0 rounded-circle btn-delete-tarea" data-tarea-id="${data.tarea.id}" data-is-proyecto="${isProj}" data-req-id="${reqId}" title="Eliminar tarea" style="width: 28px; height: 28px; padding:0; display: inline-flex; align-items: center; justify-content: center;">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        `;
+                        list.appendChild(item);
+
+                        // Bind event listeners to new task elements
+                        bindTaskEvents(item, reqId, isProj);
+
+                        // Update counter
+                        updateTaskCount(reqId, isProj, 1);
+                    }
+                } catch (err) {
+                    console.error(err);
+                    alert('Error al agregar la tarea');
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = originalBtnHtml;
+                }
+            });
+        });
+
+        function bindTaskEvents(item, reqId, isProj) {
+            const checkbox = item.querySelector('.check-tarea-completar');
+            const deleteBtn = item.querySelector('.btn-delete-tarea');
+            const label = item.querySelector('label');
+            const prefix = isProj ? 'proj' : 'cli';
+
+            if (checkbox) {
+                checkbox.addEventListener('change', async function() {
+                    const tareaId = this.dataset.tareaId;
+                    const url = isProj 
+                        ? `/requerimientos-proyecto-tareas/${tareaId}/toggle`
+                        : `/requerimientos-cliente-tareas/${tareaId}/toggle`;
+
+                    try {
+                        const response = await fetch(url, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        });
+                        const data = await response.json();
+                        if (data.success) {
+                            if (data.tarea.completada) {
+                                label.classList.add('text-decoration-line-through', 'text-muted');
+                                label.classList.remove('fw-semibold', 'text-main');
+                            } else {
+                                label.classList.remove('text-decoration-line-through', 'text-muted');
+                                label.classList.add('fw-semibold', 'text-main');
+                            }
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        this.checked = !this.checked; // Revert checkbox state on error
+                        alert('Error al actualizar el estado de la tarea');
+                    }
+                });
+            }
+
+            if (deleteBtn) {
+                deleteBtn.addEventListener('click', async function() {
+                    if (!confirm('¿Seguro que deseas eliminar esta tarea?')) return;
+                    const tareaId = this.dataset.tareaId;
+                    const url = isProj 
+                        ? `/requerimientos-proyecto-tareas/${tareaId}`
+                        : `/requerimientos-cliente-tareas/${tareaId}`;
+
+                    try {
+                        const response = await fetch(url, {
+                            method: 'DELETE',
+                            headers: {
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        });
+                        const data = await response.json();
+                        if (data.success) {
+                            item.remove();
+                            updateTaskCount(reqId, isProj, -1);
+
+                            // If list is empty, show empty message
+                            const list = document.querySelector(`.list-tareas-${prefix}-${reqId}`);
+                            if (list && list.querySelectorAll('.list-group-item').length === 0) {
+                                list.innerHTML = `
+                                    <div class="text-muted small text-center py-4 no-tasks-alert-${prefix}-${reqId}">
+                                        <i class="bi bi-check2-all fs-4 d-block mb-2 text-success opacity-50"></i>
+                                        No hay tareas registradas para este requerimiento. ¡Comienza agregando una!
+                                    </div>`;
+                            }
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        alert('Error al eliminar la tarea');
+                    }
+                });
+            }
+        }
+
+        function updateTaskCount(reqId, isProj, diff) {
+            const prefix = isProj ? 'proj' : 'cli';
+            const counterSpans = document.querySelectorAll(`.task-counter-${prefix}-${reqId}`);
+            counterSpans.forEach(counterSpan => {
+                const current = parseInt(counterSpan.textContent) || 0;
+                counterSpan.textContent = current + diff;
+            });
+        }
+
+        // Initial binding for existing tasks
+        document.querySelectorAll('[id^="tareas-row-"], [id^="tareas-card-"]').forEach(container => {
+            const idParts = container.id.split('-');
+            const reqId = idParts.pop();
+            const prefix = idParts.pop(); // 'proj' or 'cli'
+            const isProj = prefix === 'proj';
+            container.querySelectorAll('.list-group-item').forEach(item => {
+                bindTaskEvents(item, reqId, isProj);
+            });
         });
     });
 </script>

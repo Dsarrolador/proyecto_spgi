@@ -109,11 +109,27 @@
         </div>
       </a>
 
-      <a class="quick-card glass-card-premium" href="{{ route('estado-cuentas.index') }}">
-        <div class="quick-ico icon-float"><i class="bi bi-wallet2"></i></div>
+      <a class="quick-card glass-card-premium" href="{{ route('requerimientos-administrativos.index') }}">
+        <div class="quick-ico icon-float"><i class="bi bi-folder-check"></i></div>
         <div class="quick-meta text-start">
-          <p class="t">Estado de Cuenta</p>
-          <p class="d">Conciliación de pagos, facturas y saldos de clientes</p>
+          <p class="t">Req. Administrativos</p>
+          <p class="d">Control de tareas y requerimientos internos de administración</p>
+        </div>
+      </a>
+
+      <a class="quick-card glass-card-premium" href="{{ route('administracion.bitacora-clientes.index') }}">
+        <div class="quick-ico icon-float"><i class="bi bi-book-half"></i></div>
+        <div class="quick-meta text-start">
+          <p class="t">Bitácora de Clientes</p>
+          <p class="d">Gestión de contratos, documentos y contactos de administración</p>
+        </div>
+      </a>
+
+      <a class="quick-card glass-card-premium" href="{{ route('administracion.rentabilidad.index') }}">
+        <div class="quick-ico icon-float"><i class="bi bi-graph-up-arrow"></i></div>
+        <div class="quick-meta text-start">
+          <p class="t">Rentabilidad Proyectos</p>
+          <p class="d">Análisis y desglose financiero de rentabilidad de proyectos</p>
         </div>
       </a>
 
